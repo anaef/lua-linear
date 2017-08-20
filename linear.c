@@ -891,7 +891,6 @@ static int copy (lua_State *L) {
 /* wraps the AXPY subprogram */
 static void _axpy (int size, double *x, int incx, double *y, int incy,
 		double alpha) {
-	(void)alpha;
 	cblas_daxpy(size, alpha, x, incx, y, incy);
 }
 
@@ -970,7 +969,7 @@ static int inc (lua_State *L) {
 	return xy(L, _inc, 0);
 }
 
-/* elementwise multiplication implementation */
+/* element-wise multiplication implementation */
 static void _mul (int size, double *x, int incx, double *y, int incy,
 		double alpha) {
 	int i;
