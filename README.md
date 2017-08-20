@@ -29,7 +29,7 @@ Indexing is 1-based.
 #### `matrix`
 
 A matrix of double values. Matrices have support for the Lua length operator
-`#`, as well as index access to get vectors referencing the rows of columns
+`#`, as well as index access to get vectors referencing the rows or columns
 of the matrix. The order of the matrix determines whether row or column vectors
 are returned. Indexing is 1-based.
 
@@ -65,15 +65,14 @@ Returns a transposed vector of a matrix. This is a column vector in case of
 a row major matrix, and a row vector in case of a column major matrix.
 
 
-#### `linear.sub (vector [, start] [, end])
+#### `linear.sub (vector [, start] [, end])`
 
 Returns a sub vector referencing the underlying vector. Start and end are
 inclusive. If start is omitted, it defaults to 1. If end is omitted, it
 defaults to the size of the vector.
 
 
-#### `linear.sub (matrix [, majorstart] [, minorstart] [, majorend]
-[, minorend]`
+#### `linear.sub (matrix [, majorstart] [, minorstart] [, majorend] [, minorend]`
 
 Returns a sub matrix referencing the underlying matrix. All bounding values are
 inclusive. If a start value is omitted, it defaults to 1. If an end value is
@@ -97,7 +96,7 @@ number of values of the matrices must match.
 
 #### `linear.totable (vector|matrix)`
 
-Converts a vector or matrix to a Lua table. The Lua table uses only standard
+Converts a vector or matrix into a Lua table. The Lua table uses only standard
 Lua types, and can be converted back to a vector or matrix by passing it to
 `linear.tolinear`.
 
