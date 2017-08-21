@@ -421,6 +421,18 @@ local function testRectifier ()
 	assert(math.abs(linear.rectifier(-0.1) - 0.0) < EPSILON)
 end
 
+-- Tests the apply function
+local function testApply ()
+	local function inc (x)
+		return x + 1
+	end
+	assert(linear.apply(1, inc) == 2)
+	local A = linear.matrix(2, 3)
+	linear.set(A, 1)
+	linear.apply(A, inc)
+	assert(A[2][2] == 2)
+end
+
 -- Tests the gemv function
 local function testGemv ()
 	local A = linear.matrix(2, 3)
@@ -583,6 +595,7 @@ testLogistic()
 testTanh()
 testSoftplus()
 testRectifier()
+testApply()
 testGemv()
 testGer()
 testGemm()

@@ -1104,6 +1104,29 @@ static int rectifier (lua_State *L) {
 	return apply(L, _rectifier);
 }
 
+/* current Lua state */
+static __thread lua_State *TL;
+
+/* apply function implementation */
+static double _apply (double x) {
+	double result;
+
+	lua_pushvalue(TL, -1);
+	lua_pushnumber(TL, x);
+	lua_call(TL, 1, 1);
+	result = lua_tonumber(TL, -1);
+	lua_pop(TL, 1);
+	return result;
+}
+
+/* apply function */
+static int applyx (lua_State *L) {
+	luaL_checktype(L, 2, LUA_TFUNCTION);
+	lua_settop(L, 2);
+	TL = L;
+	return apply(L, _apply);
+}
+
 /* invokes the GEMV subprogram (y <- alpha A x + b y) */
 static int gemv (lua_State *L) {
 	struct matrix *A;
@@ -1338,6 +1361,7 @@ int luaopen_linear (lua_State *L) {
 		{ "tanh", tanhx },
 		{ "softplus", softplus },
 		{ "rectifier", rectifier },
+		{ "apply", applyx },
 		{ "gemv", gemv },
 		{ "ger", ger },
 		{ "gemm", gemm },
