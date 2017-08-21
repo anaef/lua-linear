@@ -43,7 +43,7 @@ Creates a new vector of the specified size.
 
 #### `linear.matrix (rows, cols [, order])`
 
-Creates a new matrix of the specified size. Order is one of `row`, `col` and
+Creates a new matrix of the specified size. Order is one of `row`, `col`, and
 defaults to creating a matrix with row major order if omitted or `nil`.
 
 
@@ -61,8 +61,9 @@ rows and columns of a matrix.
 
 #### `linear.tvector (matrix, index)`
 
-Returns a transposed vector of a matrix. This is a column vector in case of
-a row major matrix, and a row vector in case of a column major matrix.
+Returns a transposed vector referencing the underlying matrix. This is a column
+vector in case of a row major matrix, and a row vector in case of a column major
+matrix.
 
 
 #### `linear.sub (vector [, start] [, end])`
@@ -90,20 +91,21 @@ matrices and the vector must match.
 
 #### `linear.reshape (vector, matrix {, matrix})`
 
-Reshapes a vector into one or more matrices. The number of elements  of the
+Reshapes a vector into one or more matrices. The number of elements of the
 vector and the matrices must match.
 
 
 #### `linear.totable (vector|matrix)`
 
 Converts a vector or matrix into a Lua table. The Lua table uses only standard
-Lua types, and can be converted back to a vector or matrix by passing it to
-`linear.tolinear`.
+Lua types, and can be converted back to a vector or matrix by passing it to the
+`linear.tolinear` function.
 
 
 #### `linear.tolinear (table)`
 
-Converts a Lua table returned by `linear.totable` into a vector or matrix.
+Converts a Lua table returned by the `linear.totable` function into a vector or
+matrix.
 
 
 #### `linear.dot (vector x, vector y)`
@@ -111,25 +113,25 @@ Converts a Lua table returned by `linear.totable` into a vector or matrix.
 Returns the dot product of two vectors, formally `x^T y`.
 
 
-#### `linear.nrm2 (vector)`
+#### `linear.nrm2 (vector x)`
 
 Returns the Euclidean norm (also known as L2 norm) of a vector, formally
 `||x||_2`.
 
 
-#### `linear.asum (vector)`
+#### `linear.asum (vector x)`
 
 Returns the absolute-value norm (also known as L1 norm) of a vector, formally
 `||x||`.
 
 
-#### `linear.iamax (vector)`
+#### `linear.iamax (vector x)`
 
 Returns the index of the first element of a vector having the largest absolute
 value, formally `argmax |x_k|`.
 
 
-#### `linear.sum (vector)`
+#### `linear.sum (vector x)`
 
 Returns the sum of the elements of a vector, formally `sigma x_k`.
 
@@ -224,7 +226,7 @@ vector or matrix, or returns the recitifier function of a number, formally
 Performs a matrix-vector product and addition operation, formally
 `y <- alpha A x + beta y`. Transpose is one of `notrans`, `trans`, and defaults
 to `notrans` if omitted or `nil`. If set to `trans`, the operation is performed
-on `A^T`. If omitted or `nil`, alpha default to `1.0`, and beta defaults to
+on `A^T`. If omitted or `nil`, alpha defaults to `1.0`, and beta defaults to
 `0.0`.
 
 
@@ -237,9 +239,9 @@ Performs a vector-vector product and addition operation, formally
 #### `linear.gemm (matrix A, matrix B, matrix C [, transpose A [, transpose B [, alpha [, beta ]]]])`
 
 Performs a matrix-matrix product and addition operation, formally
-`C <- alpha A B + beta C`. Transpose arguments function as in the `linear.gemv`
-function. If omitted or `nil`, alpha defaults to `1.0`, and beta defaults to
-`0.0`.
+`C <- alpha A B + beta C`. The transpose arguments function as in the
+`linear.gemv` function. If omitted or `nil`, alpha defaults to `1.0`, and beta
+defaults to `0.0`.
 
 
 #### `linear.gesv (matrix A, matrix B)`
@@ -263,7 +265,8 @@ solutions. The transpose argument functions as in the `linear.gemv` function.
 
 Inverts a matrix, formally `A <- A^-1`. Returns 0 if the calculation was
 successful, and a positive value if the matrix is singular and cannot be
-inverted. In this case, the elements of the matrix are undefined.
+inverted. In this case, the elements of the matrix are undefined when the
+function returns.
 
 
 #### `linear.det (matrix A)`
