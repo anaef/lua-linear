@@ -185,40 +185,50 @@ Performs element-wise multiplication on two vectors or matrices, formally
 
 #### `linear.sign (number|vector|matrix x)`
 
-Applies the sign function to a vector or matrix, or returns the sign of a
-number, formally `x <- sgn(x)`. The sign is `1` if x > 0, `-1` if x < 0, and
-`x` otherwise.
+Applies the sign function to the elements of a vector or matrix, formally
+`x <- sgn(x)`, or returns the sign of a number, formally `sgn(x)`. The sign is
+`1` if x > 0, `-1` if x < 0, and `x` otherwise.
 
 
 #### `linear.abs (number|vector|matrix x)`
 
-Applies the absoute value function to a vector or matrix, or returns the
-absolute value of a number, formally `x <- abs(x)`.
+Applies the absoute value function to the elements of a vector or matrix,
+formally `x <- abs(x)`, or returns the absolute value of a number, formally
+`abs(x)`.
 
 
 #### `linear.logistic (number|vector|matrix x)`
 
-Applies the logistic function to a vector or matrix, or returns the logistic
-function of a number, formally `x <- 1 / (1 + exp(-x))`.
+Applies the logistic function to the elements of a vector or matrix, formally
+`x <- 1 / (1 + e^-x)`, or returns the logistic function of a number, formally
+`1 / (1 + e^-x)`.
 
 
 #### `linear.tanh (number|vector|matrix x)`
 
-Applies the hyperbolic tangent function to a vector or matrix, or returns the
-hyperbolic tangent of a number, formally `x <- tanh(x)`.
+Applies the hyperbolic tangent function to the elements of a vector or matrix,
+formally `x <- tanh(x)`, or returns the hyperbolic tangent of a number, formally
+`tanh(x)`.
 
 
 #### `linear.softplus (number|vector|matrix x)`
 
-Applies the softplus function to a vector or matrix, or returns the softplus
-function of a number, formally `x <- log(1 + exp(x))`.
+Applies the softplus function to the elements of a vector or matrix, formally
+`x <- log(1 + e^x)`, or returns the softplus function of a number, formally
+`log(1 + e^x)`.
 
 
 #### `linear.rectifier (number|vector|matrix x)`
 
-Applies the rectifier function (also known as rectified linear unit, ReLU) to a
-vector or matrix, or returns the recitifier function of a number, formally
-`x <- max(0, x)`.
+Applies the rectifier function (also known as rectified linear unit, ReLU) to
+the elements of a vector or matrix, formally `x <- max(0, x)`, or returns the
+recitifier function of a number, formally `max(0, x)`.
+
+
+#### `linear.apply (number|vector|matrix x, function f)`
+
+Applies the specified function to the elements of a vector or matrix, formally
+`x <- f(x)`, or returns function value of a number, formally `f(x)`.
 
 
 #### `linear.gemv (matrix A, vector x, vector y [, transpose A [, alpha [, beta]]])`
@@ -253,7 +263,7 @@ are stored in B.
 
 #### `linear.gels (matrix A, matrix B [, transpose A])`
 
-Solves overdetermined or underdermined systems of linear equations, formally
+Solves overdetermined or underdetermined systems of linear equations, formally
 `A X = B`. On input, each column of B represents the right-hand sides of a
 system. On output, the solutions X are stored in B. In case of overdetermined
 systems, the function solves the least squares problems `min ||b - A x||_2`,
