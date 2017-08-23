@@ -78,27 +78,6 @@ static int intvalue (lua_State *L, const char *key, int dfl) {
 	return result;
 }
 
-/* returns a double value from a table */
-static double doublevalue (lua_State *L, const char *key, double dfl) {
-	double result;
-	int isnumber;
-
-	lua_getfield(L, -1, key);
-	if (!lua_isnil(L, -1)) {
-		result = lua_tonumberx(L, -1, &isnumber);
-		if (!isnumber) {
-			luaL_error(L, "bad field " LUA_QS, key);
-		}
-	} else {
-		if (isnan(dfl)) {
-			luaL_error(L, "missing field " LUA_QS, key);
-		}
-		result = dfl;
-	}
-	lua_pop(L, 1);
-	return result;
-}
-
 /* returns an option value from a table */
 static int optionvalue (lua_State *L, const char *key, const char *dfl,
 		const char *options[]) {
