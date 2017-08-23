@@ -622,5 +622,5 @@ testGels()
 testInv()
 testDet()
 
--- Wait
-for i = 1, 1000000 do end
+-- Exit
+os.exit(0)
