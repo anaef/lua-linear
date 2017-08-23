@@ -293,19 +293,36 @@ local function testSet ()
 	end
 end
 
--- Tests the rand function
-local function testRand ()
+-- Tests the uniform function
+local function testUniform ()
 	local x = linear.vector(3)
-	linear.rand(x)
+	linear.uniform(x)
 	for i = 1, #x do
 		assert(x[i] >= 0 and x[i] < 1)
 	end
 	local A = linear.matrix(3, 3)
-	linear.rand(A)
+	linear.uniform(A)
 	for i = 1, #A do
 		local a = A[i]
 		for j = 1, #a do
 			assert(a[i] >= 0 and a[i] < 1)
+		end
+	end
+end
+
+-- Tests the normal function
+local function testNormal ()
+	local x = linear.vector(3)
+	linear.normal(x)
+	for i = 1, #x do
+		assert(type(x[i]) == "number")
+	end
+	local A = linear.matrix(3, 3)
+	linear.normal(A)
+	for i = 1, #A do
+		local a = A[i]
+		for j = 1, #a do
+			assert(type(a[j]) == "number")
 		end
 	end
 end
@@ -586,7 +603,8 @@ testCopy()
 testAxpy()
 testScal()
 testSet()
-testRand()
+testUniform()
+testNormal()
 testInc()
 testMul()
 testSign()

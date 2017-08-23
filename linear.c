@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <lauxlib.h>
 #include <cblas.h>
 #include <lapacke.h>
@@ -931,9 +932,9 @@ static int set (lua_State *L) {
 	return xy(L, _set, 0);
 }
 
-/* rand operation implementation */
-static void _rand (int size, double *x, int incx, double *y, int incy,
-			double alpha) {
+/* uniform RNG implementation */
+static void _uniform (int size, double *x, int incx, double *y, int incy,
+		double alpha) {
 	int i;
 
 	(void)y;
@@ -945,9 +946,44 @@ static void _rand (int size, double *x, int incx, double *y, int incy,
 	}
 }
 
-/* performs a random operation (x <- rand) */
-static int randx (lua_State *L) {
-	return xy(L, _rand, 0);
+/* performs a uniform operation (x <- uniform) */
+static int uniform (lua_State *L) {
+	return xy(L, _uniform, 0);
+}
+
+/* normal RNG implementation */
+static void _normal (int size, double *x, int incx, double *y, int incy,
+		double alpha) {
+	int i;
+	double u1, u2, r;
+
+	(void)y;
+	(void)incy;
+	(void)alpha;
+	for (i = 0; i < size - 1; i += 2) {
+		do {
+			u1 = (double)random() * (1.0 / (double)RAND_MAX);
+			u2 = (double)random() * (1.0 / (double)RAND_MAX);
+		} while (u1 <= -DBL_MAX);
+		r = sqrt(-2.0 * log(u1));
+		*x = r * cos(2 * M_PI * u2);
+		x += incx;
+		*x = r * sin(2 * M_PI * u2);
+		x += incx;
+	}
+	if (i < size) {
+		do {
+			u1 = (double)random() * (1.0 / (double)RAND_MAX);
+			u2 = (double)random() * (1.0 / (double)RAND_MAX);
+		} while (u1 <= -DBL_MAX);
+		*x = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
+		x += incx;
+	}
+}
+
+/* performs a normal operation (x <- normal) */
+static int normal (lua_State *L) {
+	return xy(L, _normal, 0);
 }
 
 /* inc operation implementation */
@@ -1352,7 +1388,8 @@ int luaopen_linear (lua_State *L) {
 		{ "axpy", axpy },
 		{ "scal", scal },
 		{ "set", set },
-		{ "rand", randx },
+		{ "uniform", uniform },
+		{ "normal", normal },
 		{ "inc", inc },
 		{ "mul", mul },
 		{ "sign", sign },

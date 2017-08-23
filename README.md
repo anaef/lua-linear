@@ -165,10 +165,16 @@ Sets the elements of a vector or matrix to a constant, formally `x <- alpha`. If
 omitted or `nil`, alpha defaults to `1.0`.
 
 
-#### `linear.rand (vector|matrix x)`
+#### `linear.uniform (vector|matrix x)`
 
-Sets the elements of a vector or matrix to random values, formally
-`x <- rand` where `0.0 <= rand < 1.0`.
+Sets the elements of a vector or matrix to uniformly distributed random values,
+formally `x <- uniform` where `uniform ~ 𝒰(0, 1 - ε)`.
+
+
+#### `linear.normal (vector|matrix x)`
+
+Sets the elements of a vector or matrix to normally distributed random values,
+formally `x <- normal` where `normal ~ 𝒩(0, 1)`.
 
 
 #### `linear.inc (vector|matrix x [, alpha])`
