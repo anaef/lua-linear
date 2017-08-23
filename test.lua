@@ -44,9 +44,10 @@ local function testSize ()
 	local x = linear.vector(1)
 	assert(linear.size(x) == 1)
 	local X = linear.matrix(1, 2)
-	local rows, cols = linear.size(X)
+	local rows, cols, order = linear.size(X)
 	assert(rows == 1)
 	assert(cols == 2)
+	assert(order == "row")
 end
 
 

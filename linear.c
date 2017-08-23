@@ -8,9 +8,11 @@
 #include <cblas.h>
 #include <lapacke.h>
 
+/* matrix orders */
+static const char * const ORDERS[] = { "row", "col", NULL };
+
 /* checks an order */
 static CBLAS_ORDER checkorder (lua_State *L, int index) {
-	static const char * const ORDERS[] = { "row", "col", NULL };
 
 	switch (luaL_checkoption(L, index, "row", ORDERS)) {
 	case 0:
@@ -322,7 +324,8 @@ static int size (lua_State *L) {
 	if (X != NULL) {
 		lua_pushinteger(L, X->rows);
 		lua_pushinteger(L, X->cols);
-		return 2;
+		lua_pushstring(L, ORDERS[X->order == CblasRowMajor ? 0 : 1]);
+		return 3;
 	}
 	return argerror(L, 1);
 }

@@ -57,8 +57,8 @@ and `nil` otherwise.
 
 #### `linear.size (vector|matrix)`
 
-Returns the number of elements of a vector, or two values for the number of
-rows and columns of a matrix.
+Returns the number of elements of a vector, or three values for the number of
+rows and columns as well as the order of a matrix.
 
 
 #### `linear.tvector (matrix, index)`
