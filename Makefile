@@ -1,7 +1,7 @@
 LUA_INCLUDE = /usr/include/lua5.2
 LUA_BIN = /usr/bin/lua5.2
 LIB_INSTALL = /usr/local/lib/lua/5.2
-CFLAGS = -pedantic -Wall -Wextra -fPIC -O2 -D_REENTRANT
+CFLAGS = -pedantic -Wall -Wextra -fPIC -O2 -D_REENTRANT -D_GNU_SOURCE
 LDFLAGS = -shared -fPIC
 
 export LUA_CPATH=$(PWD)/?.so
