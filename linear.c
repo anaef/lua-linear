@@ -937,7 +937,7 @@ static int uniform (lua_State *L) {
 static void _normal (int size, double *x, int incx, double *y, int incy,
 		double alpha) {
 	int i;
-	double u1, u2, r;
+	double u1, u2, r, s, c;
 
 	(void)y;
 	(void)incy;
@@ -948,9 +948,10 @@ static void _normal (int size, double *x, int incx, double *y, int incy,
 			u2 = (double)random() * (1.0 / (double)RAND_MAX);
 		} while (u1 <= -DBL_MAX);
 		r = sqrt(-2.0 * log(u1));
-		*x = r * cos(2 * M_PI * u2);
+		sincos(2 * M_PI * u2, &s, &c);
+		*x = r * c;
 		x += incx;
-		*x = r * sin(2 * M_PI * u2);
+		*x = r * s;
 		x += incx;
 	}
 	if (i < size) {
