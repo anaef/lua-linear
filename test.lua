@@ -360,6 +360,23 @@ local function testMul ()
 	assert(X[2][2] == 4)
 end
 
+-- Tests the div function
+local function testDiv ()
+	local x = linear.vector(2)
+	x[1], x[2] = 1, 2
+	linear.div(x, x)
+	assert(x[1] == 1)
+	assert(x[2] == 1)
+
+	local X = linear.matrix(2, 2)
+	linear.set(X, 1)
+	local Y = linear.matrix(2, 2)
+	linear.set(Y, 2)
+	linear.div(X, Y)
+	assert(Y[1][1] == 0.5)
+	assert(Y[2][2] == 0.5)
+end
+
 -- Tests the sign function
 local function testSign ()
 	assert(linear.sign(2) == 1)
@@ -608,6 +625,7 @@ testUniform()
 testNormal()
 testInc()
 testMul()
+testDiv()
 testSign()
 testAbs()
 testLogistic()

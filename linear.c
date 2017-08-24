@@ -1007,6 +1007,25 @@ static int mul (lua_State *L) {
 	return xy(L, _mul, 1);
 }
 
+/* element-wise division implementation */
+static void _div (int size, double *x, int incx, double *y, int incy,
+		double alpha) {
+	int i;
+
+	(void)alpha;
+	#pragma omp parallel for private(i) schedule(auto) if(size > 2500)
+	for (i = 0; i < size; i++) {
+		*y = *x / *y;
+		x += incx;
+		y += incy;
+	}
+}
+
+/* performs element-wise division (y <- x ./ y) */
+static int divx (lua_State *L) {
+	return xy(L, _div, 1);
+}
+
 /* apply function */
 typedef double(*applyfunction)(double);
 
@@ -1375,6 +1394,7 @@ int luaopen_linear (lua_State *L) {
 		{ "normal", normal },
 		{ "inc", inc },
 		{ "mul", mul },
+		{ "div", divx },
 		{ "sign", sign },
 		{ "abs", absx },
 		{ "logistic", logistic },

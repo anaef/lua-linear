@@ -191,6 +191,12 @@ Performs element-wise multiplication on two vectors or matrices, formally
 `y <- x .* y`.
 
 
+#### `linear.div (vector|matrix x, vector|matrix y)`
+
+Performs element-wise division on two vectors or matrices, formally
+`y <- x ./ y`.
+
+
 #### `linear.sign (number|vector|matrix x)`
 
 Applies the sign function to the elements of a vector or matrix, formally
