@@ -768,8 +768,8 @@ static double _sum (const double *values, int size, int inc) {
 	int i;
 
 	sum = 0.0;
-	#pragma omp parallel for private(i) schedule(auto) if(size > 2500) \
-			reduction(+:sum)
+	#pragma omp parallel for private(i) schedule(auto) \
+			 if(size >= LUALINEAR_OMP_MINSIZE) reduction(+:sum)
 	for (i = 0; i < size; i++) {
 		sum += values[(size_t)i * inc];
 	}
@@ -970,7 +970,8 @@ static void _set (int size, double *x, int incx, double *y, int incy,
 
 	(void)y;
 	(void)incy;
-	#pragma omp parallel for private(i) schedule(auto) if(size > 2500)
+	#pragma omp parallel for private(i) schedule(auto) \
+			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
 		*x = alpha;
 		x += incx;
@@ -1044,7 +1045,8 @@ static void _inc (int size, double *x, int incx, double *y, int incy,
 
 	(void)y;
 	(void)incy;
-	#pragma omp parallel for private(i) schedule(auto) if(size > 2500)
+	#pragma omp parallel for private(i) schedule(auto) \
+			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
 		*x += alpha;
 		x += incx;
@@ -1062,7 +1064,8 @@ static void _mul (int size, double *x, int incx, double *y, int incy,
 	int i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size > 2500)
+	#pragma omp parallel for private(i) schedule(auto) \
+			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
 		*y *= *x;
 		x += incx;
@@ -1081,7 +1084,8 @@ static void _div (int size, double *x, int incx, double *y, int incy,
 	int i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size > 2500)
+	#pragma omp parallel for private(i) schedule(auto) \
+			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
 		*y = *x / *y;
 		x += incx;

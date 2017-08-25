@@ -16,6 +16,11 @@
 #define LUALINEAR_MATRIX_METATABLE "linear.matrix"
 
 /**
+ * OpenMP.
+ */
+#define LUALINEAR_OMP_MINSIZE 2048
+
+/**
  * Vector.
  */
 struct vector {
