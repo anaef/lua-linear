@@ -270,6 +270,12 @@ local function testAxpy ()
 	Y[2][2] = 2
 	linear.axpy(X, Y, 2)
 	assert(Y[2][2] == 4)
+
+	linear.axpy(x, Y)
+	assert(Y[1][1] == 1)
+	assert(Y[1][2] == 2)
+	assert(Y[2][1] == 1)
+	assert(Y[2][2] == 6)
 end
 
 -- Tests the scal function

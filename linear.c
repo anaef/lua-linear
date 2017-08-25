@@ -854,7 +854,7 @@ static int sum (lua_State *L) {
 typedef void(*xyfunction)(int, double *, int, double *, int, double);
 
 /* invokes an (x,y) subproram */
-static int xy (lua_State *L, xyfunction s, int hasy) {
+static int xy (lua_State *L, xyfunction s, int hasy, int hasalpha) {
 	int index, i;
 	double alpha;
 	struct vector *x, *y;
@@ -865,17 +865,84 @@ static int xy (lua_State *L, xyfunction s, int hasy) {
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
 		if (hasy) {
-			y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
-			luaL_argcheck(L, y->size == x->size, 2,
-					"dimension mismatch");
+			y = luaL_testudata(L, 2, LUALINEAR_VECTOR_METATABLE);
+			Y = luaL_testudata(L, 2, LUALINEAR_MATRIX_METATABLE);
+			if (y == NULL && Y == NULL) {
+				return argerror(L, 2);
+			}
 			index++;
 		} else {
 			y = x;
+			Y = NULL;
 		}
-		alpha = luaL_optnumber(L, index, 1.0);
+		if (hasalpha) {
+			alpha = luaL_optnumber(L, index, 1.0);
+			index++;
+		} else {
+			alpha = 0.0;
+		}
+		if (y != NULL) {
+			/* invoke subprogram on vector-vector */
+			luaL_argcheck(L, y->size == x->size, 2,
+					"dimension mismatch");
+			s(x->size, x->values, x->inc, y->values, y->inc, alpha);
+			return 0;
+		}
 
-		/* invoke subprogram */
-		s(x->size, x->values, x->inc, y->values, y->inc, alpha);
+		/* invoke subprogram on vector-matrix */
+		switch (checktranspose(L, index)) {
+		case CblasNoTrans:
+			switch (Y->order) {
+			case CblasRowMajor:
+				luaL_argcheck(L, 1, x->size == Y->cols,
+						"dimension mismatch");
+				for (i = 0; i < Y->rows; i++) {
+					s(x->size, x->values, x->inc,
+							&Y->values[(size_t)i
+							* Y->ld], 1, alpha);
+				}
+				break;
+
+			case CblasColMajor:
+				luaL_argcheck(L, 1, x->size == Y->rows,
+						"dimension mismatch");
+				for (i = 0; i < Y->cols; i++) {
+					s(x->size, x->values, x->inc,
+							&Y->values[(size_t)i
+							* Y->ld], 1, alpha);
+				}
+				break;
+			}
+			break;
+
+		case CblasTrans:
+			switch (Y->order) {
+			case CblasRowMajor:
+				luaL_argcheck(L, 1, x->size == Y->rows,
+						"dimension mismatch");
+				for (i = 0; i < Y->rows; i++) {
+					s(x->size, x->values, x->inc,
+							&Y->values[(size_t)i],
+							Y->ld, alpha);
+				}
+				break;
+
+			case CblasColMajor:
+				luaL_argcheck(L, 1, x->size == Y->cols,
+						"dimension mismatch");
+				for (i = 0; i < Y->cols; i++) {
+					s(x->size, x->values, x->inc,
+							&Y->values[(size_t)i],
+							Y->ld, alpha);
+				}
+				break;
+			}
+			break;
+
+		default:
+			/* not reached */
+			assert(0);
+		}
 		return 0;
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
@@ -890,9 +957,14 @@ static int xy (lua_State *L, xyfunction s, int hasy) {
 		} else {
 			Y = X;
 		}
-		alpha = luaL_optnumber(L, index, 1.0);
+		if (hasalpha) {
+			alpha = luaL_optnumber(L, index, 1.0);
+			index++;
+		} else {
+			alpha = 0.0;
+		}
 
-		/* invoke subprogram */
+		/* invoke subprogram on matrix-matrix */
 		switch (X->order) {
 		case CblasRowMajor:
 			for (i = 0; i < X->rows; i++) {
@@ -924,7 +996,7 @@ static void _swap (int size, double *x, int incx, double *y, int incy,
 
 /* invokes the SWAP subprogram (y <-> x) */
 static int swap (lua_State *L) {
-	return xy(L, _swap, 1);
+	return xy(L, _swap, 1, 0);
 }
 
 /* wraps the COPY subprogram */
@@ -936,7 +1008,7 @@ static void _copy (int size, double *x, int incx, double *y, int incy,
 
 /* invokes the COPY subprogram (y <- x) */
 static int copy (lua_State *L) {
-	return xy(L, _copy, 1);
+	return xy(L, _copy, 1, 0);
 }
 
 /* wraps the AXPY subprogram */
@@ -947,7 +1019,7 @@ static void _axpy (int size, double *x, int incx, double *y, int incy,
 
 /* invokes the AXPY subprogram (y <- alpha x + y) */
 static int axpy (lua_State *L) {
-	return xy(L, _axpy, 1);
+	return xy(L, _axpy, 1, 1);
 }
 
 /* wraps the SCAL subprogram */
@@ -960,7 +1032,7 @@ static void _scal (int size, double *x, int incx, double *y, int incy,
 
 /* invokes the SCAL subprogram (x <- alpha x) */
 static int scal (lua_State *L) {
-	return xy(L, _scal, 0);
+	return xy(L, _scal, 0, 1);
 }
 
 /* set operation implementation */
@@ -980,7 +1052,7 @@ static void _set (int size, double *x, int incx, double *y, int incy,
 
 /* performs a set operation (x <- alpha) */
 static int set (lua_State *L) {
-	return xy(L, _set, 0);
+	return xy(L, _set, 0, 1);
 }
 
 /* uniform RNG implementation */
@@ -999,7 +1071,7 @@ static void _uniform (int size, double *x, int incx, double *y, int incy,
 
 /* performs a uniform operation (x <- uniform) */
 static int uniform (lua_State *L) {
-	return xy(L, _uniform, 0);
+	return xy(L, _uniform, 0, 0);
 }
 
 /* normal RNG implementation */
@@ -1035,7 +1107,7 @@ static void _normal (int size, double *x, int incx, double *y, int incy,
 
 /* performs a normal operation (x <- normal) */
 static int normal (lua_State *L) {
-	return xy(L, _normal, 0);
+	return xy(L, _normal, 0, 0);
 }
 
 /* inc operation implementation */
@@ -1055,7 +1127,7 @@ static void _inc (int size, double *x, int incx, double *y, int incy,
 
 /* performs a inc operation (x <- x + alpha) */
 static int inc (lua_State *L) {
-	return xy(L, _inc, 0);
+	return xy(L, _inc, 0, 1);
 }
 
 /* element-wise multiplication implementation */
@@ -1075,7 +1147,7 @@ static void _mul (int size, double *x, int incx, double *y, int incy,
 
 /* performs element-wise multiplication (y <- x .* y) */
 static int mul (lua_State *L) {
-	return xy(L, _mul, 1);
+	return xy(L, _mul, 1, 0);
 }
 
 /* element-wise division implementation */
@@ -1095,7 +1167,7 @@ static void _div (int size, double *x, int incx, double *y, int incy,
 
 /* performs element-wise division (y <- x ./ y) */
 static int divx (lua_State *L) {
-	return xy(L, _div, 1);
+	return xy(L, _div, 1, 0);
 }
 
 /* apply function */

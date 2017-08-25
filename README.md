@@ -145,21 +145,32 @@ performed along the minor order of the matrix, and the vector size must match
 the minor size of the matrix.
 
 
-#### `linear.swap (vector|matrix x, vector|matrix y)`
+#### `linear.swap (vector|matrix x, vector|matrix y [, transpose])`
 
-Swaps the elements of two vectors or matrices, formally `x <-> y`.
+Swaps the elements of two vectors or matrices, formally `x <-> y`. The function
+can be invoked with a vector and a matrix to swap the vector repeatedly with
+the major order vectors of the matrix. The argument transpose is one of
+`notrans`, `trans`, and it defaults to `notrans`. If set to `trans`, the vector
+is swapped with the minor order vectors of the matrix.
 
 
-#### `linear.copy (vector|matrix x, vector|matrix y)`
+#### `linear.copy (vector|matrix x, vector|matrix y [, transpose])`
 
 Copies the elements of a vector or matrix to another vector or matrix, formally
-`y <- x`.
+`y <- x`. The function can be invoked with a vector and a matrix to copy the
+vector repeatedly to the major order vectors of the matrix. The argument
+transpose is one of `notrans`, `trans`, and it defaults to `notrans`. If set to
+`trans`, the vector is copied to the minor order vectors of the matrix.
 
 
-#### `linear.axpy (vector|matrix x, vector|matrix y [, alpha])`
+#### `linear.axpy (vector|matrix x, vector|matrix y [, alpha [, transpose]])`
 
 Adds a scaled vector or matrix to another vector or matrix, formally
-`y <- alpha x + y`. The argument alpha defaults to `1.0` if omitted or `nil`.
+`y <- alpha x + y`. The function can be invoked with a vector and a matrix to
+add the vector repatedly to the major order vectors of the matrix. The argument
+alpha defaults to `1.0`. The argument transpose is one of `notrans`, `trans`,
+and it defaults to `notrans`. If set to `trans`, the vector is added to the
+minor order vectors of the matrix.
 
 
 #### `linear.scal (vector|matrix x [, alpha])`
