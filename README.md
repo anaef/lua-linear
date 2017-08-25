@@ -3,6 +3,7 @@
 ## Introduction
 
 Lua Linear provides linear algebra functions for the Lua programming language.
+Where applicable, the BLAS and LAPACK implementations on the system are used.
 
 
 ## Build, Test, and Install
@@ -30,10 +31,9 @@ as well as index access to get and set the elements of the vector. Indexing is
 #### `matrix`
 
 A matrix of double values. Matrices have support for the Lua length operator
-`#`, as well as index access to get vectors referencing the rows or columns
-of the matrix, depending on the major order of the matrix. For a row major
-matrix, row vectors are returned, and for a columm major matrix, column vectors
-are returned. Indexing is 1-based.
+`#`, as well as index access to get major order vectors referencing the
+underlying matrix. For a row major matrix, row vectors are returned, and for a
+columm major matrix, column vectors are returned. Indexing is 1-based.
 
 
 ### Functions
@@ -46,7 +46,7 @@ Creates a new vector of the specified size.
 #### `linear.matrix (rows, cols [, order])`
 
 Creates a new matrix of the specified size. Order is one of `row`, `col`, and
-defaults to creating a matrix with row major order if omitted or `nil`.
+defaults to creating a matrix with row major order.
 
 
 #### `linear.type (value)`
@@ -63,26 +63,25 @@ rows and columns as well as the order of a matrix.
 
 #### `linear.tvector (matrix, index)`
 
-Returns a transposed vector referencing the underlying matrix. This is a column
-vector in case of a row major matrix, and a row vector in case of a column major
-matrix.
+Returns a transposed (or minor order) vector referencing the underlying matrix.
+This is a column vector in case of a row major matrix, and a row vector in case
+of a column major matrix.
 
 
 #### `linear.sub (vector [, start] [, end])`
 
 Returns a sub vector referencing the underlying vector. Start and end are
-inclusive. If start is omitted or `nil`, it defaults to 1. If end is omitted or
-`nil`, it defaults to the size of the vector.
+inclusive. The argument start defaults to 1, and the argument end defaults to
+the size of the vector.
 
 
 #### `linear.sub (matrix [, majorstart [, minorstart [, majorend [, minorend]]]])`
 
 Returns a sub matrix referencing the underlying matrix. All bounding values are
-inclusive. Start values default to 1 if omitted or `nil`. End value default to
-the number of rows or columns of the matrix if omitted or `nil`. For a row major
-matrix, majorstart and majorend refer to the rows of the matrix, and minorstart
-and minorend refer to the columns of the matrix. For a column major matrix, the
-meaning is swapped.
+inclusive. Start values default to 1, and end values default to the number of
+rows or columns of the matrix. For a row major matrix, majorstart and majorend
+relate to the rows of the matrix, and minorstart and minorend relate to the
+columns of the matrix. For a column major matrix, the relation is inverse.
 
 
 #### `linear.unwind (matrix {, matrix}, vector)`
@@ -130,19 +129,16 @@ Returns the absolute-value norm (also known as L1 norm) of a vector, formally
 #### `linear.iamax (vector x)`
 
 Returns the index of the first element of a vector having the largest absolute
-value, formally `argmax |x_k|`.
+value, formally `argmax |x_i|`.
 
 
 #### `linear.sum (vector|matrix x [, vector y [, transpose]])`
 
 Returns the sum of the elements of a vector, formally `sigma x_i`, or sets a
-vector to the sum of the rows or columns of a matrix, formally
+vector to the sum of each major order vector of the matrix, formally
 `y_i <- sigma x_i,j`. The argument transpose is one of `notrans`, `trans`, and
-defaults to `notrans` if omitted or `nil`. If set to `notrans`, the summation
-is performed along the major order of the matrix, and the vector size must
-match the major size of the matrix. If set to 'trans', the summation is
-performed along the minor order of the matrix, and the vector size must match
-the minor size of the matrix.
+defaults to `notrans`. If set to 'trans', the vector is set to the sum of each
+minor order vector of the matrix, formally `y_j <- sigma x_i_j`.
 
 
 #### `linear.swap (vector|matrix x, vector|matrix y [, transpose])`
@@ -150,7 +146,7 @@ the minor size of the matrix.
 Swaps the elements of two vectors or matrices, formally `x <-> y`. The function
 can be invoked with a vector and a matrix to swap the vector repeatedly with
 the major order vectors of the matrix. The argument transpose is one of
-`notrans`, `trans`, and it defaults to `notrans`. If set to `trans`, the vector
+`notrans`, `trans`, and defaults to `notrans`. If set to `trans`, the vector
 is swapped with the minor order vectors of the matrix.
 
 
@@ -159,7 +155,7 @@ is swapped with the minor order vectors of the matrix.
 Copies the elements of a vector or matrix to another vector or matrix, formally
 `y <- x`. The function can be invoked with a vector and a matrix to copy the
 vector repeatedly to the major order vectors of the matrix. The argument
-transpose is one of `notrans`, `trans`, and it defaults to `notrans`. If set to
+transpose is one of `notrans`, `trans`, and defaults to `notrans`. If set to
 `trans`, the vector is copied to the minor order vectors of the matrix.
 
 
@@ -169,20 +165,20 @@ Adds a scaled vector or matrix to another vector or matrix, formally
 `y <- alpha x + y`. The function can be invoked with a vector and a matrix to
 add the vector repatedly to the major order vectors of the matrix. The argument
 alpha defaults to `1.0`. The argument transpose is one of `notrans`, `trans`,
-and it defaults to `notrans`. If set to `trans`, the vector is added to the
+and defaults to `notrans`. If set to `trans`, the vector is added to the
 minor order vectors of the matrix.
 
 
 #### `linear.scal (vector|matrix x [, alpha])`
 
 Scales a vecctor or matrix, formally `x <- alpha x`. The argument alpha defaults
-to `1.0` if omitted or `nil`.
+to `1.0`.
 
 
 #### `linear.set (vector|matrix x [, alpha])`
 
 Sets the elements of a vector or matrix to a constant, formally `x <- alpha`.
-The argument alpha defaults to `1.0` if omitted or `nil`.
+The argument alpha defaults to `1.0`.
 
 
 #### `linear.uniform (vector|matrix x)`
@@ -200,7 +196,7 @@ formally `x <- normal` where `normal ~ 𝒩(0, 1)`.
 #### `linear.inc (vector|matrix x [, alpha])`
 
 Increments the elements of a vector or matrix, formally `x <- x + alpha`. The
-argument alpha defaults to `1.0` if omitted or `nil`.
+argument alpha defaults to `1.0`.
 
 
 #### `linear.mul (vector|matrix x, vector|matrix y)`
@@ -224,7 +220,7 @@ Applies the sign function to the elements of a vector or matrix, formally
 
 #### `linear.abs (number|vector|matrix x)`
 
-Applies the absoute value function to the elements of a vector or matrix,
+Applies the absolute value function to the elements of a vector or matrix,
 formally `x <- abs(x)`, or returns the absolute value of a number, formally
 `abs(x)`.
 
@@ -267,24 +263,24 @@ Applies the specified function to the elements of a vector or matrix, formally
 
 Performs a matrix-vector product and addition operation, formally
 `y <- alpha A x + beta y`. The argument transpose is one of `notrans`, `trans`,
-and defaults to `notrans` if omitted or `nil`. If set to `trans`, the operation
-is performed on `A^T` instead of `A`. The arguments alpha and beta default to
-`1.0` and `0.0` respectively if omitted or `nil`.
+and defaults to `notrans`. If set to `trans`, the operation is performed on
+`A^T` instead of `A`. The arguments alpha and beta default to
+`1.0` and `0.0` respectively.
 
 
 #### `linear.ger (vector x, vector y, matrix A [, alpha])`
 
 Performs a vector-vector product and addition operation, formally
-`A <- alpha x y^T + A`. The argument alpha defaults to `1.0` if omitted or
-`nil`.
+`A <- alpha x y^T + A`. The argument alpha defaults to `1.0`.
 
 
 #### `linear.gemm (matrix A, matrix B, matrix C [, transpose A [, transpose B [, alpha [, beta ]]]])`
 
 Performs a matrix-matrix product and addition operation, formally
-`C <- alpha A B + beta C`. The transpose arguments function as in the
-`linear.gemv` function. The arguments alpha and beta default to `1.0` and `0.0`
-respectively if omitted or `nil`.
+`C <- alpha A B + beta C`. The transpose arguments are one of `notrans`,
+`trans`, and default to `notrans`. If set to `trans`, the operations is
+performed on `A^T` and/or `B^T` respectively.  The arguments alpha and beta
+default to `1.0` and `0.0` respectively.
 
 
 #### `linear.gesv (matrix A, matrix B)`
@@ -300,8 +296,9 @@ Solves overdetermined or underdetermined systems of linear equations, formally
 `A X = B`. On input, each column of B represents the right-hand sides of a
 system. On output, the solutions X are stored in B. In case of overdetermined
 systems, the function solves the least squares problems `min ||b - A x||_2`,
-and in case of underdetermined systems, the function finds minimum norm
-solutions. The transpose argument functions as in the `linear.gemv` function.
+and in case of underdetermined systems, the function finds minimum L2 norm
+solutions. The argument transpose is one of `notrans`, `trans`, and defaults
+to `notrans`. If set to `trans`, the operation is performed on `A^T`.
 
 
 #### `linear.inv (matrix A)`
