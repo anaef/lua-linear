@@ -209,6 +209,15 @@ local function testSum ()
 	local x = linear.vector(2)
 	x[1], x[2] = 1, -2
 	assert(linear.sum(x) == -1)
+	local X = linear.matrix(2, 4)
+	linear.set(X, 2)
+	linear.sum(X, x)
+	assert(x[1] == 8)
+	assert(x[2] == 8)
+	local y = linear.vector(4)
+	linear.sum(X, y, "trans")
+	assert(y[1] == 4)
+	assert(y[4] == 4)
 end
 
 -- Tests the swap function

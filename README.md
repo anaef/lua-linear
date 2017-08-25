@@ -133,9 +133,16 @@ Returns the index of the first element of a vector having the largest absolute
 value, formally `argmax |x_k|`.
 
 
-#### `linear.sum (vector x)`
+#### `linear.sum (vector|matrix x [, vector y [, transpose]])`
 
-Returns the sum of the elements of a vector, formally `sigma x_k`.
+Returns the sum of the elements of a vector, formally `sigma x_i`, or sets a
+vector to the sum of the rows or columns of a matrix, formally
+`y_i <- sigma x_i,j`. The argument transpose is one of `notrans`, `trans`, and
+defaults to `notrans` if omitted or `nil`. If set to `notrans`, the summation
+is performed along the major order of the matrix, and the vector size must
+match the major size of the matrix. If set to 'trans', the summation is
+performed along the minor order of the matrix, and the vector size must match
+the minor size of the matrix.
 
 
 #### `linear.swap (vector|matrix x, vector|matrix y)`

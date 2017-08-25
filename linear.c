@@ -762,24 +762,92 @@ static int iamax (lua_State *L) {
 	return 1;
 }
 
-/* sum implementation (sigma x) */
-static int sum (lua_State *L) {
-	struct vector *x;
+/* sum implementation */
+static double _sum (const double *values, int size, int inc) {
 	double sum;
 	int i;
 
-	/* check and process arguments */
-	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-
-	/* invoke subprogram */
 	sum = 0.0;
-	#pragma omp parallel for private(i) schedule(auto) if(x->size > 2500) \
+	#pragma omp parallel for private(i) schedule(auto) if(size > 2500) \
 			reduction(+:sum)
-	for (i = 0; i < x->size; i++) {
-		sum += x->values[(size_t)i * x->inc];
+	for (i = 0; i < size; i++) {
+		sum += values[(size_t)i * inc];
 	}
-	lua_pushnumber(L, sum);
-	return 1;
+	return sum;
+}
+
+/* sum implementation (sigma x_i) */
+static int sum (lua_State *L) {
+	struct vector *x, *y;
+	struct matrix *X;
+	int i;
+
+	/* check and process arguments */
+	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	if (x != NULL) {
+		lua_pushnumber(L, _sum(x->values, x->size, x->inc));
+		return 1;
+	}
+	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
+	if (X != NULL) {
+		y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
+		switch (checktranspose(L, 3)) {
+		case CblasNoTrans:
+			switch (X->order) {
+			case CblasRowMajor:
+				luaL_argcheck(L, y->size == X->rows, 2,
+						"dimension mismatch");
+				for (i = 0; i < X->rows; i++) {
+					y->values[(size_t)i * y->inc] = _sum(
+							&X->values[(size_t)i
+							* X->ld], X->cols, 1);
+				}
+				break;
+
+			case CblasColMajor:
+				luaL_argcheck(L, y->size == X->cols, 2,
+						"dimension mismatch");
+				for (i = 0; i < X->cols; i++) {
+					y->values[(size_t)i * y->inc] = _sum(
+							&X->values[(size_t)i
+							* X->ld], X->rows, 1);
+				}
+				break;
+			}
+			break;
+
+		case CblasTrans:
+			switch (X->order) {
+			case CblasRowMajor:
+				luaL_argcheck(L, y->size == X->cols, 2,
+						"dimension mismatch");
+				for (i = 0; i < X->cols; i++) {
+					y->values[(size_t)i * y->inc] = _sum(
+							&X->values[(size_t)i],
+							X->rows, X->ld);
+				}
+				break;
+
+			case CblasColMajor:
+				luaL_argcheck(L, y->size == X->rows, 2,
+						"dimension mismatch");
+				for (i = 0; i < X->rows; i++) {
+					y->values[(size_t)i * y->inc] = _sum(
+							&X->values[(size_t)i],
+							X->cols, X->ld);
+				}
+				break;
+			}
+			break;
+
+		default:
+			/* not reached */
+			assert(0);
+			break;
+		}
+		return 0;
+	}
+	return argerror(L, 1);
 }
 
 /* xy function */
