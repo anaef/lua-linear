@@ -135,9 +135,9 @@ value, formally `argmax |x_i|`.
 #### `linear.sum (vector|matrix x [, vector y [, transpose]])`
 
 Returns the sum of the elements of a vector, formally `sigma x_i`, or sets a
-vector to the sum of each major order vector of the matrix, formally
+vector to the sum of each major order vector of a matrix, formally
 `y_i <- sigma x_i,j`. The argument transpose is one of `notrans`, `trans`, and
-defaults to `notrans`. If set to 'trans', the vector is set to the sum of each
+defaults to `notrans`. If set to `trans`, the vector is set to the sum of each
 minor order vector of the matrix, formally `y_j <- sigma x_i_j`.
 
 
