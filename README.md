@@ -225,6 +225,13 @@ formally `x <- abs(x)`, or returns the absolute value of a number, formally
 `abs(x)`.
 
 
+#### `linear.log (number|vector|matrix x)`
+
+Applies the natural logarithm function to the elements of a vector or matrix,
+formally `x <- log(x)`, or returns the natural logarithm of a number, formally
+`log(x)`.
+
+
 #### `linear.logistic (number|vector|matrix x)`
 
 Applies the logistic function to the elements of a vector or matrix, formally

@@ -1251,6 +1251,11 @@ static int absx (lua_State *L) {
 	return apply(L, _abs);
 }
 
+/* log function */
+static int logx (lua_State *L) {
+	return apply(L, log);
+}
+
 /* logistic function implementation */
 static double _logistic (double z) {
 	return 1.0 / (1.0 + exp(-z));
@@ -1541,6 +1546,7 @@ int luaopen_linear (lua_State *L) {
 		{ "div", divx },
 		{ "sign", sign },
 		{ "abs", absx },
+		{ "log", logx },
 		{ "logistic", logistic },
 		{ "tanh", tanhx },
 		{ "softplus", softplus },

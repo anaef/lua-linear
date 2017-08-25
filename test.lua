@@ -430,6 +430,11 @@ local function testAbs ()
 	end
 end
 
+-- Tests the log function
+local function testLog ()
+	assert(math.abs(linear.log(math.exp(1)) - 1) <= EPSILON)
+end
+
 -- Tests the logistic function
 local function testLogistic ()
 	assert(math.abs(linear.logistic(0) - 0.5) < EPSILON)
@@ -643,6 +648,7 @@ testMul()
 testDiv()
 testSign()
 testAbs()
+testLog()
 testLogistic()
 testTanh()
 testSoftplus()
