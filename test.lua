@@ -367,29 +367,34 @@ local function testMul ()
 	linear.mul(x, x)
 	assert(x[1] == 1)
 	assert(x[2] == 4)
-
-	local X = linear.matrix(2, 2)
-	X[2][2] = 2
-	linear.mul(X, X)
-	assert(X[1][1] == 0)
-	assert(X[2][2] == 4)
-end
-
--- Tests the div function
-local function testDiv ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, 2
-	linear.div(x, x)
+	linear.mul(x, x, 0)
+	assert(x[1] == 1)
+	assert(x[2] == 4)
+	linear.mul(x, x, -1)
 	assert(x[1] == 1)
 	assert(x[2] == 1)
 
 	local X = linear.matrix(2, 2)
-	linear.set(X, 1)
-	local Y = linear.matrix(2, 2)
-	linear.set(Y, 2)
-	linear.div(X, Y)
-	assert(Y[1][1] == 0.5)
-	assert(Y[2][2] == 0.5)
+	X[1][1] = 1
+	X[1][2] = 2
+	X[2][1] = 2
+	X[2][2] = 4
+	linear.mul(X, X)
+	assert(X[1][1] == 1)
+	assert(X[1][2] == 4)
+	assert(X[2][1] == 4)
+	assert(X[2][2] == 16)
+	x[2] = 2
+	linear.mul(x, X, -1)
+	assert(X[1][1] == 1)
+	assert(X[1][2] == 2)
+	assert(X[2][1] == 4)
+	assert(X[2][2] == 8)
+	linear.mul(x, X, 0.5)
+	assert(X[1][1] == 1)
+	assert(math.abs(X[1][2] - 2 * math.sqrt(2)) < EPSILON)
+	assert(X[2][1] == 4)
+	assert(math.abs(X[2][2] - 8 * math.sqrt(2)) < EPSILON)
 end
 
 -- Tests the sign function
@@ -645,7 +650,6 @@ testUniform()
 testNormal()
 testInc()
 testMul()
-testDiv()
 testSign()
 testAbs()
 testLog()

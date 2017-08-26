@@ -1130,8 +1130,8 @@ static int inc (lua_State *L) {
 	return xy(L, _inc, 0, 1);
 }
 
-/* element-wise multiplication implementation */
-static void _mul (int size, double *x, int incx, double *y, int incy,
+/* element-wise multiplication implementation, alpha = 1 */
+static void _mul1 (int size, double *x, int incx, double *y, int incy,
 		double alpha) {
 	int i;
 
@@ -1145,13 +1145,8 @@ static void _mul (int size, double *x, int incx, double *y, int incy,
 	}
 }
 
-/* performs element-wise multiplication (y <- x .* y) */
-static int mul (lua_State *L) {
-	return xy(L, _mul, 1, 0);
-}
-
-/* element-wise division implementation */
-static void _div (int size, double *x, int incx, double *y, int incy,
+/* element-wise multiplication implementation, alpha = -1 */
+static void _mulm1 (int size, double *x, int incx, double *y, int incy,
 		double alpha) {
 	int i;
 
@@ -1159,15 +1154,38 @@ static void _div (int size, double *x, int incx, double *y, int incy,
 	#pragma omp parallel for private(i) schedule(auto) \
 			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
-		*y = *x / *y;
+		*y /= *x;
 		x += incx;
 		y += incy;
 	}
 }
 
-/* performs element-wise division (y <- x ./ y) */
-static int divx (lua_State *L) {
-	return xy(L, _div, 1, 0);
+/* element-wise multiplication implementation, alpha = any */
+static void _mul (int size, double *x, int incx, double *y, int incy,
+		double alpha) {
+	int i;
+
+	#pragma omp parallel for private(i) schedule(auto) \
+			if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < size; i++) {
+		*y *= pow(*x, alpha);
+		x += incx;
+		y += incy;
+	}
+}
+
+/* performs element-wise multiplication (y <- x^alpha .* y) */
+static int mul (lua_State *L) {
+	double alpha;
+
+	alpha = luaL_optnumber(L, 3, 1.0);
+	if (alpha == 1.0) {
+		return xy(L, _mul1, 1, 1);
+	}
+	if (alpha == -1.0) {
+		return xy(L, _mulm1, 1, 1);
+	}
+	return xy(L, _mul, 1, 1);
 }
 
 /* apply function */
@@ -1543,7 +1561,6 @@ int luaopen_linear (lua_State *L) {
 		{ "normal", normal },
 		{ "inc", inc },
 		{ "mul", mul },
-		{ "div", divx },
 		{ "sign", sign },
 		{ "abs", absx },
 		{ "log", logx },
