@@ -68,7 +68,7 @@ This is a column vector in case of a row major matrix, and a row vector in case
 of a column major matrix.
 
 
-#### `linear.sub (vector [, start] [, end])`
+#### `linear.sub (vector [, start [, end]])`
 
 Returns a sub vector referencing the underlying vector. Start and end are
 inclusive. The argument start defaults to 1, and the argument end defaults to
@@ -134,11 +134,11 @@ value, formally `argmax |x_i|`.
 
 #### `linear.sum (vector|matrix x [, vector y [, transpose]])`
 
-Returns the sum of the elements of a vector, formally `sigma x_i`, or sets a
+Returns the sum of the elements of a vector, formally `sigma_i x_i`, or sets a
 vector to the sum of each major order vector of a matrix, formally
-`y_i <- sigma x_i,j`. The argument transpose is one of `notrans`, `trans`, and
+`y_i <- sigma_j x_i,j`. The argument transpose is one of `notrans`, `trans`, and
 defaults to `notrans`. If set to `trans`, the vector is set to the sum of each
-minor order vector of the matrix, formally `y_j <- sigma x_i_j`.
+minor order vector of the matrix, formally `y_j <- sigma_i x_i_j`.
 
 
 #### `linear.swap (vector|matrix x, vector|matrix y [, transpose])`
