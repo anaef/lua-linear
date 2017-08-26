@@ -23,9 +23,9 @@ make install
 
 #### `vector`
 
-A vector of double values. Vectors have support for the Lua length operator `#`,
-as well as index access to get and set the elements of the vector. Indexing is
-1-based.
+A vector of double values. Vectors have support for the ipairs function, the
+length operator `#`, as well as index access to get and set the elements of the
+vector. Indexing is 1-based.
 
 
 #### `matrix`

@@ -172,6 +172,31 @@ static int vector_newindex (lua_State *L) {
 	return 0;
 }
 
+/* vector next function */
+static int vector_next (lua_State *L) {
+	struct vector *x;
+	int i;
+
+	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	i = luaL_checkinteger(L, 2);
+	if (i >= 0 && i < x->size) {
+		lua_pushinteger(L, i + 1);
+		lua_pushnumber(L, x->values[(size_t)i]);
+		return 2;
+	}
+	lua_pushnil(L);
+	return 1;
+}
+
+/* vector ipairs function */
+static int vector_ipairs (lua_State *L) {
+	luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	lua_pushcfunction(L, vector_next);
+	lua_pushvalue(L, 1);
+	lua_pushinteger(L, 0);
+	return 3;
+}
+
 /* returns the string representation of a vector */
 static int vector_tostring (lua_State *L) {
 	struct vector *x;
@@ -1606,6 +1631,8 @@ int luaopen_linear (lua_State *L) {
 	lua_setfield(L, -2, "__index");
 	lua_pushcfunction(L, vector_newindex);
 	lua_setfield(L, -2, "__newindex");
+	lua_pushcfunction(L, vector_ipairs);
+	lua_setfield(L, -2, "__ipairs");
 	lua_pushcfunction(L, vector_tostring);
 	lua_setfield(L, -2, "__tostring");
 	lua_pushcfunction(L, vector_free);

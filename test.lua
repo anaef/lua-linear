@@ -10,6 +10,9 @@ local function testVector ()
 	X[1], X[2] = 1, 2
 	assert(X[1] == 1)
 	assert(X[2] == 2)
+	for i, x in ipairs(X) do
+		assert(i == x)
+	end
 end
 
 -- Tests the matrix function
