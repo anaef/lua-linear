@@ -175,13 +175,13 @@ static int vector_newindex (lua_State *L) {
 /* vector next function */
 static int vector_next (lua_State *L) {
 	struct vector *x;
-	int i;
+	int index;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	i = luaL_checkinteger(L, 2);
-	if (i >= 0 && i < x->size) {
-		lua_pushinteger(L, i + 1);
-		lua_pushnumber(L, x->values[(size_t)i]);
+	index = luaL_checkinteger(L, 2);
+	if (index >= 0 && index < x->size) {
+		lua_pushinteger(L, index + 1);
+		lua_pushnumber(L, x->values[(size_t)index]);
 		return 2;
 	}
 	lua_pushnil(L);
@@ -1655,21 +1655,7 @@ int luaopen_linear (lua_State *L) {
 	luaL_register(L, luaL_checkstring(L, 1), FUNCTIONS);
 	#endif
 
-	/* matrix metatable */
-	luaL_newmetatable(L, LUALINEAR_MATRIX_METATABLE);
-	lua_pushcfunction(L, matrix_len);
-	lua_setfield(L, -2, "__len");
-	lua_pushcfunction(L, matrix_index);
-	lua_setfield(L, -2, "__index");
-	lua_pushcfunction(L, matrix_ipairs);
-	lua_setfield(L, -2, "__ipairs");
-	lua_pushcfunction(L, matrix_tostring);
-	lua_setfield(L, -2, "__tostring");
-	lua_pushcfunction(L, matrix_free);
-	lua_setfield(L, -2, "__gc");
-	lua_pop(L, 1);
-
-	/* matrix vector metatable */
+	/* vector metatable */
 	luaL_newmetatable(L, LUALINEAR_VECTOR_METATABLE);
 	lua_pushcfunction(L, vector_len);
 	lua_setfield(L, -2, "__len");
@@ -1682,6 +1668,20 @@ int luaopen_linear (lua_State *L) {
 	lua_pushcfunction(L, vector_tostring);
 	lua_setfield(L, -2, "__tostring");
 	lua_pushcfunction(L, vector_free);
+	lua_setfield(L, -2, "__gc");
+	lua_pop(L, 1);
+
+	/* matrix metatable */
+	luaL_newmetatable(L, LUALINEAR_MATRIX_METATABLE);
+	lua_pushcfunction(L, matrix_len);
+	lua_setfield(L, -2, "__len");
+	lua_pushcfunction(L, matrix_index);
+	lua_setfield(L, -2, "__index");
+	lua_pushcfunction(L, matrix_ipairs);
+	lua_setfield(L, -2, "__ipairs");
+	lua_pushcfunction(L, matrix_tostring);
+	lua_setfield(L, -2, "__tostring");
+	lua_pushcfunction(L, matrix_free);
 	lua_setfield(L, -2, "__gc");
 	lua_pop(L, 1);
 
