@@ -203,7 +203,7 @@ argument alpha defaults to `1.0`.
 #### `linear.mul (vector|matrix x, vector|matrix y [, alpha [, transpose]])`
 
 Performs element-wise power multiplication on two vectors or matrices, formally
-`y <- x.^alpha .* y`.  The function can be invoked with a vector and a matrix to
+`y <- x^alpha * y`.  The function can be invoked with a vector and a matrix to
 multiply the vector repatedly with the major order vectors of the matrix. The
 argument alpha defaults to `1.0`. The argument transpose is one of `notrans`,
 `trans`, and defaults to `notrans`. If set to `trans`, the vector is multiplied
@@ -212,7 +212,7 @@ with the minor order vectors of the matrix.
 
 #### `linear.pow (vector|matrix x, [, alpha])`
 
-Raises the elements of a vector or matrix to a power, formally `x <- x.^alpha`.
+Raises the elements of a vector or matrix to a power, formally `x <- x^alpha`.
 The argument alpha defaults to `1.0`.
 
 
