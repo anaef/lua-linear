@@ -1281,7 +1281,7 @@ static int powx (lua_State *L) {
 typedef double(*applyfunction)(double);
 
 /* applies a function to a value */
-static int apply (lua_State *L, applyfunction apply) {
+static int apply (lua_State *L, applyfunction apply, int parallel) {
 	struct vector *x;
 	struct matrix *X;
 	int i, j;
@@ -1293,6 +1293,8 @@ static int apply (lua_State *L, applyfunction apply) {
 	}
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
+		#pragma omp parallel for private(i) schedule(auto) \
+				if(parallel && x->size >= LUALINEAR_OMP_MINSIZE)
 		for (i = 0; i < x->size; i++) {
 			x->values[(size_t)i * x->inc] =
 					apply(x->values[(size_t)i
@@ -1306,6 +1308,10 @@ static int apply (lua_State *L, applyfunction apply) {
 		case CblasRowMajor:
 			for (i = 0; i < X->rows; i++) {
 				base = (size_t)i * X->ld;
+				#pragma omp parallel for private(j) \
+						schedule(auto) \
+						if(parallel && X->cols \
+						>= LUALINEAR_OMP_MINSIZE)
 				for (j = 0; j < X->cols; j++) {
 					X->values[base + j] = apply(
 							X->values[base
@@ -1317,6 +1323,10 @@ static int apply (lua_State *L, applyfunction apply) {
 		case CblasColMajor:
 			for (i = 0; i < X->cols; i++) {
 				base = (size_t)i * X->ld;
+				#pragma omp parallel for private(j) \
+						schedule(auto) \
+						if(parallel && X->rows \
+						>= LUALINEAR_OMP_MINSIZE)
 				for (j = 0; j < X->rows; j++) {
 					X->values[base + j] = apply(
 							X->values[base
@@ -1345,7 +1355,7 @@ static double _sign (double x) {
 
 /* sign function */
 static int sign (lua_State *L) {
-	return apply(L, _sign);
+	return apply(L, _sign, 1);
 }
 
 /* abs function implementation */
@@ -1355,17 +1365,17 @@ static double _abs (double x) {
 
 /* abs function */
 static int absx (lua_State *L) {
-	return apply(L, _abs);
+	return apply(L, _abs, 1);
 }
 
 /* exp function */
 static int expx (lua_State *L) {
-	return apply(L, exp);
+	return apply(L, exp, 1);
 }
 
 /* log function */
 static int logx (lua_State *L) {
-	return apply(L, log);
+	return apply(L, log, 1);
 }
 
 /* logistic function implementation */
@@ -1375,12 +1385,12 @@ static double _logistic (double z) {
 
 /* logistic function */
 static int logistic (lua_State *L) {
-	return apply(L, _logistic);
+	return apply(L, _logistic, 1);
 }
 
 /* tanh function */
 static int tanhx (lua_State *L) {
-	return apply(L, tanh);
+	return apply(L, tanh, 1);
 }
 
 /* softplus function implementation */
@@ -1390,7 +1400,7 @@ static double _softplus (double x) {
 
 /* softplus function */
 static int softplus (lua_State *L) {
-	return apply(L, _softplus);
+	return apply(L, _softplus, 1);
 }
 
 /* rectifier function implementation */
@@ -1400,7 +1410,7 @@ static double _rectifier (double x) {
 
 /* rectifier function */
 static int rectifier (lua_State *L) {
-	return apply(L, _rectifier);
+	return apply(L, _rectifier, 1);
 }
 
 /* current Lua state */
@@ -1423,7 +1433,7 @@ static int applyx (lua_State *L) {
 	luaL_checktype(L, 2, LUA_TFUNCTION);
 	lua_settop(L, 2);
 	TL = L;
-	return apply(L, _apply);
+	return apply(L, _apply, 0);
 }
 
 /* invokes the GEMV subprogram (y <- alpha A x + b y) */
