@@ -2,8 +2,9 @@
 
 ## Introduction
 
-Lua Linear provides linear algebra functions for the Lua programming language.
-Where applicable, the BLAS and LAPACK implementations on the system are used.
+Lua Linear provides comprehensive linear algebra support for the Lua
+programming language. Where applicable, the BLAS and LAPACK implementations on
+the system are used.
 
 
 ## Build, Test, and Install
@@ -339,6 +340,8 @@ Lua Linear supports Lua 5.2.
 Lua Linear has been built and tested on Ubuntu Linux (64-bit).
 
 Lua Linear uses the BLAS and LAPACK implementations on the system.
+
+Lua Linear uses the OpenMP implementation on the system.
 
 
 ## License
