@@ -1257,6 +1257,26 @@ static int mul (lua_State *L) {
 	return xy(L, _mul, 1, 1);
 }
 
+/* power raising operation implementation */
+static void _pow (int size, double *x, int incx, double *y, int incy,
+			double alpha) {
+	int i;
+
+	(void)y;
+	(void)incy;
+	#pragma omp parallel for private(i) schedule(auto) \
+			if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < size; i++) {
+		*x = pow(*x, alpha);
+		x += incx;
+	}
+}
+
+/* performs element-wise power raising (x <- x^alpha) */
+static int powx (lua_State *L) {
+	return xy(L, _pow, 0, 1);
+}
+
 /* apply function */
 typedef double(*applyfunction)(double);
 
@@ -1630,6 +1650,7 @@ int luaopen_linear (lua_State *L) {
 		{ "normal", normal },
 		{ "inc", inc },
 		{ "mul", mul },
+		{ "pow", powx },
 		{ "sign", sign },
 		{ "abs", absx },
 		{ "log", logx },

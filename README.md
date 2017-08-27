@@ -210,6 +210,12 @@ argument alpha defaults to `1.0`. The argument transpose is one of `notrans`,
 with the minor order vectors of the matrix.
 
 
+#### `linear.pow (vector|matrix x, [, alpha])`
+
+Raises the elements of a vector or matrix to a power, formally `x <- x.^alpha`.
+The argument alpha defaults to `1.0`.
+
+
 #### `linear.sign (number|vector|matrix x)`
 
 Applies the sign function to the elements of a vector or matrix, formally

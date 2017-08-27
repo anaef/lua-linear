@@ -405,6 +405,21 @@ local function testMul ()
 	assert(math.abs(X[2][2] - 8 * math.sqrt(2)) < EPSILON)
 end
 
+-- Tests the pow function
+local function testPow ()
+	local x = linear.vector(2)
+	x[1], x[2] = 1, 2
+	linear.pow(x, 2)
+	assert(x[1] == 1)
+	assert(x[2] == 4)
+
+	local X = linear.matrix(2, 3)
+	X[2][3] = 2
+	linear.pow(X, 3)
+	assert(X[1][1] == 0)
+	assert(X[2][3] == 8)
+end
+
 -- Tests the sign function
 local function testSign ()
 	assert(linear.sign(2) == 1)
@@ -658,6 +673,7 @@ testUniform()
 testNormal()
 testInc()
 testMul()
+testPow()
 testSign()
 testAbs()
 testLog()
