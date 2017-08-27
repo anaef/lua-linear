@@ -539,7 +539,7 @@ local function testGemv ()
 	A1[1], A1[2] = 1, 4
 	A2[1], A2[2] = 2, 5
 	A3[1], A3[2] = 3, 6
-	linear.gemv(A, x, y, "trans", 2)
+	linear.gemv(A, x, y, 2, nil, "trans")
 	assert(y[1] == 28)
 	assert(y[2] == 64)
 end
@@ -579,7 +579,7 @@ local function testGemm ()
 
 	local C = linear.matrix(3, 3)
 	local C1, C2, C3 = C[1], C[2], C[3]
-	linear.gemm(A, B, C, "trans", "trans", 2)
+	linear.gemm(A, B, C, 2, nil, "trans", "trans")
 	assert(C1[1] == 18)
 	assert(C1[2] == 38)
 	assert(C1[3] == 58)

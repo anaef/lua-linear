@@ -1430,17 +1430,17 @@ static int applyx (lua_State *L) {
 static int gemv (lua_State *L) {
 	struct matrix *A;
 	struct vector *x, *y;	
-	CBLAS_TRANSPOSE ta;
 	double alpha, beta;
+	CBLAS_TRANSPOSE ta;
 	int m, n;
 
 	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	x = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
 	y = luaL_checkudata(L, 3, LUALINEAR_VECTOR_METATABLE);
-	ta = checktranspose(L, 4);
-	alpha = luaL_optnumber(L, 5, 1.0);
-	beta = luaL_optnumber(L, 6, 0.0);
+	alpha = luaL_optnumber(L, 4, 1.0);
+	beta = luaL_optnumber(L, 5, 0.0);
+	ta = checktranspose(L, 6);
 	m = ta == CblasNoTrans ? A->rows : A->cols;
 	n = ta == CblasNoTrans ? A->cols : A->rows;
 	luaL_argcheck(L, x->size == n, 2, "dimension mismatch");
@@ -1475,8 +1475,8 @@ static int ger (lua_State *L) {
 /* invokes the GEMM subprogram (C <- alpha A B + beta C) */
 static int gemm (lua_State *L) {
 	struct matrix *A, *B, *C;
-	CBLAS_TRANSPOSE ta, tb;
 	double alpha, beta;
+	CBLAS_TRANSPOSE ta, tb;
 	int m, n, ka, kb;
 
 	/* check and process arguments */
@@ -1485,10 +1485,10 @@ static int gemm (lua_State *L) {
 	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
 	C = luaL_checkudata(L, 3, LUALINEAR_MATRIX_METATABLE);
 	luaL_argcheck(L, C->order == A->order, 3, "order mismatch");
-	ta = checktranspose(L, 4);
-	tb = checktranspose(L, 5);
-	alpha = luaL_optnumber(L, 6, 1.0);
-	beta = luaL_optnumber(L, 7, 0.0);
+	alpha = luaL_optnumber(L, 4, 1.0);
+	beta = luaL_optnumber(L, 5, 0.0);
+	ta = checktranspose(L, 6);
+	tb = checktranspose(L, 7);
 	m = ta == CblasNoTrans ? A->rows : A->cols;
 	n = tb == CblasNoTrans ? B->cols : B->rows;
 	ka = ta == CblasNoTrans ? A->cols : A->rows;

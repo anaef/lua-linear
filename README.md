@@ -277,13 +277,13 @@ Applies the specified function to the elements of a vector or matrix, formally
 `x <- f(x)`, or returns the function value of a number, formally `f(x)`.
 
 
-#### `linear.gemv (matrix A, vector x, vector y [, transpose A [, alpha [, beta]]])`
+#### `linear.gemv (matrix A, vector x, vector y [, alpha [, beta [, transpose A]]])`
 
 Performs a matrix-vector product and addition operation, formally
-`y <- alpha A x + beta y`. The argument transpose is one of `notrans`, `trans`,
+`y <- alpha A x + beta y`. The arguments alpha and beta default to `1.0` and
+`0.0` respectively. The argument transpose is one of `notrans`, `trans`,
 and defaults to `notrans`. If set to `trans`, the operation is performed on
-`A^T` instead of `A`. The arguments alpha and beta default to
-`1.0` and `0.0` respectively.
+`A^T` instead of `A`.
 
 
 #### `linear.ger (vector x, vector y, matrix A [, alpha])`
@@ -292,13 +292,13 @@ Performs a vector-vector product and addition operation, formally
 `A <- alpha x y^T + A`. The argument alpha defaults to `1.0`.
 
 
-#### `linear.gemm (matrix A, matrix B, matrix C [, transpose A [, transpose B [, alpha [, beta ]]]])`
+#### `linear.gemm (matrix A, matrix B, matrix C [, alpha [, beta [, transpose A [, transpose B]]]])`
 
 Performs a matrix-matrix product and addition operation, formally
-`C <- alpha A B + beta C`. The transpose arguments are one of `notrans`,
-`trans`, and default to `notrans`. If set to `trans`, the operations is
-performed on `A^T` and/or `B^T` respectively.  The arguments alpha and beta
-default to `1.0` and `0.0` respectively.
+`C <- alpha A B + beta C`. The arguments alpha and beta default to `1.0` and
+`0.0` respectively. The transpose arguments are one of `notrans`, `trans`, and
+default to `notrans`. If set to `trans`, the operations is performed on `A^T`
+and/or `B^T` respectively.
 
 
 #### `linear.gesv (matrix A, matrix B)`
