@@ -230,6 +230,12 @@ formally `x <- abs(x)`, or returns the absolute value of a number, formally
 `abs(x)`.
 
 
+#### `linear.exp (number|vector|matrix x)`
+
+Applies the exponent function to the elements of a vector or matrix, formally
+`x <- e^x`, or returns the exponent of a number, formally `e^x`.
+
+
 #### `linear.log (number|vector|matrix x)`
 
 Applies the natural logarithm function to the elements of a vector or matrix,

@@ -1358,6 +1358,11 @@ static int absx (lua_State *L) {
 	return apply(L, _abs);
 }
 
+/* exp function */
+static int expx (lua_State *L) {
+	return apply(L, exp);
+}
+
 /* log function */
 static int logx (lua_State *L) {
 	return apply(L, log);
@@ -1653,6 +1658,7 @@ int luaopen_linear (lua_State *L) {
 		{ "pow", powx },
 		{ "sign", sign },
 		{ "abs", absx },
+		{ "exp", expx },
 		{ "log", logx },
 		{ "logistic", logistic },
 		{ "tanh", tanhx },
