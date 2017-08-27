@@ -130,7 +130,7 @@ Returns the absolute-value norm (also known as L1 norm) of a vector, formally
 #### `linear.iamax (vector x)`
 
 Returns the index of the first element of a vector having the largest absolute
-value, formally `argmax |x_i|`.
+value, formally `argmax_i |x_i|`.
 
 
 #### `linear.sum (vector|matrix x [, vector y [, transpose]])`
