@@ -31,6 +31,11 @@ local function testMatrix ()
 	assert(A2[3] == 6)
 	local B = linear.matrix(2, 3, "col")
 	assert(#B == 3)
+	for i, a in ipairs(A) do
+		assert(type(i) == "number")
+		assert(linear.type(a) == "vector")
+		assert(#a == 3)
+	end
 end
 
 -- Tests the type function

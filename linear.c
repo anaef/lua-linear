@@ -299,6 +299,50 @@ static int matrix_index (lua_State *L) {
 	return 1;
 }
 
+/* matrix next function */
+static int matrix_next (lua_State *L) {
+	struct matrix *X;
+	int index, majorsize, minorsize;
+	struct vector *x;
+
+	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
+	index = luaL_checkinteger(L, 2);
+	switch (X->order) {
+	case CblasRowMajor:
+		majorsize = X->rows;
+		minorsize = X->cols;
+		break;
+
+	case CblasColMajor:
+		majorsize = X->cols;
+		minorsize = X->rows;
+		break;
+
+	default:
+		/* not reached */
+		assert(0);
+		return 0;
+	}
+	if (index >= 0 && index < majorsize) {
+		lua_pushinteger(L, index + 1);
+		x = wrapvector(L, minorsize, &X->values[(size_t)index * X->ld]);
+		lua_pushvalue(L, 1);
+		x->ref = luaL_ref(L, LUA_REGISTRYINDEX);
+		return 2;
+	}
+	lua_pushnil(L);
+	return 1;
+}
+
+/* matrix ipairs function */
+static int matrix_ipairs (lua_State *L) {
+	luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
+	lua_pushcfunction(L, matrix_next);
+	lua_pushvalue(L, 1);
+	lua_pushinteger(L, 0);
+	return 3;
+}
+
 /* returns the string representation of a matrix */
 static int matrix_tostring (lua_State *L) {
 	struct matrix *X;
@@ -1617,6 +1661,8 @@ int luaopen_linear (lua_State *L) {
 	lua_setfield(L, -2, "__len");
 	lua_pushcfunction(L, matrix_index);
 	lua_setfield(L, -2, "__index");
+	lua_pushcfunction(L, matrix_ipairs);
+	lua_setfield(L, -2, "__ipairs");
 	lua_pushcfunction(L, matrix_tostring);
 	lua_setfield(L, -2, "__tostring");
 	lua_pushcfunction(L, matrix_free);
