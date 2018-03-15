@@ -120,7 +120,7 @@ static struct vector *newvector (lua_State *L, int size) {
 }
 
 /* pushes an existing vector onto the stack */
-static struct vector *wrapvector (lua_State *L, int size, double *values) {
+static struct vector *wrapvector (lua_State *L, int size, float *values) {
 	return lualinear_wrapvector(L, size, values);
 }
 
@@ -162,7 +162,7 @@ static int vector_index (lua_State *L) {
 static int vector_newindex (lua_State *L) {
 	struct vector *x;
 	int index;
-	double value;
+	float value;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	index = luaL_checkinteger(L, 2);
@@ -227,7 +227,7 @@ static struct matrix *newmatrix (lua_State *L, int rows, int cols,
 
 /* pushes an existing matrix onto the stack */
 static struct matrix *wrapmatrix (lua_State *L, int rows, int cols,
-		CBLAS_ORDER order, double *values) {
+		CBLAS_ORDER order, float *values) {
 	return lualinear_wrapmatrix(L, rows, cols, order, values);
 }
 
@@ -605,7 +605,7 @@ static int totable (lua_State *L) {
 	struct vector *x;
 	struct matrix *X;
 	int i, j;
-	const double *value;
+	const float *value;
 
 	/* check and process arguments */
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
@@ -682,7 +682,7 @@ static int tolinear (lua_State *L) {
 	CBLAS_ORDER order;
 	int i, j;
 	int isnum;
-	double *value;
+	float *value;
 
 	/* check arguments */
 	luaL_checktype(L, 1, LUA_TTABLE);
@@ -776,7 +776,7 @@ static int tolinear (lua_State *L) {
 /* invokes the DOT subprogram (x' y) */
 static int dot (lua_State *L) {
 	struct vector *x, *y;
-	double dot;
+	float dot;
 
 	/* check and process arguments */
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
@@ -784,7 +784,7 @@ static int dot (lua_State *L) {
 	luaL_argcheck(L, y->size == x->size, 2, "dimension mismatch");
 
 	/* invoke subprogram */
-	dot = cblas_ddot(x->size, x->values, x->inc, y->values, y->inc);
+	dot = cblas_sdot(x->size, x->values, x->inc, y->values, y->inc);
 	lua_pushnumber(L, dot);
 	return 1;
 }
@@ -792,13 +792,13 @@ static int dot (lua_State *L) {
 /* invokes the NRM2 subprogram (||x||_2) */
 static int nrm2 (lua_State *L) {
 	struct vector *x;
-	double nrm2;
+	float nrm2;
 
 	/* check and process arguments */
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 
 	/* invoke subprogram */
-	nrm2 = cblas_dnrm2(x->size, x->values, x->inc);
+	nrm2 = cblas_snrm2(x->size, x->values, x->inc);
 	lua_pushnumber(L, nrm2);
 	return 1;
 }
@@ -806,13 +806,13 @@ static int nrm2 (lua_State *L) {
 /* invokes the ASUM subprogram (sigma |x|) */
 static int asum (lua_State *L) {
 	struct vector *x;
-	double asum;
+	float asum;
 
 	/* check and process arguments */
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 
 	/* invoke subprogram */
-	asum = cblas_dasum(x->size, x->values, x->inc);
+	asum = cblas_sasum(x->size, x->values, x->inc);
 	lua_pushnumber(L, asum);
 	return 1;
 }
@@ -826,14 +826,14 @@ static int iamax (lua_State *L) {
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 
 	/* invoke subprogram */
-	iamax = cblas_idamax(x->size, x->values, x->inc);
+	iamax = cblas_isamax(x->size, x->values, x->inc);
 	lua_pushinteger(L, iamax + 1);
 	return 1;
 }
 
 /* sum implementation */
-static double _sum (const double *values, int size, int inc) {
-	double sum;
+static float _sum (const float *values, int size, int inc) {
+	float sum;
 	int i;
 
 	sum = 0.0;
@@ -920,12 +920,12 @@ static int sum (lua_State *L) {
 }
 
 /* xy function */
-typedef void(*xyfunction)(int, double *, int, double *, int, double);
+typedef void(*xyfunction)(int, float *, int, float *, int, float);
 
 /* invokes an (x,y) subproram */
 static int xy (lua_State *L, xyfunction s, int hasy, int hasalpha) {
 	int index, i;
-	double alpha;
+	float alpha;
 	struct vector *x, *y;
 	struct matrix *X, *Y;
 
@@ -1057,10 +1057,10 @@ static int xy (lua_State *L, xyfunction s, int hasy, int hasalpha) {
 }
 
 /* wraps the SWAP subprogram */
-static void _swap (int size, double *x, int incx, double *y, int incy,
-		double alpha) {
+static void _swap (int size, float *x, int incx, float *y, int incy,
+		float alpha) {
 	(void)alpha;
-	cblas_dswap(size, x, incx, y, incy);
+	cblas_sswap(size, x, incx, y, incy);
 }
 
 /* invokes the SWAP subprogram (y <-> x) */
@@ -1069,10 +1069,10 @@ static int swap (lua_State *L) {
 }
 
 /* wraps the COPY subprogram */
-static void _copy (int size, double *x, int incx, double *y, int incy,
-		double alpha) {
+static void _copy (int size, float *x, int incx, float *y, int incy,
+		float alpha) {
 	(void)alpha;
-	cblas_dcopy(size, x, incx, y, incy);
+	cblas_scopy(size, x, incx, y, incy);
 }
 
 /* invokes the COPY subprogram (y <- x) */
@@ -1081,9 +1081,9 @@ static int copy (lua_State *L) {
 }
 
 /* wraps the AXPY subprogram */
-static void _axpy (int size, double *x, int incx, double *y, int incy,
-		double alpha) {
-	cblas_daxpy(size, alpha, x, incx, y, incy);
+static void _axpy (int size, float *x, int incx, float *y, int incy,
+		float alpha) {
+	cblas_saxpy(size, alpha, x, incx, y, incy);
 }
 
 /* invokes the AXPY subprogram (y <- alpha x + y) */
@@ -1092,11 +1092,11 @@ static int axpy (lua_State *L) {
 }
 
 /* wraps the SCAL subprogram */
-static void _scal (int size, double *x, int incx, double *y, int incy,
-			double alpha) {
+static void _scal (int size, float *x, int incx, float *y, int incy,
+			float alpha) {
 	(void)y;
 	(void)incy;
-	cblas_dscal(size, alpha, x, incx);
+	cblas_sscal(size, alpha, x, incx);
 }
 
 /* invokes the SCAL subprogram (x <- alpha x) */
@@ -1105,8 +1105,8 @@ static int scal (lua_State *L) {
 }
 
 /* set operation implementation */
-static void _set (int size, double *x, int incx, double *y, int incy,
-			double alpha) {
+static void _set (int size, float *x, int incx, float *y, int incy,
+			float alpha) {
 	int i;
 
 	(void)y;
@@ -1125,15 +1125,15 @@ static int set (lua_State *L) {
 }
 
 /* uniform RNG implementation */
-static void _uniform (int size, double *x, int incx, double *y, int incy,
-		double alpha) {
+static void _uniform (int size, float *x, int incx, float *y, int incy,
+		float alpha) {
 	int i;
 
 	(void)y;
 	(void)incy;
 	(void)alpha;
 	for (i = 0; i < size; i++) {
-		*x = (double)random() * (1.0 / ((double)RAND_MAX + 1.0));
+		*x = (float)random() * (1.0 / ((float)RAND_MAX + 1.0));
 		x += incx;
 	}
 }
@@ -1144,21 +1144,21 @@ static int uniform (lua_State *L) {
 }
 
 /* normal RNG implementation */
-static void _normal (int size, double *x, int incx, double *y, int incy,
-		double alpha) {
+static void _normal (int size, float *x, int incx, float *y, int incy,
+		float alpha) {
 	int i;
-	double u1, u2, r, s, c;
+	float u1, u2, r, s, c;
 
 	(void)y;
 	(void)incy;
 	(void)alpha;
 	for (i = 0; i < size - 1; i += 2) {
 		do {
-			u1 = (double)random() * (1.0 / (double)RAND_MAX);
-			u2 = (double)random() * (1.0 / (double)RAND_MAX);
+			u1 = (float)random() * (1.0 / (float)RAND_MAX);
+			u2 = (float)random() * (1.0 / (float)RAND_MAX);
 		} while (u1 <= -DBL_MAX);
-		r = sqrt(-2.0 * log(u1));
-		sincos(2 * M_PI * u2, &s, &c);
+		r = sqrt(-2.0 * logf(u1));
+		sincosf(2 * M_PI * u2, &s, &c);
 		*x = r * c;
 		x += incx;
 		*x = r * s;
@@ -1166,10 +1166,10 @@ static void _normal (int size, double *x, int incx, double *y, int incy,
 	}
 	if (i < size) {
 		do {
-			u1 = (double)random() * (1.0 / (double)RAND_MAX);
-			u2 = (double)random() * (1.0 / (double)RAND_MAX);
+			u1 = (float)random() * (1.0 / (float)RAND_MAX);
+			u2 = (float)random() * (1.0 / (float)RAND_MAX);
 		} while (u1 <= -DBL_MAX);
-		*x = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
+		*x = sqrtf(-2.0 * logf(u1)) * cosf(2 * M_PI * u2);
 		x += incx;
 	}
 }
@@ -1180,8 +1180,8 @@ static int normal (lua_State *L) {
 }
 
 /* inc operation implementation */
-static void _inc (int size, double *x, int incx, double *y, int incy,
-			double alpha) {
+static void _inc (int size, float *x, int incx, float *y, int incy,
+			float alpha) {
 	int i;
 
 	(void)y;
@@ -1200,8 +1200,8 @@ static int inc (lua_State *L) {
 }
 
 /* element-wise multiplication implementation, alpha = 1 */
-static void _mul1 (int size, double *x, int incx, double *y, int incy,
-		double alpha) {
+static void _mul1 (int size, float *x, int incx, float *y, int incy,
+		float alpha) {
 	int i;
 
 	(void)alpha;
@@ -1215,8 +1215,8 @@ static void _mul1 (int size, double *x, int incx, double *y, int incy,
 }
 
 /* element-wise multiplication implementation, alpha = -1 */
-static void _mulm1 (int size, double *x, int incx, double *y, int incy,
-		double alpha) {
+static void _mulm1 (int size, float *x, int incx, float *y, int incy,
+		float alpha) {
 	int i;
 
 	(void)alpha;
@@ -1230,8 +1230,8 @@ static void _mulm1 (int size, double *x, int incx, double *y, int incy,
 }
 
 /* element-wise multiplication implementation, alpha = any */
-static void _mul (int size, double *x, int incx, double *y, int incy,
-		double alpha) {
+static void _mul (int size, float *x, int incx, float *y, int incy,
+		float alpha) {
 	int i;
 
 	#pragma omp parallel for private(i) schedule(auto) \
@@ -1245,7 +1245,7 @@ static void _mul (int size, double *x, int incx, double *y, int incy,
 
 /* performs element-wise multiplication (y <- x^alpha .* y) */
 static int mul (lua_State *L) {
-	double alpha;
+	float alpha;
 
 	alpha = luaL_optnumber(L, 3, 1.0);
 	if (alpha == 1.0) {
@@ -1258,8 +1258,8 @@ static int mul (lua_State *L) {
 }
 
 /* power raising operation implementation */
-static void _pow (int size, double *x, int incx, double *y, int incy,
-			double alpha) {
+static void _pow (int size, float *x, int incx, float *y, int incy,
+			float alpha) {
 	int i;
 
 	(void)y;
@@ -1278,7 +1278,7 @@ static int powx (lua_State *L) {
 }
 
 /* apply function */
-typedef double(*applyfunction)(double);
+typedef float(*applyfunction)(float);
 
 /* applies a function to a value */
 static int apply (lua_State *L, applyfunction apply, int parallel) {
@@ -1343,7 +1343,7 @@ static int apply (lua_State *L, applyfunction apply, int parallel) {
 }
 
 /* sign function implementation */
-static double _sign (double x) {
+static float _sign (float x) {
 	if (x > 0) {
 		return 1;
 	}
@@ -1359,7 +1359,7 @@ static int sign (lua_State *L) {
 }
 
 /* abs function implementation */
-static double _abs (double x) {
+static float _abs (float x) {
 	return abs(x);
 }
 
@@ -1370,17 +1370,17 @@ static int absx (lua_State *L) {
 
 /* exp function */
 static int expx (lua_State *L) {
-	return apply(L, exp, 1);
+	return apply(L, expf, 1);
 }
 
 /* log function */
 static int logx (lua_State *L) {
-	return apply(L, log, 1);
+	return apply(L, logf, 1);
 }
 
 /* logistic function implementation */
-static double _logistic (double z) {
-	return 1.0 / (1.0 + exp(-z));
+static float _logistic (float z) {
+	return 1.0 / (1.0 + expf(-z));
 }
 
 /* logistic function */
@@ -1390,12 +1390,12 @@ static int logistic (lua_State *L) {
 
 /* tanh function */
 static int tanhx (lua_State *L) {
-	return apply(L, tanh, 1);
+	return apply(L, tanhf, 1);
 }
 
 /* softplus function implementation */
-static double _softplus (double x) {
-	return log(1 + exp(x));
+static float _softplus (float x) {
+	return logf(1 + expf(x));
 }
 
 /* softplus function */
@@ -1404,7 +1404,7 @@ static int softplus (lua_State *L) {
 }
 
 /* rectifier function implementation */
-static double _rectifier (double x) {
+static float _rectifier (float x) {
 	return x > 0.0 ? x : 0.0;
 }
 
@@ -1417,8 +1417,8 @@ static int rectifier (lua_State *L) {
 static __thread lua_State *TL;
 
 /* apply function implementation */
-static double _apply (double x) {
-	double result;
+static float _apply (float x) {
+	float result;
 
 	lua_pushvalue(TL, -1);
 	lua_pushnumber(TL, x);
@@ -1440,7 +1440,7 @@ static int applyx (lua_State *L) {
 static int gemv (lua_State *L) {
 	struct matrix *A;
 	struct vector *x, *y;	
-	double alpha, beta;
+	float alpha, beta;
 	CBLAS_TRANSPOSE ta;
 	int m, n;
 
@@ -1457,7 +1457,7 @@ static int gemv (lua_State *L) {
 	luaL_argcheck(L, y->size == m, 3, "dimension mismatch");
 
 	/* invoke subprogram */
-	cblas_dgemv(A->order, ta, A->rows, A->cols, alpha, A->values, A->ld,
+	cblas_sgemv(A->order, ta, A->rows, A->cols, alpha, A->values, A->ld,
 			x->values, x->inc, beta, y->values, y->inc);
 	return 0;
 }
@@ -1466,7 +1466,7 @@ static int gemv (lua_State *L) {
 static int ger (lua_State *L) {
 	struct vector *x, *y;	
 	struct matrix *A;
-	double alpha;
+	float alpha;
 
 	/* check and process arguments */
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
@@ -1477,7 +1477,7 @@ static int ger (lua_State *L) {
 	luaL_argcheck(L, y->size == A->cols, 2, "dimension mismatch");
 
 	/* invoke subprogram */
-	cblas_dger(A->order, A->rows, A->cols, alpha, x->values, x->inc,
+	cblas_sger(A->order, A->rows, A->cols, alpha, x->values, x->inc,
 			y->values, y->inc, A->values, A->ld);
 	return 0;
 }
@@ -1485,7 +1485,7 @@ static int ger (lua_State *L) {
 /* invokes the GEMM subprogram (C <- alpha A B + beta C) */
 static int gemm (lua_State *L) {
 	struct matrix *A, *B, *C;
-	double alpha, beta;
+	float alpha, beta;
 	CBLAS_TRANSPOSE ta, tb;
 	int m, n, ka, kb;
 
@@ -1506,7 +1506,7 @@ static int gemm (lua_State *L) {
 	luaL_argcheck(L, ka == kb, 2, "dimension mismatch");
 
 	/* invoke subprogramm */
-	cblas_dgemm(A->order, ta, tb, m, n, ka, alpha, A->values, A->ld,
+	cblas_sgemm(A->order, ta, tb, m, n, ka, alpha, A->values, A->ld,
 			B->values, B->ld, beta, C->values, C->ld);
 	return 0;
 }
@@ -1528,7 +1528,7 @@ static int gesv (lua_State *L) {
 	if (ipiv == NULL) {
 		return luaL_error(L, "cannot allocate indexes");
 	}
-	result = LAPACKE_dgesv(A->order, A->rows, B->cols, A->values, A->ld,
+	result = LAPACKE_sgesv(A->order, A->rows, B->cols, A->values, A->ld,
 			ipiv, B->values, B->ld);
 	free(ipiv);
 	lua_pushinteger(L, result);
@@ -1549,7 +1549,7 @@ static int gels (lua_State *L) {
 			"dimension mismatch");
 
 	/* invoke subprogramm */
-	lua_pushinteger(L, LAPACKE_dgels(A->order, ta, A->rows, A->cols,
+	lua_pushinteger(L, LAPACKE_sgels(A->order, ta, A->rows, A->cols,
 			B->cols, A->values, A->ld, B->values, B->ld));
 	return 1;
 }
@@ -1568,14 +1568,14 @@ static int inv (lua_State *L) {
 	if (ipiv == NULL) {
 		return luaL_error(L, "cannot allocate indexes");
 	}
-	result = LAPACKE_dgetrf(A->order, A->rows, A->cols, A->values, A->ld,
+	result = LAPACKE_sgetrf(A->order, A->rows, A->cols, A->values, A->ld,
 			ipiv);
 	if (result != 0) {
 		free(ipiv);
 		lua_pushinteger(L, result);
 		return 1;
 	}
-	result = LAPACKE_dgetri(A->order, A->rows, A->values, A->ld, ipiv);
+	result = LAPACKE_sgetri(A->order, A->rows, A->values, A->ld, ipiv);
 	free(ipiv);
 	lua_pushinteger(L, result);
 	return 1;
@@ -1584,7 +1584,7 @@ static int inv (lua_State *L) {
 /* calculates the determinant of a matrix */
 static int det (lua_State *L) {
 	struct matrix *A;
-	double *copy, *d, *s, det;
+	float *copy, *d, *s, det;
 	int n, *ipiv, result, neg, i;
 
 	/* check and process arguments */
@@ -1593,14 +1593,14 @@ static int det (lua_State *L) {
 	n = A->rows;
 
 	/* copy matrix */
-	copy = calloc((size_t)n * n, sizeof(double));
+	copy = calloc((size_t)n * n, sizeof(float));
 	if (copy == NULL) {
 		return luaL_error(L, "cannot allocate values");
 	}
 	d = copy;
 	s = A->values;
 	for (i = 0; i < n; i++) {
-		memcpy(d, s, (size_t)n * sizeof(double));
+		memcpy(d, s, (size_t)n * sizeof(float));
 		d += n;
 		s += A->ld;
 	}
@@ -1611,7 +1611,7 @@ static int det (lua_State *L) {
 		free(copy);
 		return luaL_error(L, "cannot allocate indexes");
 	}
-	result = LAPACKE_dgetrf(A->order, n, n, copy, n, ipiv);
+	result = LAPACKE_sgetrf(A->order, n, n, copy, n, ipiv);
 	if (result != 0) {
 		free(copy);
 		free(ipiv);

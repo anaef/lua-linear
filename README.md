@@ -24,14 +24,14 @@ make install
 
 #### `vector`
 
-A vector of double values. Vectors have support for the ipairs function, the
+A vector of float values. Vectors have support for the ipairs function, the
 length operator `#`, as well as index access to get and set the elements of the
 vector. Indexing is 1-based.
 
 
 #### `matrix`
 
-A matrix of double values. Matrices have support for the ipairs function, the
+A matrix of float values. Matrices have support for the ipairs function, the
 length operator `#`, as well as index access to get major order vectors
 referencing the underlying matrix. For a row major matrix, row vectors are
 returned, and for a columm major matrix, column vectors are returned. Indexing

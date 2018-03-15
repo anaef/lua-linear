@@ -1,7 +1,7 @@
 local linear = require("linear")
 
 -- Epsilon
-local EPSILON = 1E-13
+local EPSILON = 6E-5
 
 -- Tests the vector function
 local function testVector ()
