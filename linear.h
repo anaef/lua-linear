@@ -37,14 +37,14 @@ inline struct vector *lualinear_newvector (lua_State *L, int size) {
 	struct vector *vector;
 
 	assert(size >= 1);
-	vector = lua_newuserdata(L, sizeof(struct vector));
+	vector = (struct vector *)lua_newuserdata(L, sizeof(struct vector));
 	vector->size = size;
 	vector->inc = 1;
 	vector->values = NULL;
 	vector->ref = LUA_NOREF;
 	luaL_getmetatable(L, LUALINEAR_VECTOR_METATABLE);
 	lua_setmetatable(L, -2);
-	vector->values = calloc(size, sizeof(float));
+	vector->values = (float *)calloc(size, sizeof(float));
 	if (vector->values == NULL) {
 		luaL_error(L, "cannot allocate values");
 	}
@@ -59,7 +59,7 @@ inline struct vector *lualinear_wrapvector (lua_State *L, int size,
 	struct vector *vector;
 
 	assert(size >= 1);
-	vector = lua_newuserdata(L, sizeof(struct vector));
+	vector = (struct vector *)lua_newuserdata(L, sizeof(struct vector));
 	vector->size = size;
 	vector->inc = 1;
 	vector->values = values;
@@ -89,7 +89,7 @@ inline struct matrix *lualinear_newmatrix (lua_State *L, int rows, int cols,
 	struct matrix *matrix;
 
 	assert(rows >= 1 && cols >= 1);
-	matrix = lua_newuserdata(L, sizeof(struct matrix));
+	matrix = (struct matrix *)lua_newuserdata(L, sizeof(struct matrix));
 	matrix->rows = rows;
 	matrix->cols = cols;
 	matrix->ld = order == CblasRowMajor ? cols : rows;
@@ -98,7 +98,7 @@ inline struct matrix *lualinear_newmatrix (lua_State *L, int rows, int cols,
 	matrix->ref = LUA_NOREF;
 	luaL_getmetatable(L, LUALINEAR_MATRIX_METATABLE);
 	lua_setmetatable(L, -2);
-	matrix->values = calloc((size_t)rows * cols, sizeof(float));
+	matrix->values = (float *)calloc((size_t)rows * cols, sizeof(float));
 	if (matrix->values == NULL) {
 		luaL_error(L, "cannot allocate values");
 	}
@@ -113,7 +113,7 @@ inline struct matrix *lualinear_wrapmatrix (lua_State *L, int rows, int cols,
 	struct matrix *matrix;
 
 	assert(rows >= 1 && cols >= 1);
-	matrix = lua_newuserdata(L, sizeof(struct matrix));
+	matrix = (struct matrix *)lua_newuserdata(L, sizeof(struct matrix));
 	matrix->rows = rows;
 	matrix->cols = cols;
 	matrix->ld = order == CblasRowMajor ? cols : rows;
