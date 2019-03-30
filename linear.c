@@ -1114,8 +1114,7 @@ static void _set (int size, float *x, int incx, float *y, int incy,
 	#pragma omp parallel for private(i) schedule(auto) \
 			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
-		*x = alpha;
-		x += incx;
+		x[(size_t)i * incx] = alpha;
 	}
 }
 
@@ -1189,8 +1188,7 @@ static void _inc (int size, float *x, int incx, float *y, int incy,
 	#pragma omp parallel for private(i) schedule(auto) \
 			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
-		*x += alpha;
-		x += incx;
+		x[(size_t)i * incx] += alpha;
 	}
 }
 
@@ -1208,9 +1206,7 @@ static void _mul1 (int size, float *x, int incx, float *y, int incy,
 	#pragma omp parallel for private(i) schedule(auto) \
 			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
-		*y *= *x;
-		x += incx;
-		y += incy;
+		y[(size_t)i * incy] *= x[(size_t)i * incx];
 	}
 }
 
@@ -1223,9 +1219,7 @@ static void _mulm1 (int size, float *x, int incx, float *y, int incy,
 	#pragma omp parallel for private(i) schedule(auto) \
 			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
-		*y /= *x;
-		x += incx;
-		y += incy;
+		y[(size_t)i * incy] /= x[(size_t)i * incx];
 	}
 }
 
@@ -1237,9 +1231,7 @@ static void _mul (int size, float *x, int incx, float *y, int incy,
 	#pragma omp parallel for private(i) schedule(auto) \
 			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
-		*y *= pow(*x, alpha);
-		x += incx;
-		y += incy;
+		y[(size_t)i * incy] *= pow(x[(size_t)i * incx], alpha);
 	}
 }
 
@@ -1267,8 +1259,7 @@ static void _pow (int size, float *x, int incx, float *y, int incy,
 	#pragma omp parallel for private(i) schedule(auto) \
 			if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
-		*x = pow(*x, alpha);
-		x += incx;
+		x[(size_t)i * incx] = pow(x[(size_t)i * incx], alpha);
 	}
 }
 
