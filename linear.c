@@ -1625,6 +1625,222 @@ static int det (lua_State *L) {
 	return 1;
 }
 
+/* calculates the covariance of a matrix */
+static int cov (lua_State *L) {
+	struct matrix *A, *B;
+	int ddof, i, j, k;
+	float *means, *v, *vi, *vj, sum;
+
+	/* check and process arguments */
+	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
+	B = luaL_checkudata(L, 2, LUALINEAR_MATRIX_METATABLE);
+	luaL_argcheck(L, A->cols == B->rows, 2, "dimension mismatch");
+	luaL_argcheck(L, B->rows == B->cols, 2, "not square");
+	ddof = luaL_optinteger(L, 3, 0);
+	luaL_argcheck(L, ddof >= 0 && ddof < A->rows, 3, "bad ddof");
+
+	/* calculate means */
+	means = calloc((size_t)A->cols, sizeof(float));
+	if (means == NULL) {
+		return luaL_error(L, "cannot allocate values");
+	}
+	switch (A->order) {
+	case CblasRowMajor:
+		#pragma omp parallel for private(i, j, sum, v) schedule(auto) \
+				if(A->rows * A->cols >= LUALINEAR_OMP_MINSIZE)
+		for (i = 0; i < A->cols; i++) {
+			sum = 0.0;
+			v = &A->values[i];
+			for (j = 0; j < A->rows; j++) {
+				sum += *v;
+				v += A->ld;
+			}
+			means[i] = sum / A->rows;
+		}
+		break;
+
+	case CblasColMajor:
+		#pragma omp parallel for private(i, j, sum, v) schedule(auto) \
+				if(A->rows * A->cols >= LUALINEAR_OMP_MINSIZE)
+		for (i = 0; i < A->cols; i++) {
+			sum = 0.0;
+			v = &A->values[(size_t)i * A->ld];
+			for (j = 0; j < A->rows; j++) {
+				sum += *v;
+				v++;
+			}
+			means[i] = sum / A->rows;
+		}
+		break;
+	}
+
+	/* calculate covariance */
+	switch (A->order) {
+	case CblasRowMajor:
+		for (i = 0; i < A->cols; i++) {
+			#pragma omp parallel for private(j, k, sum, vi, vj) \
+					schedule(auto) if(A->rows * (A->cols \
+					- i) >= LUALINEAR_OMP_MINSIZE)
+			for (j = i; j < A->cols; j++) {
+				sum = 0.0;
+				vi = &A->values[i];
+				vj = &A->values[j];
+				for (k = 0; k < A->rows; k++) {
+					sum += (*vi - means[i])
+							* (*vj - means[j]);
+					vi += A->ld;
+					vj += A->ld;
+				}
+				B->values[(size_t)i * B->ld + j] = B->values[
+						(size_t)j * B->ld + i]
+						= sum / (A->rows - ddof);
+			}
+		}
+		break;
+
+	case CblasColMajor:
+		for (i = 0; i < A->cols; i++) {
+			#pragma omp parallel for private(j, k, sum, vi, vj) \
+					schedule(auto) if(A->rows * (A->cols \
+					- i) >= LUALINEAR_OMP_MINSIZE)
+			for (j = i; j < A->cols; j++) {
+				sum = 0.0;
+				vi = &A->values[(size_t)i * A->ld];
+				vj = &A->values[(size_t)j * A->ld];
+				for (k = 0; k < A->rows; k++) {
+					sum += (*vi - means[i])
+							* (*vj - means[j]);
+					vi++;
+					vj++;
+				}
+				B->values[(size_t)i * B->ld + j] = B->values[
+						(size_t)j * B->ld + i]
+						= sum / (A->rows - ddof);
+			}
+		}
+		break;
+	}
+	free(means);
+	return 0;
+}
+
+/* calculates the correlation of a matrix */
+static int corr (lua_State *L) {
+	struct matrix *A, *B;
+	int i, j, k;
+	float *means, *stds, *v, *vi, *vj, sum;
+
+	/* check and process arguments */
+	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
+	B = luaL_checkudata(L, 2, LUALINEAR_MATRIX_METATABLE);
+	luaL_argcheck(L, A->cols == B->rows, 2, "dimension mismatch");
+	luaL_argcheck(L, B->rows == B->cols, 2, "not square");
+
+	/* calculate means and stds */
+	means = calloc((size_t)A->cols, sizeof(float));
+	if (means == NULL) {
+		return luaL_error(L, "cannot allocate values");
+	}
+	stds = calloc((size_t)A->cols, sizeof(float));
+	if (stds == NULL) {
+		free(means);
+		return luaL_error(L, "cannot allocate values");
+	}
+	switch (A->order) {
+	case CblasRowMajor:
+		#pragma omp parallel for private(i, j, sum, v) schedule(auto) \
+				if(A->rows * A->cols >= LUALINEAR_OMP_MINSIZE)
+		for (i = 0; i < A->cols; i++) {
+			sum = 0.0;
+			v = &A->values[i];
+			for (j = 0; j < A->rows; j++) {
+				sum += *v;
+				v += A->ld;
+			}
+			means[i] = sum / A->rows;
+			sum = 0.0;
+			v = &A->values[i];
+			for (j = 0; j < A->rows; j++) {
+				sum += (*v - means[i]) * (*v - means[i]);
+				v += A->ld;
+			}
+			stds[i] = sqrt(sum);
+		}
+		break;
+
+	case CblasColMajor:
+		#pragma omp parallel for private(i, j, sum, v) schedule(auto) \
+				if(A->rows * A->cols >= LUALINEAR_OMP_MINSIZE)
+		for (i = 0; i < A->cols; i++) {
+			sum = 0.0;
+			v = &A->values[(size_t)i * A->ld];
+			for (j = 0; j < A->rows; j++) {
+				sum += *v;
+				v++;
+			}
+			means[i] = sum / A->rows;
+			sum = 0.0;
+			v = &A->values[(size_t)i * A->ld];
+			for (j = 0; j < A->rows; j++) {
+				sum += (*v - means[i]) * (*v - means[i]);
+				v++;
+			}
+			stds[i] = sqrt(sum);
+		}
+		break;
+	}
+
+	/* calculate correlation */
+	switch (A->order) {
+	case CblasRowMajor:
+		for (i = 0; i < A->cols; i++) {
+			#pragma omp parallel for private(j, k, sum, vi, vj) \
+					schedule(auto) if(A->rows * (A->cols \
+					- i) >= LUALINEAR_OMP_MINSIZE)
+			for (j = i; j < A->cols; j++) {
+				sum = 0.0;
+				vi = &A->values[i];
+				vj = &A->values[j];
+				for (k = 0; k < A->rows; k++) {
+					sum += (*vi - means[i])
+							* (*vj - means[j]);
+					vi += A->ld;
+					vj += A->ld;
+				}
+				B->values[(size_t)i * B->ld + j] = B->values[
+						(size_t)j * B->ld + i]
+						= sum / (stds[i] * stds[j]);
+			}
+		}
+		break;
+
+	case CblasColMajor:
+		for (i = 0; i < A->cols; i++) {
+			#pragma omp parallel for private(j, k, sum, vi, vj) \
+					schedule(auto) if(A->rows * (A->cols \
+					- i) >= LUALINEAR_OMP_MINSIZE)
+			for (j = i; j < A->cols; j++) {
+				sum = 0.0;
+				vi = &A->values[(size_t)i * A->ld];
+				vj = &A->values[(size_t)j * A->ld];
+				for (k = 0; k < A->rows; k++) {
+					sum += (*vi - means[i])
+							* (*vj - means[j]);
+					vi++;
+					vj++;
+				}
+				B->values[(size_t)i * B->ld + j] = B->values[
+						(size_t)j * B->ld + i]
+						= sum / (stds[i] * stds[j]);
+			}
+		}
+		break;
+	}
+	free(means);
+	free(stds);
+	return 0;
+}
+
 
 /*
  * Exported functions.
@@ -1673,6 +1889,8 @@ int luaopen_linear (lua_State *L) {
 		{ "gels", gels },
 		{ "inv", inv },
 		{ "det", det },
+		{ "cov", cov },
+		{ "corr", corr },
 		{ NULL, NULL }
 	};
 

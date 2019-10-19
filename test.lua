@@ -653,6 +653,36 @@ local function testDet ()
 	assert(math.abs(linear.det(A) - 488) < EPSILON)
 end
 
+-- Tests the cov function
+local function testCov ()
+	local A = linear.matrix(3, 2)
+	local A1, A2, A3 = A[1], A[2], A[3]
+	A1[1], A1[2] = 1, 1
+	A2[1], A2[2] = 1, 2
+	A3[1], A3[2] = 2, 2
+	local B = linear.matrix(2, 2)
+	linear.cov(A, B, 1)
+	assert(math.abs(B[1][1] - 1 / 3) < EPSILON)
+	assert(math.abs(B[1][2] - 1 / 6) < EPSILON)
+	assert(math.abs(B[2][1] - 1 / 6) < EPSILON)
+	assert(math.abs(B[2][2] - 1 / 3) < EPSILON)
+end
+
+-- Tests the corr function
+local function testCorr ()
+	local A = linear.matrix(3, 2)
+	local A1, A2, A3 = A[1], A[2], A[3]
+	A1[1], A1[2] = 1, 1
+	A2[1], A2[2] = 1, 2
+	A3[1], A3[2] = 2, 2
+	local B = linear.matrix(2, 2)
+	linear.corr(A, B, 1)
+	assert(math.abs(B[1][1] - 1) < EPSILON)
+	assert(math.abs(B[1][2] - 0.5) < EPSILON)
+	assert(math.abs(B[2][1] - 0.5) < EPSILON)
+	assert(math.abs(B[2][2] - 1) < EPSILON)
+end
+
 -- Tests
 testVector()
 testMatrix()
@@ -695,6 +725,8 @@ testGesv()
 testGels()
 testInv()
 testDet()
+testCov()
+testCorr()
 
 -- Exit
 os.exit(0)
