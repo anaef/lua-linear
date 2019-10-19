@@ -1536,7 +1536,7 @@ static int gels (lua_State *L) {
 	B = luaL_checkudata(L, 2, LUALINEAR_MATRIX_METATABLE);
 	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
 	ta = lapacktranspose(checktranspose(L, 3));
-	luaL_argcheck(L, B->rows == (ta == 'N' ? A->rows : A->cols), 2,
+	luaL_argcheck(L, B->rows == (A->rows >= A->cols ? A->rows : A->cols), 2,
 			"dimension mismatch");
 
 	/* invoke subprogramm */
