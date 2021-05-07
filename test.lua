@@ -434,6 +434,7 @@ local function testAbs ()
 	assert(linear.abs(0) == 0)
 	assert(linear.abs(-1) == 1)
 	assert(linear.abs(1) == 1)
+	assert(linear.abs(1.5) == 1.5)
 	local x = linear.vector(3)
 	for i = 1, #x do
 		x[i] = -i

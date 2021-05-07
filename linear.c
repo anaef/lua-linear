@@ -1351,7 +1351,7 @@ static int sign (lua_State *L) {
 
 /* abs function implementation */
 static float _abs (float x) {
-	return abs(x);
+	return fabs(x);
 }
 
 /* abs function */
