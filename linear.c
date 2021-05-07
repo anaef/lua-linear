@@ -444,10 +444,10 @@ static int sub (lua_State *L) {
 	if (x != NULL) {
 		int start, end;
 
-		start = luaL_optint(L, 2, 1);
+		start = luaL_optinteger(L, 2, 1);
 		luaL_argcheck(L, start >= 1 && start <= x->size, 2,
 				"bad index");
-		end = luaL_optint(L, 3, x->size);
+		end = luaL_optinteger(L, 3, x->size);
 		luaL_argcheck(L, end >= start && end <= x->size, 3,
 				"bad index");
 		s = wrapvector(L, end - start + 1, &x->values[
@@ -463,16 +463,16 @@ static int sub (lua_State *L) {
 
 		switch (X->order){
 		case CblasRowMajor:
-			rowstart = luaL_optint(L, 2, 1);
+			rowstart = luaL_optinteger(L, 2, 1);
 			luaL_argcheck(L, rowstart >= 1 && rowstart <= X->rows,
 					2, "bad index");
-			colstart = luaL_optint(L, 3, 1);
+			colstart = luaL_optinteger(L, 3, 1);
 			luaL_argcheck(L, colstart >= 1 && colstart <= X->cols,
 					3, "bad index");
-			rowend = luaL_optint(L, 4, X->rows);
+			rowend = luaL_optinteger(L, 4, X->rows);
 			luaL_argcheck(L, rowend >= rowstart && rowend
 					<= X->rows, 4, "bad index");
-			colend = luaL_optint(L, 5, X->cols);
+			colend = luaL_optinteger(L, 5, X->cols);
 			luaL_argcheck(L, colend >= colstart && colend
 					<= X->cols, 5, "bad index");
 			S = wrapmatrix(L, rowend - rowstart + 1, colend
@@ -482,16 +482,16 @@ static int sub (lua_State *L) {
 			break;
 		
 		case CblasColMajor:
-			colstart = luaL_optint(L, 2, 1);
+			colstart = luaL_optinteger(L, 2, 1);
 			luaL_argcheck(L, colstart >= 1 && colstart <= X->cols,
 					2, "bad index");
-			rowstart = luaL_optint(L, 3, 1);
+			rowstart = luaL_optinteger(L, 3, 1);
 			luaL_argcheck(L, rowstart >= 1 && rowstart <= X->rows,
 					3, "bad index");
-			colend = luaL_optint(L, 4, X->cols);
+			colend = luaL_optinteger(L, 4, X->cols);
 			luaL_argcheck(L, colend >= colstart && colend
 					<= X->cols, 4, "bad index");
-			rowend = luaL_optint(L, 5, X->rows);
+			rowend = luaL_optinteger(L, 5, X->rows);
 			luaL_argcheck(L, rowend >= rowstart && rowend
 					<= X->rows, 5, "bad index");
 			S = wrapmatrix(L, rowend - rowstart + 1, colend
