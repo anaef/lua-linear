@@ -335,7 +335,7 @@ Returns the determinant of a matrix, formally `det(A)`.
 
 ## Limitations
 
-Lua Linear supports Lua 5.3.
+Lua Linear supports Lua 5.2, and Lua 5.3.
 
 Lua Linear has been built and tested on Ubuntu Linux (64-bit).
 
