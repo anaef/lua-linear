@@ -26,7 +26,7 @@
 struct vector {
         int size;
         int inc;
-        float *values;
+        double *values;
         int ref;
 };
 
@@ -44,7 +44,7 @@ inline struct vector *lualinear_newvector (lua_State *L, int size) {
 	vector->ref = LUA_NOREF;
 	luaL_getmetatable(L, LUALINEAR_VECTOR_METATABLE);
 	lua_setmetatable(L, -2);
-	vector->values = (float *)calloc(size, sizeof(float));
+	vector->values = (double *)calloc(size, sizeof(double));
 	if (vector->values == NULL) {
 		luaL_error(L, "cannot allocate values");
 	}
@@ -54,8 +54,7 @@ inline struct vector *lualinear_newvector (lua_State *L, int size) {
 /**
  * Pushes an existing vector onto the stack.
  */
-inline struct vector *lualinear_wrapvector (lua_State *L, int size,
-		float *values) {
+inline struct vector *lualinear_wrapvector (lua_State *L, int size, double *values) {
 	struct vector *vector;
 
 	assert(size >= 1);
@@ -77,15 +76,14 @@ struct matrix {
         int cols;
         int ld;
         CBLAS_ORDER order;
-        float *values;
+        double *values;
         int ref;
 };
 
 /**
  * Pushes a new matrix onto the stack.
  */
-inline struct matrix *lualinear_newmatrix (lua_State *L, int rows, int cols,
-                CBLAS_ORDER order) {
+inline struct matrix *lualinear_newmatrix (lua_State *L, int rows, int cols, CBLAS_ORDER order) {
 	struct matrix *matrix;
 
 	assert(rows >= 1 && cols >= 1);
@@ -98,7 +96,7 @@ inline struct matrix *lualinear_newmatrix (lua_State *L, int rows, int cols,
 	matrix->ref = LUA_NOREF;
 	luaL_getmetatable(L, LUALINEAR_MATRIX_METATABLE);
 	lua_setmetatable(L, -2);
-	matrix->values = (float *)calloc((size_t)rows * cols, sizeof(float));
+	matrix->values = (double *)calloc((size_t)rows * cols, sizeof(double));
 	if (matrix->values == NULL) {
 		luaL_error(L, "cannot allocate values");
 	}
@@ -108,8 +106,8 @@ inline struct matrix *lualinear_newmatrix (lua_State *L, int rows, int cols,
 /**
  * Pushes an existing matrix onto the stack-
  */
-inline struct matrix *lualinear_wrapmatrix (lua_State *L, int rows, int cols,
-		CBLAS_ORDER order, float *values) {
+inline struct matrix *lualinear_wrapmatrix (lua_State *L, int rows, int cols, CBLAS_ORDER order,
+		double *values) {
 	struct matrix *matrix;
 
 	assert(rows >= 1 && cols >= 1);
@@ -129,5 +127,6 @@ inline struct matrix *lualinear_wrapmatrix (lua_State *L, int rows, int cols,
  * Opens the Linear module in a Lua state.
  */
 int luaopen_linear (lua_State *L);
+
 
 #endif /* LUALINEAR_INCLUDED */
