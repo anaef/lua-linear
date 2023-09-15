@@ -205,13 +205,6 @@ local function testAsum ()
 	assert(linear.asum(x) == 3)
 end
 
--- Tests the iamax function
-local function testIamax ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, -2
-	assert(linear.iamax(x) == 2)
-end
-
 -- Tests the sum function
 local function testSum ()
 	local x = linear.vector(2)
@@ -226,6 +219,34 @@ local function testSum ()
 	linear.sum(X, y, "trans")
 	assert(y[1] == 4)
 	assert(y[4] == 4)
+end
+
+-- Tests the iamax function
+local function testIamax ()
+	local x = linear.vector(2)
+	x[1], x[2] = 1, -2
+	assert(linear.iamax(x) == 2)
+end
+
+-- Tests the iamin function
+local function testIamin ()
+	local x = linear.vector(2)
+	x[1], x[2] = 1, -2
+	assert(linear.iamin(x) == 1)
+end
+
+-- Tests the imax function
+local function testImax ()
+	local x = linear.vector(2)
+	x[1], x[2] = 1, -2
+	assert(linear.imax(x) == 1)
+end
+
+-- Tests the imin function
+local function testImin ()
+	local x = linear.vector(2)
+	x[1], x[2] = 1, -2
+	assert(linear.imin(x) == 2)
 end
 
 -- Tests the swap function
@@ -699,6 +720,9 @@ testDot()
 testNrm2()
 testAsum()
 testIamax()
+testIamin()
+testImax()
+testImin()
 testSum()
 testSwap()
 testCopy()

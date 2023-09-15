@@ -9,9 +9,9 @@
 #include <lapacke.h>
 
 
-typedef void(*vm_function)(size_t, double *, int, double *, int, double);
-typedef double(*unary_function)(double);
-
+typedef double (*v_function)(int n, const double *x, int incx);
+typedef void (*vm_function)(size_t, double *, int, double *, int, double);
+typedef double (*unary_function)(double);
 
 static inline CBLAS_ORDER checkorder(lua_State *L, int index);
 static inline CBLAS_TRANSPOSE checktranspose(lua_State *L, int index);
@@ -52,10 +52,15 @@ static int totable(lua_State *L);
 static int tolinear(lua_State *L);
 
 static int dot(lua_State *L);
+static int v(lua_State *L, v_function f);
 static int nrm2(lua_State *L);
 static int asum(lua_State *L);
-static int iamax(lua_State *L);
+static double _sum(int size, const double *values, int inc);
 static int sum(lua_State *L);
+static int iamax(lua_State *L);
+static int iamin(lua_State *L);
+static int imax(lua_State *L);
+static int imin(lua_State *L);
 
 static int xy(lua_State *L, vm_function s, int hasy, int hasalpha);
 static void _swap(size_t size, double *x, int incx, double *y, int incy, double alpha);
@@ -805,45 +810,61 @@ static int dot (lua_State *L) {
 	return 1;
 }
 
-static int nrm2 (lua_State *L) {
-	double          nrm2;
-	struct vector  *x;
+static int v (lua_State *L, v_function f) {
+	size_t          i;
+	struct vector  *x, *y;
+	struct matrix  *X;
 
 	/* check and process arguments */
-	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	if (x != NULL) {
+		lua_pushnumber(L, f(x->size, x->values, x->inc));
+		return 1;
+	}
+	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
+	if (X != NULL) {
+		y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
+		if (checktranspose(L, 3) == CblasNoTrans) {
+			if (X->order == CblasRowMajor) {
+				luaL_argcheck(L, y->size == X->rows, 2, "dimension mismatch");
+				for (i = 0; i < X->rows; i++) {
+					y->values[i * y->inc] = f(X->cols, &X->values[i * X->ld],
+							1);
+				}
+			} else {
+				luaL_argcheck(L, y->size == X->cols, 2, "dimension mismatch");
+				for (i = 0; i < X->cols; i++) {
+					y->values[i * y->inc] = f(X->rows, &X->values[i * X->ld],
+							1);
+				}
+			}
+		} else {
+			if (X->order == CblasRowMajor) {
+				luaL_argcheck(L, y->size == X->cols, 2, "dimension mismatch");
+				for (i = 0; i < X->cols; i++) {
+					y->values[i * y->inc] = f(X->rows, &X->values[i], X->ld);
+				}
+			} else {
+				luaL_argcheck(L, y->size == X->rows, 2, "dimension mismatch");
+				for (i = 0; i < X->rows; i++) {
+					y->values[i * y->inc] = f(X->cols, &X->values[i], X->ld);
+				}
+			}
+		}
+		return 0;
+	}
+	return argerror(L, 1);
+}
 
-	/* invoke subprogram */
-	nrm2 = cblas_dnrm2(x->size, x->values, x->inc);
-	lua_pushnumber(L, nrm2);
-	return 1;
+static int nrm2 (lua_State *L) {
+	return v(L, cblas_dnrm2);
 }
 
 static int asum (lua_State *L) {
-	double          asum;
-	struct vector  *x;
-
-	/* check and process arguments */
-	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-
-	/* invoke subprogram */
-	asum = cblas_dasum(x->size, x->values, x->inc);
-	lua_pushnumber(L, asum);
-	return 1;
+	return v(L, cblas_dasum);
 }
 
-static int iamax (lua_State *L) {
-	size_t          iamax;
-	struct vector  *x;
-
-	/* check and process arguments */
-	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-
-	/* invoke subprogram */
-	iamax = cblas_idamax(x->size, x->values, x->inc);
-	lua_pushinteger(L, iamax + 1);
-	return 1;
-}
-
+/* cblas_dsum does not work as expected */
 static double _sum (int size, const double *values, int inc) {
 	size_t  i;
 	double  sum;
@@ -858,51 +879,39 @@ static double _sum (int size, const double *values, int inc) {
 }
 
 static int sum (lua_State *L) {
-	size_t          i;
-	struct vector  *x, *y;
-	struct matrix  *X;
+	return v(L, _sum);
+}
 
-	/* check and process arguments */
-	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	if (x != NULL) {
-		lua_pushnumber(L, _sum(x->size, x->values, x->inc));
-		return 1;
-	}
-	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
-	if (X != NULL) {
-		y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
-		if (checktranspose(L, 3) == CblasNoTrans) {
-			if (X->order == CblasRowMajor) {
-				luaL_argcheck(L, y->size == X->rows, 2, "dimension mismatch");
-				for (i = 0; i < X->rows; i++) {
-					y->values[i * y->inc] = _sum(X->cols, &X->values[i
-							* X->ld], 1);
-				}
-			} else {
-				luaL_argcheck(L, y->size == X->cols, 2, "dimension mismatch");
-				for (i = 0; i < X->cols; i++) {
-					y->values[i * y->inc] = _sum(X->rows, &X->values[i
-							* X->ld], 1);
-				}
-			}
-		} else {
-			if (X->order == CblasRowMajor) {
-				luaL_argcheck(L, y->size == X->cols, 2, "dimension mismatch");
-				for (i = 0; i < X->cols; i++) {
-					y->values[i * y->inc] = _sum(X->rows, &X->values[i],
-							X->ld);
-				}
-			} else {
-				luaL_argcheck(L, y->size == X->rows, 2, "dimension mismatch");
-				for (i = 0; i < X->rows; i++) {
-					y->values[i * y->inc] = _sum(X->cols, &X->values[i],
-							X->ld);
-				}
-			}
-		}
-		return 0;
-	}
-	return argerror(L, 1);
+static int iamax (lua_State *L) {
+	struct vector  *x;
+
+	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	lua_pushinteger(L, cblas_idamax(x->size, x->values, x->inc) + 1);
+	return 1;
+}
+
+static int iamin (lua_State *L) {
+	struct vector  *x;
+
+	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	lua_pushinteger(L, cblas_idamin(x->size, x->values, x->inc) + 1);
+	return 1;
+}
+
+static int imax (lua_State *L) {
+	struct vector  *x;
+
+	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	lua_pushinteger(L, cblas_idmax(x->size, x->values, x->inc) + 1);
+	return 1;
+}
+
+static int imin (lua_State *L) {
+	struct vector  *x;
+
+	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	lua_pushinteger(L, cblas_idmin(x->size, x->values, x->inc) + 1);
+	return 1;
 }
 
 
@@ -1714,8 +1723,11 @@ int luaopen_linear (lua_State *L) {
 		{ "dot", dot },
 		{ "nrm2", nrm2 },
 		{ "asum", asum },
-		{ "iamax", iamax },
 		{ "sum", sum },
+		{ "iamax", iamax },
+		{ "iamin", iamin },
+		{ "imax", imax },
+		{ "imin", imin },
 		{ "swap", swap },
 		{ "copy", copy },
 		{ "axpy", axpy },
