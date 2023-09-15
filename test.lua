@@ -138,7 +138,7 @@ local function testTotable ()
 	assert(t.type == "matrix")
 	assert(t.rows == 3)
 	assert(t.cols == 2)
-	assert(t.order == "rowmajor")
+	assert(t.order == "row")
 	assert(type(t.values) == "table")
 	assert(#t.values == 3)
 	assert(type(t.values[1]) == "table")
@@ -167,7 +167,7 @@ local function testTolinear ()
 		type = "matrix",
 		rows = 3,
 		cols = 2,
-		order = "rowmajor",
+		order = "row",
 		values = {
 			{ 2, 0 },
 			{ 0, 0 },
