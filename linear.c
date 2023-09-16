@@ -1086,37 +1086,36 @@ static int _vector (lua_State *L, vector_function f) {
 	struct vector  *x, *y;
 	struct matrix  *X;
 
-	/* check and process arguments */
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
+		/* vector */
 		lua_pushnumber(L, f(x->size, x->values, x->inc));
 		return 1;
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	if (X != NULL) {
+		/* matrix-vector */
 		y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
-		if (checktranspose(L, 3) == CblasNoTrans) {
+		if (checkorder(L, 3) == CblasRowMajor) {
+			luaL_argcheck(L, y->size == X->cols, 2, "dimension mismatch");
 			if (X->order == CblasRowMajor) {
-				luaL_argcheck(L, y->size == X->rows, 2, "dimension mismatch");
-				for (i = 0; i < X->rows; i++) {
-					y->values[i * y->inc] = f(X->cols, &X->values[i * X->ld],
-							1);
+				for (i = 0; i < X->cols; i++) {
+					y->values[i * y->inc] = f(X->rows, &X->values[i], X->ld);
 				}
 			} else {
-				luaL_argcheck(L, y->size == X->cols, 2, "dimension mismatch");
 				for (i = 0; i < X->cols; i++) {
 					y->values[i * y->inc] = f(X->rows, &X->values[i * X->ld],
 							1);
 				}
 			}
 		} else {
+			luaL_argcheck(L, y->size == X->rows, 2, "dimension mismatch");
 			if (X->order == CblasRowMajor) {
-				luaL_argcheck(L, y->size == X->cols, 2, "dimension mismatch");
-				for (i = 0; i < X->cols; i++) {
-					y->values[i * y->inc] = f(X->rows, &X->values[i], X->ld);
+				for (i = 0; i < X->rows; i++) {
+					y->values[i * y->inc] = f(X->cols, &X->values[i * X->ld],
+							1);
 				}
 			} else {
-				luaL_argcheck(L, y->size == X->rows, 2, "dimension mismatch");
 				for (i = 0; i < X->rows; i++) {
 					y->values[i * y->inc] = f(X->cols, &X->values[i], X->ld);
 				}
@@ -1197,63 +1196,58 @@ static int vector_matrix (lua_State *L, vector_matrix_function f, int hasalpha, 
 	struct vector  *x, *y;
 	struct matrix  *X, *Y;
 
-	/* check and process arguments */
 	index = 3;
 	alpha = hasalpha ? luaL_optnumber(L, index++, 1.0) : 0.0;
 	beta = hasbeta ? luaL_optnumber(L, index++, 0.0) : 0.0;
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
 		y = luaL_testudata(L, 2, LUALINEAR_VECTOR_METATABLE);
-		Y = luaL_testudata(L, 2, LUALINEAR_MATRIX_METATABLE);
-		if (y == NULL && Y == NULL) {
-			return argerror(L, 2);
-		}
 		if (y != NULL) {
-			/* invoke subprogram on vector-vector */
+			/* vector-vector */
 			luaL_argcheck(L, y->size == x->size, 2, "dimension mismatch");
 			f(x->size, alpha, x->values, x->inc, beta, y->values, y->inc);
 			return 0;
 		}
-
-		/* invoke subprogram on vector-matrix */
-		if (checktranspose(L, index) == CblasNoTrans) {
-			if (Y->order == CblasRowMajor) {
+		Y = luaL_testudata(L, 2, LUALINEAR_MATRIX_METATABLE);
+		if (Y != NULL) {
+			/* vector-matrix */
+			if (checkorder(L, index) == CblasRowMajor) {
 				luaL_argcheck(L, 1, x->size == Y->cols, "dimension mismatch");
-				for (i = 0; i < Y->rows; i++) {
-					f(x->size, alpha, x->values, x->inc, beta,
-							&Y->values[i * Y->ld], 1);
-				}
-			} else {
-				luaL_argcheck(L, 1, x->size == Y->rows, "dimension mismatch");
-				for (i = 0; i < Y->cols; i++) {
-					f(x->size, alpha, x->values, x->inc, beta,
-							&Y->values[i * Y->ld], 1);
-				}
-			}
-		} else {
-			if (Y->order == CblasRowMajor) {
-				luaL_argcheck(L, 1, x->size == Y->rows, "dimension mismatch");
-				for (i = 0; i < Y->cols; i++) {
-					f(x->size, alpha, x->values, x->inc, beta, &Y->values[i],
-							Y->ld);
+				if (Y->order == CblasRowMajor) {
+					for (i = 0; i < Y->rows; i++) {
+						f(x->size, alpha, x->values, x->inc, beta,
+								&Y->values[i * Y->ld], 1);
+					}
+				} else {
+					for (i = 0;i < Y->rows; i++) {
+						f(x->size, alpha, x->values, x->inc, beta,
+								&Y->values[i], Y->ld);
+					}
 				}
 			} else {
 				luaL_argcheck(L, 1, x->size == Y->cols, "dimension mismatch");
-				for (i = 0; i < Y->cols; i++) {
-					f(x->size, alpha, x->values, x->inc, beta, &Y->values[i],
-							Y->ld);
+				if (Y->order == CblasRowMajor) {
+					for (i = 0; i < Y->cols; i++) {
+						f(x->size, alpha, x->values, x->inc, beta,
+								&Y->values[i], Y->ld);
+					}
+				} else {
+					for (i = 0; i < Y->cols; i++) {
+						f(x->size, alpha, x->values, x->inc, beta,
+								&Y->values[i * Y->ld], 1);
+					}
 				}
 			}
+			return 0;
 		}
-		return 0;
+		return argerror(L, 2);
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	if (X != NULL) {
+		/* matrix-matrix */
 		Y = luaL_checkudata(L, 2, LUALINEAR_MATRIX_METATABLE);
 		luaL_argcheck(L, X->order == Y->order, 2, "order mismatch");
 		luaL_argcheck(L, X->rows == Y->rows && X->cols == Y->cols, 2, "dimension mismatch");
-
-		/* invoke subprogram on matrix-matrix */
 		if (X->order == CblasRowMajor) {
 			for (i = 0; i < X->rows; i++) {
 				f(X->cols, alpha, &X->values[i * X->ld], 1, beta,

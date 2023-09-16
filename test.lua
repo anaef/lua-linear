@@ -354,16 +354,16 @@ end
 
 -- Tests the dot function
 local function testDot ()
-	local X = linear.vector(2)
-	X[1], X[2] = 1, 2
-	assert(linear.dot(X, X) == 5)
+	local x = linear.vector(2)
+	x[1], x[2] = 1, 2
+	assert(linear.dot(x, x) == 5)
 end
 
 -- Tests the nrm2 function
 local function testNrm2 ()
-	local X = linear.vector(2)
-	X[1], X[2] = 1, 2
-	assert(math.abs(linear.nrm2(X) - math.sqrt(5)) <= EPSILON)
+	local x = linear.vector(2)
+	x[1], x[2] = 1, 2
+	assert(math.abs(linear.nrm2(x) - math.sqrt(5)) <= EPSILON)
 end
 
 -- Tests the asum function
@@ -379,14 +379,36 @@ local function testSum ()
 	x[1], x[2] = 1, -2
 	assert(linear.sum(x) == -1)
 	local X = linear.matrix(2, 4)
-	linear.set(X, 2)
+	linear.set(X[1], 1)
+	for i = 1, 4 do
+		X[2][i] = i
+	end
+	local x = linear.vector(4)
 	linear.sum(X, x)
-	assert(x[1] == 8)
-	assert(x[2] == 8)
-	local y = linear.vector(4)
-	linear.sum(X, y, "trans")
-	assert(y[1] == 4)
-	assert(y[4] == 4)
+	assert(x[1] == 2)
+	assert(x[2] == 3)
+	assert(x[3] == 4)
+	assert(x[4] == 5)
+	local x = linear.vector(2)
+	linear.sum(X, x, "col")
+	assert(x[1] == 4)
+	assert(x[2] == 10)
+
+	local X = linear.matrix(2, 4, "col")
+	linear.set(linear.tvector(X, 1), 1)
+	for i = 1, 4 do
+		X[i][2] = i
+	end
+	local x = linear.vector(4)
+	linear.sum(X, x, "row")
+	assert(x[1] == 2)
+	assert(x[2] == 3)
+	assert(x[3] == 4)
+	assert(x[4] == 5)
+	local x = linear.vector(2)
+	linear.sum(X, x, "col")
+	assert(x[1] == 4)
+	assert(x[2] == 10)
 end
 
 -- Tests the iamax function
@@ -461,6 +483,62 @@ local function testAxpy ()
 	assert(y[1] == 5)
 	assert(y[2] == 8)
 
+	local Y = linear.matrix(2, 3)
+	linear.set(Y[1], 1)
+	linear.set(Y[2], 2)
+	local x = linear.vector(3)
+	for i = 1, 3 do
+		x[i] = i
+	end
+	linear.axpy(x, Y)
+	assert(Y[1][1] == 2)
+	assert(Y[1][2] == 3)
+	assert(Y[1][3] == 4)
+	assert(Y[2][1] == 3)
+	assert(Y[2][2] == 4)
+	assert(Y[2][3] == 5)
+	linear.set(Y[1], 1)
+	linear.set(Y[2], 2)
+	local x = linear.vector(2)
+	for i = 1, 2 do
+		x[i] = i
+	end
+	linear.axpy(x, Y, 2, "col")
+	assert(Y[1][1] == 3)
+	assert(Y[1][2] == 3)
+	assert(Y[1][3] == 3)
+	assert(Y[2][1] == 6)
+	assert(Y[2][2] == 6)
+	assert(Y[2][3] == 6)
+
+	local Y = linear.matrix(2, 3, "col")
+	linear.set(linear.tvector(Y, 1), 1)
+	linear.set(linear.tvector(Y, 2), 2)
+	local x = linear.vector(3)
+	for i = 1, 3 do
+		x[i] = i
+	end
+	linear.axpy(x, Y, 1, "row")
+	assert(Y[1][1] == 2)
+	assert(Y[2][1] == 3)
+	assert(Y[3][1] == 4)
+	assert(Y[1][2] == 3)
+	assert(Y[2][2] == 4)
+	assert(Y[3][2] == 5)
+	linear.set(linear.tvector(Y, 1), 1)
+	linear.set(linear.tvector(Y, 2), 2)
+	local x = linear.vector(2)
+	for i = 1, 2 do
+		x[i] = i
+	end
+	linear.axpy(x, Y, 3, "col")
+	assert(Y[1][1] == 4)
+	assert(Y[2][1] == 4)
+	assert(Y[3][1] == 4)
+	assert(Y[1][2] == 8)
+	assert(Y[2][2] == 8)
+	assert(Y[3][2] == 8)
+
 	local X = linear.matrix(2, 2)
 	local Y = linear.matrix(2, 2)
 	X[2][2] = 1
@@ -468,11 +546,6 @@ local function testAxpy ()
 	linear.axpy(X, Y, 2)
 	assert(Y[2][2] == 4)
 
-	linear.axpy(x, Y)
-	assert(Y[1][1] == 1)
-	assert(Y[1][2] == 2)
-	assert(Y[2][1] == 1)
-	assert(Y[2][2] == 6)
 end
 
 -- Tests the axpby function
