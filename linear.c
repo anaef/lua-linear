@@ -1,3 +1,10 @@
+/*
+ * Lua Linear
+ *
+ * Copyright (C) 2017-2023 Andre Naef
+ */
+
+
 #include "linear.h"
 #include <assert.h>
 #include <stdlib.h>
@@ -9,9 +16,11 @@
 #include <lapacke.h>
 
 
-typedef double (*v_function)(int n, const double *x, int incx);
-typedef void (*vm_function)(size_t, double *, int, double *, int, double);
-typedef double (*unary_function)(double);
+typedef void (*elementary_function)(const int size, double alpha, double *x, const int incx);
+typedef double (*vector_function)(const int size, const double *x, const int incx);
+typedef void (*vector_matrix_function)(const int size, const double alpha, double *x,
+		const int incx, const double beta, double *y, const int incy);
+
 
 static inline CBLAS_ORDER checkorder(lua_State *L, int index);
 static inline CBLAS_TRANSPOSE checktranspose(lua_State *L, int index);
@@ -51,8 +60,39 @@ static int reshape(lua_State *L);
 static int totable(lua_State *L);
 static int tolinear(lua_State *L);
 
+static int elementary(lua_State *L, elementary_function f, int hasalpha);
+static void _sgn(const int size, double alpha, double *x, const int incx);
+static int sgn(lua_State *L);
+static void _abs(const int size, double alpha, double *x, const int incx);
+static int absx(lua_State *L);
+static void _exp(const int size, double alpha, double *x, const int incx);
+static int expx(lua_State *L);
+static void _log(const int size, double alpha, double *x, const int incx);
+static int logx(lua_State *L);
+static void _logistic(const int size, double alpha, double *x, const int incx);
+static int logistic(lua_State *L);
+static void _tanh(const int size, double alpha, double *x, const int incx);
+static int tanhx(lua_State *L);
+static void _softplus(const int size, double alpha, double *x, const int incx);
+static int softplus(lua_State *L);
+static void _rectifier(const int size, double alpha, double *x, const int incx);
+static int rectifier(lua_State *L);
+static void _set(const int size, double alpha, double *x, const int incx);
+static int set(lua_State *L);
+static void _uniform(const int size, double alpha, double *x, const int incx);
+static int uniform(lua_State *L);
+static void _normal(const int size, double alpha, double *x, const int incx);
+static int normal(lua_State *L);
+static void _inc(const int size, double alpha, double *x, const int incx);
+static int inc(lua_State *L);
+static int scal(lua_State *L);
+static void _pow(const int size, double alpha, double *x, const int incx);
+static int powx(lua_State *L);
+static void _apply(const int size, double alpha, double *x, const int incx);
+static int apply(lua_State *L);
+
 static int dot(lua_State *L);
-static int v(lua_State *L, v_function f);
+static int _vector(lua_State *L, vector_function f);
 static int nrm2(lua_State *L);
 static int asum(lua_State *L);
 static double _sum(int size, const double *values, int inc);
@@ -62,45 +102,24 @@ static int iamin(lua_State *L);
 static int imax(lua_State *L);
 static int imin(lua_State *L);
 
-static int xy(lua_State *L, vm_function s, int hasy, int hasalpha);
-static void _swap(size_t size, double *x, int incx, double *y, int incy, double alpha);
+static int vector_matrix(lua_State *L, vector_matrix_function s, int hasalpha, int hasbeta);
+static void _swap(const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy);
 static int swap(lua_State *L);
-static void _copy(size_t size, double *x, int incx, double *y, int incy, double alpha);
+static void _copy(const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy);
 static int copy(lua_State *L);
-static void _axpy(size_t size, double *x, int incx, double *y, int incy, double alpha);
+static void _axpy(const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy);
 static int axpy(lua_State *L);
-static void _scal(size_t size, double *x, int incx, double *y, int incy, double alpha);
-static int scal(lua_State *L);
-static void _set(size_t size, double *x, int incx, double *y, int incy, double alpha);
-static int set(lua_State *L);
-static void _uniform(size_t size, double *x, int incx, double *y, int incy, double alpha);
-static int uniform(lua_State *L);
-static void _normal(size_t size, double *x, int incx, double *y, int incy, double alpha);
-static int normal(lua_State *L);
-static void _inc(size_t size, double *x, int incx, double *y, int incy, double alpha);
-static int inc(lua_State *L);
-static void _mul1(size_t size, double *x, int incx, double *y, int incy, double alpha);
-static void _mulm1(size_t size, double *x, int incx, double *y, int incy, double alpha);
-static void _mul(size_t size, double *x, int incx, double *y, int incy, double alpha);
+static int axpby(lua_State *L);
+static void _mul1(const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy);
+static void _mulm1(const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy);
+static void _mul(const int size, const double alpha, double *x, int incx, const double beta,
+		 double *y, int incy);
 static int mul(lua_State *L);
-static void _pow(size_t size, double *x, int incx, double *y, int incy, double alpha);
-static int powx(lua_State *L);
-
-static int apply(lua_State *L, unary_function apply, int parallel);
-static double _sign(double x);
-static int sign(lua_State *L);
-static int absx(lua_State *L);
-static int expx(lua_State *L);
-static int logx(lua_State *L);
-static double _logistic(double z);
-static int logistic(lua_State *L);
-static int tanhx(lua_State *L);
-static double _softplus(double x);
-static int softplus(lua_State *L);
-static double _rectifier(double x);
-static int rectifier(lua_State *L);
-static double _apply(double x);
-static int applyx(lua_State *L);
 
 static int gemv(lua_State *L);
 static int ger(lua_State *L);
@@ -114,9 +133,10 @@ static int cov(lua_State *L);
 static int corr(lua_State *L);
 
 
-static const char *const ORDERS[] = {"row", "col", "rowmajor", "colmajor", NULL};
+static const char *const ORDERS[] = {"row", "col", "rowmajor", "colmajor", NULL};  /* legacy */
 static const char *const TRANSPOSES[] = {"notrans", "trans", NULL};
 static const char *const TYPES[] = {"vector", "matrix", NULL};
+static __thread lua_State *TL;
 
 
 /*
@@ -293,7 +313,7 @@ static int vector_tostring (lua_State *L) {
 	struct vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	lua_pushfstring(L, "vector: %p", x);
+	lua_pushfstring(L, LUALINEAR_VECTOR_METATABLE ": %p", x);
 	return 1;
 }
 
@@ -440,7 +460,7 @@ static int matrix_tostring (lua_State *L) {
 	struct matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
-	lua_pushfstring(L, "matrix: %p", X);
+	lua_pushfstring(L, LUALINEAR_MATRIX_METATABLE ": %p", X);
 	return 1;
 }
 
@@ -751,7 +771,7 @@ static int tolinear (lua_State *L) {
 			return luaL_error(L, "bad field " LUA_QS, "cols");
 		}
 		order = optionvalue(L, "order", NULL, ORDERS);
-		if (order >=2) {
+		if (order >= 2) {  /* legacy */
 			order -=2 ;
 		}
 		if (order == 0) {
@@ -792,25 +812,276 @@ static int tolinear (lua_State *L) {
 
 
 /*
+ * elementary functions
+ */
+
+static int elementary (lua_State *L, elementary_function f, int hasalpha) {
+	size_t          i;
+	double          alpha;
+	struct vector  *x;
+	struct matrix  *X;
+
+	alpha = hasalpha ? luaL_optnumber(L, 2, 1.0) : 0.0;
+	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	if (x != NULL) {
+		f(x->size, alpha, x->values, x->inc);
+		return 0;
+	}
+	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
+	if (X != NULL) {
+		if (X->order == CblasRowMajor) {
+			for (i = 0; i < X->rows; i++) {
+				f(X->cols, alpha, &X->values[i * X->ld], 1);
+			}
+		} else {
+			for (i = 0; i < X->cols; i++) {
+				f(X->rows, alpha, &X->values[i * X->ld], 1);
+			}
+		}
+		return 0;
+	}
+	return argerror(L, 1);
+}
+
+static void _sgn (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	(void)alpha;
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		if (x[i * incx] > 0) {
+			x[i * incx] = 1;
+		} else if (x[i * incx] < 0) {
+			x[i * incx] = -1;
+		}
+	}
+}
+
+static int sgn (lua_State *L) {
+	return elementary(L, _sgn, 0);
+}
+
+static void _abs (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	(void)alpha;
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] = fabs(x[i * incx]);
+	}
+}
+
+static int absx (lua_State *L) {
+	return elementary(L, _abs, 0);
+}
+
+static void _exp (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	(void)alpha;
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] = exp(x[i * incx]);
+	}
+}
+
+static int expx (lua_State *L) {
+	return elementary(L, _exp, 0);
+}
+
+static void _log (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	(void)alpha;
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] = log(x[i * incx]);
+	}
+}
+
+static int logx (lua_State *L) {
+	return elementary(L, _log, 0);
+}
+
+static void _logistic (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	(void)alpha;
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] = 1.0 / (1.0 + exp(-x[i * incx]));
+	}
+}
+
+static int logistic (lua_State *L) {
+	return elementary(L, _logistic, 0);
+}
+
+static void _tanh (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	(void)alpha;
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] = tanh(x[i * incx]);
+	}
+}
+
+static int tanhx (lua_State *L) {
+	return elementary(L, _tanh, 0);
+}
+
+static void _softplus (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	(void)alpha;
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] = log(1.0 + exp(x[i * incx]));
+	}
+}
+
+static int softplus (lua_State *L) {
+	return elementary(L, _softplus, 0);
+}
+
+static void _rectifier (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	(void)alpha;
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] = x[i * incx] > 0 ? x[i * incx] : 0.0;
+	}
+}
+
+static int rectifier (lua_State *L) {
+	return elementary(L, _rectifier, 0);
+}
+
+static void _set (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] = alpha;
+	}
+
+}
+
+static int set (lua_State *L) {
+	return elementary(L, _set, 1);
+}
+
+static void _uniform (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	(void)alpha;
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] = random() / (RAND_MAX + 1.0);
+	}
+}
+
+static int uniform (lua_State *L) {
+	return elementary(L, _uniform, 0);
+}
+
+static void _normal (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+	double  u1, u2, r, s, c;
+
+	(void)alpha;
+
+	/* Box-Muller transform */
+	for (i = 0; i < (size_t)size - 1; i += 2) {
+		u1 = random() / (double)RAND_MAX;
+		u2 = random() / (double)RAND_MAX;
+		r = sqrt(-2.0 * log(u1));
+		sincos(2 * M_PI * u2, &s, &c);
+		*x = r * c;
+		x += incx;
+		*x = r * s;
+		x += incx;
+	}
+	if (i < (size_t)size) {
+		u1 = random() / (double)RAND_MAX;
+		u2 = random() / (double)RAND_MAX;
+		*x = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
+	}
+}
+
+static int normal (lua_State *L) {
+	return elementary(L, _normal, 0);
+}
+
+static void _inc (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] += alpha;
+	}
+}
+
+static int inc (lua_State *L) {
+	return elementary(L, _inc, 1);
+}
+
+static int scal (lua_State *L) {
+	return elementary(L, cblas_dscal, 1);
+}
+
+static void _pow (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
+	for (i = 0; i < (size_t)size; i++) {
+		x[i * incx] = pow(x[i * incx], alpha);
+	}
+}
+
+static int powx (lua_State *L) {
+	return elementary(L, _pow, 1);
+}
+
+static void _apply (const int size, double alpha, double *x, const int incx) {
+	size_t  i;
+
+	(void)alpha;
+	for (i = 0; i < (size_t)size; i++) {
+		lua_pushvalue(TL, -1);
+		lua_pushnumber(TL, *x);
+		lua_call(TL, 1, 1);
+		*x = lua_tonumber(TL, -1);
+		x += incx;
+		lua_pop(TL, 1);
+	}
+}
+
+static int apply (lua_State *L) {
+	luaL_checktype(L, 2, LUA_TFUNCTION);
+	lua_settop(L, 2);
+	TL = L;
+	return elementary(L, _apply, 0);
+}
+
+
+/*
  * vector functions
  */
 
 static int dot (lua_State *L) {
-	double          dot;
 	struct vector  *x, *y;
 
-	/* check and process arguments */
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
 	luaL_argcheck(L, y->size == x->size, 2, "dimension mismatch");
-
-	/* invoke subprogram */
-	dot = cblas_ddot(x->size, x->values, x->inc, y->values, y->inc);
-	lua_pushnumber(L, dot);
+	lua_pushnumber(L, cblas_ddot(x->size, x->values, x->inc, y->values, y->inc));
 	return 1;
 }
 
-static int v (lua_State *L, v_function f) {
+static int _vector (lua_State *L, vector_function f) {
 	size_t          i;
 	struct vector  *x, *y;
 	struct matrix  *X;
@@ -857,15 +1128,15 @@ static int v (lua_State *L, v_function f) {
 }
 
 static int nrm2 (lua_State *L) {
-	return v(L, cblas_dnrm2);
+	return _vector(L, cblas_dnrm2);
 }
 
 static int asum (lua_State *L) {
-	return v(L, cblas_dasum);
+	return _vector(L, cblas_dasum);
 }
 
 /* cblas_dsum does not work as expected */
-static double _sum (int size, const double *values, int inc) {
+static double _sum (int size, const double *x, const int incx) {
 	size_t  i;
 	double  sum;
 
@@ -873,13 +1144,13 @@ static double _sum (int size, const double *values, int inc) {
 	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE) \
 			reduction(+:sum)
 	for (i = 0; i < (size_t)size; i++) {
-		sum += values[i * inc];
+		sum += x[i * incx];
 	}
 	return sum;
 }
 
 static int sum (lua_State *L) {
-	return v(L, _sum);
+	return _vector(L, _sum);
 }
 
 static int iamax (lua_State *L) {
@@ -919,38 +1190,28 @@ static int imin (lua_State *L) {
  * vector-matrix functions
  */
 
-static int xy (lua_State *L, vm_function s, int hasy, int hasalpha) {
+static int vector_matrix (lua_State *L, vector_matrix_function f, int hasalpha, int hasbeta) {
 	int             index;
 	size_t          i;
-	double          alpha;
+	double          alpha, beta;
 	struct vector  *x, *y;
 	struct matrix  *X, *Y;
 
 	/* check and process arguments */
-	index = 2;
+	index = 3;
+	alpha = hasalpha ? luaL_optnumber(L, index++, 1.0) : 0.0;
+	beta = hasbeta ? luaL_optnumber(L, index++, 0.0) : 0.0;
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
-		if (hasy) {
-			y = luaL_testudata(L, 2, LUALINEAR_VECTOR_METATABLE);
-			Y = luaL_testudata(L, 2, LUALINEAR_MATRIX_METATABLE);
-			if (y == NULL && Y == NULL) {
-				return argerror(L, 2);
-			}
-			index++;
-		} else {
-			y = x;
-			Y = NULL;
-		}
-		if (hasalpha) {
-			alpha = luaL_optnumber(L, index, 1.0);
-			index++;
-		} else {
-			alpha = 0.0;
+		y = luaL_testudata(L, 2, LUALINEAR_VECTOR_METATABLE);
+		Y = luaL_testudata(L, 2, LUALINEAR_MATRIX_METATABLE);
+		if (y == NULL && Y == NULL) {
+			return argerror(L, 2);
 		}
 		if (y != NULL) {
 			/* invoke subprogram on vector-vector */
 			luaL_argcheck(L, y->size == x->size, 2, "dimension mismatch");
-			s(x->size, x->values, x->inc, y->values, y->inc, alpha);
+			f(x->size, alpha, x->values, x->inc, beta, y->values, y->inc);
 			return 0;
 		}
 
@@ -959,26 +1220,28 @@ static int xy (lua_State *L, vm_function s, int hasy, int hasalpha) {
 			if (Y->order == CblasRowMajor) {
 				luaL_argcheck(L, 1, x->size == Y->cols, "dimension mismatch");
 				for (i = 0; i < Y->rows; i++) {
-					s(x->size, x->values, x->inc, &Y->values[i * Y->ld], 1,
-							alpha);
+					f(x->size, alpha, x->values, x->inc, beta,
+							&Y->values[i * Y->ld], 1);
 				}
 			} else {
 				luaL_argcheck(L, 1, x->size == Y->rows, "dimension mismatch");
 				for (i = 0; i < Y->cols; i++) {
-					s(x->size, x->values, x->inc, &Y->values[i * Y->ld], 1,
-							alpha);
+					f(x->size, alpha, x->values, x->inc, beta,
+							&Y->values[i * Y->ld], 1);
 				}
 			}
 		} else {
 			if (Y->order == CblasRowMajor) {
 				luaL_argcheck(L, 1, x->size == Y->rows, "dimension mismatch");
-				for (i = 0; i < Y->rows; i++) {
-					s(x->size, x->values, x->inc, &Y->values[i], Y->ld, alpha);
+				for (i = 0; i < Y->cols; i++) {
+					f(x->size, alpha, x->values, x->inc, beta, &Y->values[i],
+							Y->ld);
 				}
 			} else {
 				luaL_argcheck(L, 1, x->size == Y->cols, "dimension mismatch");
 				for (i = 0; i < Y->cols; i++) {
-					s(x->size, x->values, x->inc, &Y->values[i], Y->ld, alpha);
+					f(x->size, alpha, x->values, x->inc, beta, &Y->values[i],
+							Y->ld);
 				}
 			}
 		}
@@ -986,32 +1249,20 @@ static int xy (lua_State *L, vm_function s, int hasy, int hasalpha) {
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	if (X != NULL) {
-		if (hasy) {
-			Y = luaL_checkudata(L, 2, LUALINEAR_MATRIX_METATABLE);
-			luaL_argcheck(L, X->order == Y->order, 2, "order mismatch");
-			luaL_argcheck(L, X->rows == Y->rows && X->cols == Y->cols, 2,
-					"dimension mismatch");
-			index++;
-		} else {
-			Y = X;
-		}
-		if (hasalpha) {
-			alpha = luaL_optnumber(L, index, 1.0);
-			index++;
-		} else {
-			alpha = 0.0;
-		}
+		Y = luaL_checkudata(L, 2, LUALINEAR_MATRIX_METATABLE);
+		luaL_argcheck(L, X->order == Y->order, 2, "order mismatch");
+		luaL_argcheck(L, X->rows == Y->rows && X->cols == Y->cols, 2, "dimension mismatch");
 
 		/* invoke subprogram on matrix-matrix */
 		if (X->order == CblasRowMajor) {
 			for (i = 0; i < X->rows; i++) {
-				s(X->cols, &X->values[i * X->ld], 1, &Y->values[i * Y->ld], 1,
-						alpha);
+				f(X->cols, alpha, &X->values[i * X->ld], 1, beta,
+						&Y->values[i * Y->ld], 1);
 			}
 		} else {
 			for (i = 0; i < X->cols; i++) {
-				s(X->rows, &X->values[i * X->ld], 1, &Y->values[i * Y->ld], 1,
-						alpha);
+				f(X->rows, alpha, &X->values[i * X->ld], 1, beta,
+						&Y->values[i * Y->ld], 1);
 			}
 		}
 		return 0;
@@ -1019,144 +1270,71 @@ static int xy (lua_State *L, vm_function s, int hasy, int hasalpha) {
 	return argerror(L, 1);
 }
 
-static void _swap (size_t size, double *x, int incx, double *y, int incy, double alpha) {
+static void _swap (const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy) {
 	(void)alpha;
+	(void)beta;
 	cblas_dswap(size, x, incx, y, incy);
 }
 
 static int swap (lua_State *L) {
-	return xy(L, _swap, 1, 0);
+	return vector_matrix(L, _swap, 0, 0);
 }
 
-static void _copy (size_t size, double *x, int incx, double *y, int incy, double alpha) {
+static void _copy (const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy) {
 	(void)alpha;
+	(void)beta;
 	cblas_dcopy(size, x, incx, y, incy);
 }
 
 static int copy (lua_State *L) {
-	return xy(L, _copy, 1, 0);
+	return vector_matrix(L, _copy, 0, 0);
 }
 
-static void _axpy (size_t size, double *x, int incx, double *y, int incy, double alpha) {
+static void _axpy (const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy) {
+	(void)beta;
 	cblas_daxpy(size, alpha, x, incx, y, incy);
 }
-
+	
 static int axpy (lua_State *L) {
-	return xy(L, _axpy, 1, 1);
+	return vector_matrix(L, _axpy, 1, 0);
 }
 
-static void _scal (size_t size, double *x, int incx, double *y, int incy, double alpha) {
-	(void)y;
-	(void)incy;
-	cblas_dscal(size, alpha, x, incx);
+static int axpby (lua_State *L) {
+	return vector_matrix(L, (vector_matrix_function)cblas_daxpby, 1, 1);
 }
 
-static int scal (lua_State *L) {
-	return xy(L, _scal, 0, 1);
-}
-
-static void _set (size_t size, double *x, int incx, double *y, int incy, double alpha) {
-	size_t  i;
-
-	(void)y;
-	(void)incy;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
-	for (i = 0; i < size; i++) {
-		x[i * incx] = alpha;
-	}
-}
-
-static int set (lua_State *L) {
-	return xy(L, _set, 0, 1);
-}
-
-static void _uniform (size_t size, double *x, int incx, double *y, int incy, double alpha) {
-	size_t  i;
-
-	(void)y;
-	(void)incy;
-	(void)alpha;
-	for (i = 0; i < size; i++) {
-		*x = random() / (RAND_MAX + 1.0);
-		x += incx;
-	}
-}
-
-static int uniform (lua_State *L) {
-	return xy(L, _uniform, 0, 0);
-}
-
-static void _normal (size_t size, double *x, int incx, double *y, int incy, double alpha) {
-	size_t  i;
-	double  u1, u2, r, s, c;
-
-	(void)y;
-	(void)incy;
-	(void)alpha;
-	for (i = 0; i < size - 1; i += 2) {
-		do {
-			u1 = random() / (double)RAND_MAX;
-			u2 = random() / (double)RAND_MAX;
-		} while (u1 <= -DBL_MAX);
-		r = sqrt(-2.0 * log(u1));
-		sincos(2 * M_PI * u2, &s, &c);
-		*x = r * c;
-		x += incx;
-		*x = r * s;
-		x += incx;
-	}
-	if (i < size) {
-		do {
-			u1 = random() / (double)RAND_MAX;
-			u2 = random() / (double)RAND_MAX;
-		} while (u1 <= -DBL_MAX);
-		*x = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
-		x += incx;
-	}
-}
-
-static int normal (lua_State *L) {
-	return xy(L, _normal, 0, 0);
-}
-
-static void _inc (size_t size, double *x, int incx, double *y, int incy, double alpha) {
-	size_t  i;
-
-	(void)y;
-	(void)incy;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
-	for (i = 0; i < size; i++) {
-		x[i * incx] += alpha;
-	}
-}
-
-static int inc (lua_State *L) {
-	return xy(L, _inc, 0, 1);
-}
-
-static void _mul1 (size_t size, double *x, int incx, double *y, int incy, double alpha) {
-	size_t  i;
+static void _mul1 (const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy) {
+	int  i;
 
 	(void)alpha;
+	(void)beta;
 	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
 		y[i * incy] *= x[i * incx];
 	}
 }
 
-static void _mulm1 (size_t size, double *x, int incx, double *y, int incy, double alpha) {
-	size_t  i;
+static void _mulm1 (const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy) {
+	int  i;
 
 	(void)alpha;
+	(void)beta;
 	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
 		y[i * incy] /= x[i * incx];
 	}
 }
 
-static void _mul (size_t size, double *x, int incx, double *y, int incy, double alpha) {
-	size_t  i;
+static void _mul (const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy) {
+	int  i;
 
+	(void)beta;
 	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
 		y[i * incy] *= pow(x[i * incx], alpha);
@@ -1168,151 +1346,12 @@ static int mul (lua_State *L) {
 
 	alpha = luaL_optnumber(L, 3, 1.0);
 	if (alpha == 1.0) {
-		return xy(L, _mul1, 1, 1);
+		return vector_matrix(L, _mul1, 1, 0);
 	}
 	if (alpha == -1.0) {
-		return xy(L, _mulm1, 1, 1);
+		return vector_matrix(L, _mulm1, 1, 0);
 	}
-	return xy(L, _mul, 1, 1);
-}
-
-static void _pow (size_t size, double *x, int incx, double *y, int incy, double alpha) {
-	size_t  i;
-
-	(void)y;
-	(void)incy;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
-	for (i = 0; i < size; i++) {
-		x[i * incx] = pow(x[i * incx], alpha);
-	}
-}
-
-static int powx (lua_State *L) {
-	return xy(L, _pow, 0, 1);
-}
-
-
-/*
- * unary functions
- */
-
-static int apply (lua_State *L, unary_function apply, int parallel) {
-	size_t          base, i, j;
-	struct vector  *x;
-	struct matrix  *X;
-
-	if (lua_type(L, 1) == LUA_TNUMBER) {
-		lua_pushnumber(L, apply(lua_tonumber(L, 1)));
-		return 1;
-	}
-	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	if (x != NULL) {
-		#pragma omp parallel for private(i) schedule(auto) \
-				if(parallel && x->size >= LUALINEAR_OMP_MINSIZE)
-		for (i = 0; i < x->size; i++) {
-			x->values[i * x->inc] = apply(x->values[i * x->inc]);
-		}
-		return 0;
-	}
-	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
-	if (X != NULL) {
-		if (X->order == CblasRowMajor) {
-			for (i = 0; i < X->rows; i++) {
-				base = i * X->ld;
-				#pragma omp parallel for private(j) schedule(auto) \
-						if(parallel && X->cols >= LUALINEAR_OMP_MINSIZE)
-				for (j = 0; j < X->cols; j++) {
-					X->values[base + j] = apply(X->values[base + j]);
-				}
-			}
-		} else {
-			for (i = 0; i < X->cols; i++) {
-				base = i * X->ld;
-				#pragma omp parallel for private(j) schedule(auto) \
-						if(parallel && X->rows >= LUALINEAR_OMP_MINSIZE)
-				for (j = 0; j < X->rows; j++) {
-					X->values[base + j] = apply(X->values[base + j]);
-				}
-			}
-		}
-		return 0;
-	}
-	return luaL_argerror(L, 1, lua_pushfstring(L, "number, vector, or matrix expected, got %s",
-			luaL_typename(L, 1)));
-}
-
-static double _sign (double x) {
-	if (x > 0) {
-		return 1;
-	}
-	if (x < 0) {
-		return -1;
-	}
-	return x;
-}
-
-static int sign (lua_State *L) {
-	return apply(L, _sign, 1);
-}
-
-static int absx (lua_State *L) {
-	return apply(L, fabs, 1);
-}
-
-static int expx (lua_State *L) {
-	return apply(L, exp, 1);
-}
-
-static int logx (lua_State *L) {
-	return apply(L, log, 1);
-}
-
-static double _logistic (double z) {
-	return 1.0 / (1.0 + exp(-z));
-}
-
-static int logistic (lua_State *L) {
-	return apply(L, _logistic, 1);
-}
-
-static int tanhx (lua_State *L) {
-	return apply(L, tanh, 1);
-}
-
-static double _softplus (double x) {
-	return log(1 + exp(x));
-}
-
-static int softplus (lua_State *L) {
-	return apply(L, _softplus, 1);
-}
-
-static double _rectifier (double x) {
-	return x > 0.0 ? x : 0.0;
-}
-
-static int rectifier (lua_State *L) {
-	return apply(L, _rectifier, 1);
-}
-
-static __thread lua_State *TL;
-
-static double _apply (double x) {
-	double result;
-
-	lua_pushvalue(TL, -1);
-	lua_pushnumber(TL, x);
-	lua_call(TL, 1, 1);
-	result = lua_tonumber(TL, -1);
-	lua_pop(TL, 1);
-	return result;
-}
-
-static int applyx (lua_State *L) {
-	luaL_checktype(L, 2, LUA_TFUNCTION);
-	lua_settop(L, 2);
-	TL = L;
-	return apply(L, _apply, 0);
+	return vector_matrix(L, _mul, 1, 0);
 }
 
 
@@ -1710,6 +1749,7 @@ static int corr (lua_State *L) {
 
 int luaopen_linear (lua_State *L) {
 	static const luaL_Reg FUNCTIONS[] = {
+		/* structural functions */
 		{ "vector", vector },
 		{ "matrix", matrix },
 		{ "type", type },
@@ -1720,6 +1760,25 @@ int luaopen_linear (lua_State *L) {
 		{ "reshape", reshape },
 		{ "totable", totable },
 		{ "tolinear", tolinear },
+
+		/* elementary functions */
+		{ "sgn", sgn },
+		{ "abs", absx },
+		{ "exp", expx },
+		{ "log", logx },
+		{ "logistic", logistic },
+		{ "tanh", tanhx },
+		{ "softplus", softplus },
+		{ "rectifier", rectifier },
+		{ "apply", apply },
+		{ "set", set },
+		{ "uniform", uniform },
+		{ "normal", normal },
+		{ "inc", inc },
+		{ "pow", powx },
+		{ "scal", scal },
+
+		/* vector functions */
 		{ "dot", dot },
 		{ "nrm2", nrm2 },
 		{ "asum", asum },
@@ -1728,25 +1787,15 @@ int luaopen_linear (lua_State *L) {
 		{ "iamin", iamin },
 		{ "imax", imax },
 		{ "imin", imin },
+
+		/* vector-matrix functions */
 		{ "swap", swap },
 		{ "copy", copy },
 		{ "axpy", axpy },
-		{ "scal", scal },
-		{ "set", set },
-		{ "uniform", uniform },
-		{ "normal", normal },
-		{ "inc", inc },
+		{ "axpby", axpby },
 		{ "mul", mul },
-		{ "pow", powx },
-		{ "sign", sign },
-		{ "abs", absx },
-		{ "exp", expx },
-		{ "log", logx },
-		{ "logistic", logistic },
-		{ "tanh", tanhx },
-		{ "softplus", softplus },
-		{ "rectifier", rectifier },
-		{ "apply", applyx },
+
+		/* matrix functions */
 		{ "gemv", gemv },
 		{ "ger", ger },
 		{ "gemm", gemm },
@@ -1754,8 +1803,11 @@ int luaopen_linear (lua_State *L) {
 		{ "gels", gels },
 		{ "inv", inv },
 		{ "det", det },
+
+		/* statistical functions */
 		{ "cov", cov },
 		{ "corr", corr },
+
 		{ NULL, NULL }
 	};
 

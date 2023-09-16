@@ -184,6 +184,174 @@ local function testTolinear ()
 	assert(X[3][2] == 3)
 end
 
+local function testElementaryFunction (inputs, outputs, f)
+	local X = linear.matrix(2, #inputs)
+	local x1, x2 = X[1], X[2]
+	for i, value in ipairs(inputs) do
+		x1[i] = value
+		x2[#inputs - i + 1] = value
+	end
+	f(X)
+	for i, output in ipairs(outputs) do
+		if output == output then
+			assert(math.abs(x1[i] - output) < EPSILON, i)
+			assert(math.abs(x2[#inputs - i + 1] - output) < EPSILON, i)
+		else
+			assert(x1[i] ~= x1[i], i)
+			assert(x2[#inputs - i + 1] ~= x2[#inputs - i + 1], i)
+		end
+	end
+end
+
+-- Tests the sign function
+local function testSgn ()
+	testElementaryFunction({ 2, 0, -1, 0 / 0 }, { 1, 0, -1, 0 / 0 }, linear.sgn)
+end
+
+-- Tests the abs function
+local function testAbs ()
+	testElementaryFunction({ 0, -1, 1, 1.5 }, { 0, 1, 1, 1.5 }, linear.abs)
+end
+
+-- Tests the exp function
+local function testExp ()
+	testElementaryFunction({ 0, math.log(2) }, { 1, 2 }, linear.exp)
+end
+
+-- Tests the log function
+local function testLog ()
+	testElementaryFunction({ 1, math.exp(1) }, { 0, 1 }, linear.log)
+end
+
+-- Tests the logistic function
+local function testLogistic ()
+	testElementaryFunction({ 0, -100, 100 }, { 0.5, 0, 1 }, linear.logistic)
+end
+
+-- Tests the tanh function
+local function testTanh ()
+	testElementaryFunction({ 0, 1 }, { 0, 0.76159 }, linear.tanh)
+end
+
+-- Tests the softplus function
+local function testSoftplus ()
+	testElementaryFunction({ -100, -1, 0, 1, 100 }, { 0, 0.31326, 0.69314, 1.31326, 100 },
+			linear.softplus)
+end
+
+-- Tests the rectifier function
+local function testRectifier ()
+	testElementaryFunction({ -0.1, 0.1 }, { 0, 0.1 }, linear.rectifier)
+end
+
+-- Tests the set function
+local function testSet ()
+	local x = linear.vector(3)
+	linear.set(x, 1)
+	assert(x[1] == 1)
+	assert(x[2] == 1)
+	assert(x[3] == 1)
+	local A = linear.matrix(3, 3)
+	linear.set(A, 2)
+	for i = 1, #A do
+		local a = A[i]
+		for j = 1, #a do
+			assert(a[i] == 2)
+		end
+	end
+end
+
+-- Tests the uniform function
+local function testUniform ()
+	local x = linear.vector(3)
+	linear.uniform(x)
+	for i = 1, #x do
+		assert(x[i] >= 0 and x[i] < 1)
+	end
+	local A = linear.matrix(3, 3)
+	linear.uniform(A)
+	for i = 1, #A do
+		local a = A[i]
+		for j = 1, #a do
+			assert(a[i] >= 0 and a[i] < 1)
+		end
+	end
+end
+
+-- Tests the normal function
+local function testNormal ()
+	local x = linear.vector(3)
+	linear.normal(x)
+	for i = 1, #x do
+		assert(type(x[i]) == "number")
+	end
+	local A = linear.matrix(3, 3)
+	linear.normal(A)
+	for i = 1, #A do
+		local a = A[i]
+		for j = 1, #a do
+			assert(type(a[j]) == "number")
+		end
+	end
+end
+
+-- Tests the inc function
+local function testInc ()
+	local x = linear.vector(3)
+	linear.inc(x, 1)
+	for i = 1, #x do
+		assert(x[i] == 1)
+	end
+	local A = linear.matrix(3, 3)
+	linear.inc(A, 2)
+	for i = 1, #A do
+		local a = A[i]
+		for j = 1, #a do
+			assert(a[j] == 2)
+		end
+	end
+end
+
+-- Tests the scal function
+local function testScal ()
+	local x = linear.vector(2)
+	x[1], x[2] = 1, 2
+	linear.scal(x, 2)
+	assert(x[1] == 2)
+	assert(x[2] == 4)
+
+	local X = linear.matrix(2, 2)
+	X[2][2] = 1
+	linear.scal(X, 2)
+	assert(X[2][2] == 2)
+end
+
+-- Tests the pow function
+local function testPow ()
+	local x = linear.vector(2)
+	x[1], x[2] = 1, 2
+	linear.pow(x, 0.5)
+	assert(x[1] == 1)
+	assert(math.abs(x[2] - math.sqrt(2)) < EPSILON)
+
+	local X = linear.matrix(2, 3)
+	X[2][3] = 2
+	linear.pow(X, 3)
+	assert(X[1][1] == 0)
+	assert(X[2][3] == 8)
+end
+
+-- Tests the apply function
+local function testApply ()
+	local function inc (x)
+		return x + 1
+	end
+	local A = linear.matrix(2, 3)
+	linear.set(A, 1)
+	linear.apply(A, inc)
+	assert(A[2][2] == 2)
+end
+
 -- Tests the dot function
 local function testDot ()
 	local X = linear.vector(2)
@@ -307,86 +475,28 @@ local function testAxpy ()
 	assert(Y[2][2] == 6)
 end
 
--- Tests the scal function
-local function testScal ()
+-- Tests the axpby function
+local function testAxpby ()
 	local x = linear.vector(2)
 	x[1], x[2] = 1, 2
-	linear.scal(x, 2)
-	assert(x[1] == 2)
-	assert(x[2] == 4)
+	local y = linear.vector(2)
+	y[1], y[2] = 3, 4
+	linear.axpby(x, y, 2, 3)
+	assert(y[1] == 11)
+	assert(y[2] == 16)
 
 	local X = linear.matrix(2, 2)
+	local Y = linear.matrix(2, 2)
 	X[2][2] = 1
-	linear.scal(X, 2)
-	assert(X[2][2] == 2)
-end
+	Y[2][2] = 2
+	linear.axpby(X, Y, 2, 3)
+	assert(Y[2][2] == 8)
 
--- Tests the set function
-local function testSet ()
-	local x = linear.vector(3)
-	linear.set(x, 1)
-	assert(x[1] == 1)
-	assert(x[2] == 1)
-	assert(x[3] == 1)
-	local A = linear.matrix(3, 3)
-	linear.set(A, 2)
-	for i = 1, #A do
-		local a = A[i]
-		for j = 1, #a do
-			assert(a[i] == 2)
-		end
-	end
-end
-
--- Tests the uniform function
-local function testUniform ()
-	local x = linear.vector(3)
-	linear.uniform(x)
-	for i = 1, #x do
-		assert(x[i] >= 0 and x[i] < 1)
-	end
-	local A = linear.matrix(3, 3)
-	linear.uniform(A)
-	for i = 1, #A do
-		local a = A[i]
-		for j = 1, #a do
-			assert(a[i] >= 0 and a[i] < 1)
-		end
-	end
-end
-
--- Tests the normal function
-local function testNormal ()
-	local x = linear.vector(3)
-	linear.normal(x)
-	for i = 1, #x do
-		assert(type(x[i]) == "number")
-	end
-	local A = linear.matrix(3, 3)
-	linear.normal(A)
-	for i = 1, #A do
-		local a = A[i]
-		for j = 1, #a do
-			assert(type(a[j]) == "number")
-		end
-	end
-end
-
--- Tests the inc function
-local function testInc ()
-	local x = linear.vector(3)
-	linear.inc(x, 1)
-	for i = 1, #x do
-		assert(x[i] == 1)
-	end
-	local A = linear.matrix(3, 3)
-	linear.inc(A, 2)
-	for i = 1, #A do
-		local a = A[i]
-		for j = 1, #a do
-			assert(a[j] == 2)
-		end
-	end
+	linear.axpby(x, Y)
+	assert(Y[1][1] == 1)
+	assert(Y[1][2] == 2)
+	assert(Y[2][1] == 1)
+	assert(Y[2][2] == 2)
 end
 
 -- Tests the mul function
@@ -424,123 +534,6 @@ local function testMul ()
 	assert(math.abs(X[1][2] - 2 * math.sqrt(2)) < EPSILON)
 	assert(X[2][1] == 4)
 	assert(math.abs(X[2][2] - 8 * math.sqrt(2)) < EPSILON)
-end
-
--- Tests the pow function
-local function testPow ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, 2
-	linear.pow(x, 2)
-	assert(x[1] == 1)
-	assert(x[2] == 4)
-
-	local X = linear.matrix(2, 3)
-	X[2][3] = 2
-	linear.pow(X, 3)
-	assert(X[1][1] == 0)
-	assert(X[2][3] == 8)
-end
-
--- Tests the sign function
-local function testSign ()
-	assert(linear.sign(2) == 1)
-	assert(linear.sign(0) == 0)
-	assert(linear.sign(-1) == -1)
-	local sign = linear.sign(0 / 0)
-	assert(sign ~= sign)
-end
-
--- Tests the abs function
-local function testAbs ()
-	assert(linear.abs(0) == 0)
-	assert(linear.abs(-1) == 1)
-	assert(linear.abs(1) == 1)
-	assert(linear.abs(1.5) == 1.5)
-	local x = linear.vector(3)
-	for i = 1, #x do
-		x[i] = -i
-	end
-	linear.abs(x)
-	for i = 1, #x do
-		assert(x[i] == i)
-	end
-	local X = linear.matrix(3, 3)
-	for i = 1, #X do
-		local x = X[i]
-		for j = 1, #x do
-			x[j] = -i * 3 - j
-		end
-	end
-	linear.abs(X)
-	for i = 1, #X do
-		local x = X[i]
-		for j = 1, #x do
-			assert(x[j] == i * 3 + j)
-		end
-	end
-end
-
--- Tests the exp function
-local function testExp ()
-	assert(math.abs(linear.exp(math.log(2)) - 2) <= EPSILON)
-end
-
--- Tests the log function
-local function testLog ()
-	assert(math.abs(linear.log(math.exp(1)) - 1) <= EPSILON)
-end
-
--- Tests the logistic function
-local function testLogistic ()
-	assert(math.abs(linear.logistic(0) - 0.5) < EPSILON)
-	assert(math.abs(linear.logistic(-100) - 0) < EPSILON)
-	assert(math.abs(linear.logistic(100) - 1) < EPSILON)
-	local x = linear.vector(3)
-	linear.logistic(x)
-	for i = 1, #x do
-		assert(math.abs(x[i] - 0.5) < EPSILON)
-	end
-	local A = linear.matrix(3, 3)
-	linear.logistic(A)
-	for i = 1, #A do
-		local x = A[i]
-		for j = 1, #x do
-			assert(math.abs(x[i] - 0.5) < EPSILON)
-		end
-	end
-end
-
--- Tests the tanh function
-local function testTanh ()
-	assert(math.abs(linear.tanh(0)) < EPSILON)
-	assert(math.abs(linear.tanh(1) - 0.76159) < 0.0001)
-end
-
--- Tests the softplus function
-local function testSoftplus ()
-	assert(math.abs(linear.softplus(0) - math.log(2)) < EPSILON)
-	assert(linear.softplus(-1) > 0)
-	assert(linear.softplus(0) > linear.softplus(-1))
-	assert(linear.softplus(1) > linear.softplus(0))
-end
-
--- Tests the rectifier function
-local function testRectifier ()
-	assert(linear.rectifier(0) == 0)
-	assert(math.abs(linear.rectifier(0.1) - 0.1) < EPSILON)
-	assert(math.abs(linear.rectifier(-0.1) - 0.0) < EPSILON)
-end
-
--- Tests the apply function
-local function testApply ()
-	local function inc (x)
-		return x + 1
-	end
-	assert(linear.apply(1, inc) == 2)
-	local A = linear.matrix(2, 3)
-	linear.set(A, 1)
-	linear.apply(A, inc)
-	assert(A[2][2] == 2)
 end
 
 -- Tests the gemv function
@@ -705,7 +698,7 @@ local function testCorr ()
 	assert(math.abs(B[2][2] - 1) < EPSILON)
 end
 
--- Tests
+-- Structural function tests
 testVector()
 testMatrix()
 testType()
@@ -716,25 +709,9 @@ testUnwind()
 testReshape()
 testTotable()
 testTolinear()
-testDot()
-testNrm2()
-testAsum()
-testIamax()
-testIamin()
-testImax()
-testImin()
-testSum()
-testSwap()
-testCopy()
-testAxpy()
-testScal()
-testSet()
-testUniform()
-testNormal()
-testInc()
-testMul()
-testPow()
-testSign()
+
+-- Elementary function tests
+testSgn()
 testAbs()
 testExp()
 testLog()
@@ -742,7 +719,32 @@ testLogistic()
 testTanh()
 testSoftplus()
 testRectifier()
+testSet()
+testUniform()
+testNormal()
+testInc()
+testScal()
+testPow()
 testApply()
+
+-- Vector function tests
+testDot()
+testNrm2()
+testAsum()
+testSum()
+testIamax()
+testIamin()
+testImax()
+testImin()
+
+-- Vector-matrix function tests
+testSwap()
+testCopy()
+testAxpy()
+testAxpby()
+testMul()
+
+-- Matrix function tests
 testGemv()
 testGer()
 testGemm()
@@ -750,6 +752,8 @@ testGesv()
 testGels()
 testInv()
 testDet()
+
+-- Statistical function tests
 testCov()
 testCorr()
 
