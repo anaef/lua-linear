@@ -20,20 +20,24 @@
 #define LUALINEAR_MATRIX_METATABLE  "linear.matrix"
 
 
+struct data {
+	size_t   refs;    /* number of references */
+};
+
 struct vector {
-        size_t   length;  /* length*/
-        size_t   inc;     /* increment to next value*/
-        double  *values;  /* values */
-        int      ref;     /* Lua reference */
+	size_t        length;  /* length*/
+	size_t        inc;     /* increment to next value */
+	struct data  *data;    /* shared data */
+	double       *values;  /* values */
 };
 
 struct matrix {
-        size_t        rows;    /* number of rows */
-        size_t        cols;    /* number of columns*/
-        size_t        ld;      /* increment to next major vector */
-        CBLAS_ORDER   order;   /* order */
-        double       *values;  /* values */
-        int           ref;     /* Lua reference */
+	size_t        rows;    /* number of rows */
+	size_t        cols;    /* number of columns*/
+	size_t        ld;      /* increment to next major vector */
+	CBLAS_ORDER   order;   /* order */
+	struct data  *data;    /* shared data */
+	double       *values;  /* values */
 };
 
 

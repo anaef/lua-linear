@@ -27,8 +27,8 @@ static inline CBLAS_TRANSPOSE checktranspose(lua_State *L, int index);
 static inline char lapacktranspose(CBLAS_TRANSPOSE transpose);
 static int argerror(lua_State *L, int index);
 
-struct vector *create_vector(lua_State *L, size_t size);
-struct vector *wrap_vector(lua_State *L, size_t size, double *values);
+static struct vector *create_vector(lua_State *L, size_t length);
+static void push_vector(lua_State *L, size_t length, size_t inc, struct data *data, double *values);
 static int vector(lua_State *L);
 static int vector_len(lua_State *L);
 static int vector_index(lua_State *L);
@@ -38,16 +38,16 @@ static int vector_ipairs(lua_State *L);
 static int vector_tostring(lua_State *L);
 static int vector_gc(lua_State *L);
 
-struct matrix *create_matrix(lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order);
-struct matrix *wrap_matrix(lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order,
-		double *values);
+static struct matrix *create_matrix(lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order);
+static void push_matrix(lua_State *L, size_t rows, size_t cols, size_t ld, CBLAS_ORDER order,
+		struct data *data, double *values);
 static int matrix(lua_State *L);
 static int matrix_len(lua_State *L);
 static int matrix_index(lua_State *L);
 static int matrix_next(lua_State *L);
 static int matrix_ipairs(lua_State *L);
 static int matrix_tostring(lua_State *L);
-static int matrix_free(lua_State *L);
+static int matrix_gc(lua_State *L);
 
 static int type(lua_State *L);
 static int size(lua_State *L);
@@ -167,36 +167,39 @@ static int argerror (lua_State *L, int index) {
  * vector
  */
 
-struct vector *create_vector (lua_State *L, size_t size) {
+static struct vector *create_vector (lua_State *L, size_t length) {
 	struct vector  *vector;
 
-	assert(size >= 1 && size <= INT_MAX);
+	assert(length >= 1 && length <= INT_MAX);
 	vector = lua_newuserdata(L, sizeof(struct vector));
-	vector->length = size;
+	vector->length = length;
 	vector->inc = 1;
-	vector->values = NULL;
-	vector->ref = LUA_NOREF;
+	vector->data = NULL;
 	luaL_getmetatable(L, LUALINEAR_VECTOR_METATABLE);
 	lua_setmetatable(L, -2);
-	vector->values = calloc(size, sizeof(double));
-	if (vector->values == NULL) {
-		luaL_error(L, "cannot allocate values");
+	vector->data = calloc(1, sizeof(struct data) + length * sizeof(double));
+	if (vector->data == NULL) {
+		luaL_error(L, "cannot allocate data");
 	}
+	vector->data->refs = 1;
+	vector->values = (double *)((char *)vector->data + sizeof(struct data));
         return vector;
 }
 
-struct vector *wrap_vector (lua_State *L, size_t size, double *values) {
+static void push_vector (lua_State *L, size_t length, size_t inc, struct data *data,
+		double *values) {
 	struct vector  *vector;
 
-	assert(size >= 1 && size <= INT_MAX);
+	assert(length >= 1 && length <= INT_MAX);
 	vector = lua_newuserdata(L, sizeof(struct vector));
-	vector->length = size;
-	vector->inc = 1;
-	vector->values = values;
-	vector->ref = LUA_REFNIL;
+	vector->length = length;
+	vector->inc = inc;
+	vector->data = NULL;
 	luaL_getmetatable(L, LUALINEAR_VECTOR_METATABLE);
 	lua_setmetatable(L, -2);
-	return vector;
+	vector->data = data;
+	data->refs++;
+	vector->values = values;
 }
 
 static int vector (lua_State *L) {
@@ -275,10 +278,11 @@ static int vector_gc (lua_State *L) {
 	struct vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	if (x->ref == LUA_NOREF) {
-		free(x->values);
-	} else {
-		luaL_unref(L, LUA_REGISTRYINDEX, x->ref);
+	if (x->data) {
+		x->data->refs--;
+		if (x->data->refs == 0) {
+			free(x->data);
+		}
 	}
 	return 0;
 }
@@ -288,7 +292,7 @@ static int vector_gc (lua_State *L) {
  * matrix
  */
 
-struct matrix *create_matrix (lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order) {
+static struct matrix *create_matrix (lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order) {
 	struct matrix  *matrix;
 
 	assert(rows >= 1 && rows <= INT_MAX && cols >= 1 && cols <= INT_MAX);
@@ -297,32 +301,34 @@ struct matrix *create_matrix (lua_State *L, size_t rows, size_t cols, CBLAS_ORDE
 	matrix->cols = cols;
 	matrix->ld = order == CblasRowMajor ? cols : rows;
 	matrix->order = order;
-	matrix->values = NULL;
-	matrix->ref = LUA_NOREF;
+	matrix->data = NULL;
 	luaL_getmetatable(L, LUALINEAR_MATRIX_METATABLE);
 	lua_setmetatable(L, -2);
-	matrix->values = calloc(rows * cols, sizeof(double));
-	if (matrix->values == NULL) {
-		luaL_error(L, "cannot allocate values");
+	matrix->data = calloc(1, sizeof(struct data) + rows * cols * sizeof(double));
+	if (matrix->data == NULL) {
+		luaL_error(L, "cannot allocate data");
 	}
+	matrix->data->refs = 1;
+	matrix->values = (double *)((char *)matrix->data + sizeof(struct data));
 	return matrix;
 }
 
-struct matrix *wrap_matrix (lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order,
-		double *values) {
+static void push_matrix (lua_State *L, size_t rows, size_t cols, size_t ld, CBLAS_ORDER order,
+		struct data *data, double *values) {
 	struct matrix  *matrix;
 
 	assert(rows >= 1 && rows <= INT_MAX && cols >= 1 && cols <= INT_MAX);
 	matrix = (struct matrix *)lua_newuserdata(L, sizeof(struct matrix));
 	matrix->rows = rows;
 	matrix->cols = cols;
-	matrix->ld = order == CblasRowMajor ? cols : rows;
+	matrix->ld = ld;
 	matrix->order = order;
-	matrix->values = values;
-	matrix->ref = LUA_REFNIL;
+	matrix->data = NULL;
 	luaL_getmetatable(L, LUALINEAR_MATRIX_METATABLE);
 	lua_setmetatable(L, -2);
-	return matrix;
+	matrix->data = data;
+	data->refs++;
+	matrix->values = values;
 }
 
 static int matrix (lua_State *L) {
@@ -351,29 +357,24 @@ static int matrix_len (lua_State *L) {
 }
 
 static int matrix_index (lua_State *L) {
-	size_t          index, size;
-	struct vector  *x;
+	size_t          index, length;
 	struct matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	index = luaL_checkinteger(L, 2);
-	luaL_argcheck(L, index >= 1, 2, "bad index");
 	if (X->order == CblasRowMajor) {
-		luaL_argcheck(L, index <= X->rows, 2, "bad index");
-		size = X->cols;
+		luaL_argcheck(L, index >= 1 && index <= X->rows, 2, "bad index");
+		length = X->cols;
 	} else {
-		luaL_argcheck(L, index <= X->cols, 2, "bad index");
-		size = X->rows;
+		luaL_argcheck(L, index >= 1 && index <= X->cols, 2, "bad index");
+		length = X->rows;
 	}
-	x = wrap_vector(L, size, &X->values[(index - 1) * X->ld]);
-	lua_pushvalue(L, 1);
-	x->ref = luaL_ref(L, LUA_REGISTRYINDEX);
+	push_vector(L, length, 1, X->data, &X->values[(index - 1) * X->ld]);
 	return 1;
 }
 
 static int matrix_next (lua_State *L) {
 	size_t          index, majorsize, minorsize;
-	struct vector  *x;
 	struct matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
@@ -387,9 +388,7 @@ static int matrix_next (lua_State *L) {
 	}
 	if (index < majorsize) {
 		lua_pushinteger(L, index + 1);
-		x = wrap_vector(L, minorsize, &X->values[index * X->ld]);
-		lua_pushvalue(L, 1);
-		x->ref = luaL_ref(L, LUA_REGISTRYINDEX);
+		push_vector(L, minorsize, 1, X->data, &X->values[index * X->ld]);
 		return 2;
 	}
 	lua_pushnil(L);
@@ -412,14 +411,15 @@ static int matrix_tostring (lua_State *L) {
 	return 1;
 }
 
-static int matrix_free (lua_State *L) {
+static int matrix_gc (lua_State *L) {
 	struct matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
-	if (X->ref == LUA_NOREF) {
-		free(X->values);
-	} else {
-		luaL_unref(L, LUA_REGISTRYINDEX, X->ref);
+	if (X->data) {
+		X->data->refs--;
+		if (X->data->refs == 0) {
+			free(X->data);
+		}
 	}
 	return 0;
 }
@@ -462,30 +462,25 @@ static int size (lua_State *L) {
 }
 
 static int tvector (lua_State *L) {
-	size_t          index, size;
-	struct vector  *x;
+	size_t          index, length;
 	struct matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	index = luaL_checkinteger(L, 2);
-	luaL_argcheck(L, index >= 1, 2, "bad index");
 	if (X->order == CblasRowMajor) {
-		luaL_argcheck(L, index <= X->cols, 2, "bad index");
-		size = X->rows;
+		luaL_argcheck(L, index >= 1 && index <= X->cols, 2, "bad index");
+		length = X->rows;
 	} else {
-		luaL_argcheck(L, index <= X->rows, 2, "bad index");
-		size = X->cols;
+		luaL_argcheck(L, index >= 1 && index <= X->rows, 2, "bad index");
+		length = X->cols;
 	}
-	x = wrap_vector(L, size, &X->values[index - 1]);
-	x->inc = X->ld;
-	lua_pushvalue(L, 1);
-	x->ref = luaL_ref(L, LUA_REGISTRYINDEX);
+	push_vector(L, length, X->ld, X->data, &X->values[index - 1]);
 	return 1;
 }
 
 static int sub (lua_State *L) {
-	struct vector  *x, *s;
-	struct matrix  *X, *S;
+	struct vector  *x;
+	struct matrix  *X;
 
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
@@ -495,10 +490,7 @@ static int sub (lua_State *L) {
 		luaL_argcheck(L, start >= 1 && start <= x->length, 2, "bad index");
 		end = luaL_optinteger(L, 3, x->length);
 		luaL_argcheck(L, end >= start && end <= x->length, 3, "bad index");
-		s = wrap_vector(L, end - start + 1, &x->values[(start - 1) * x->inc]);
-		s->inc = x->inc;
-		lua_pushvalue(L, 1);
-		s->ref = luaL_ref(L, LUA_REGISTRYINDEX);
+		push_vector(L, end - start + 1, x->inc, x->data, &x->values[(start - 1) * x->inc]);
 		return 1;
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
@@ -514,8 +506,9 @@ static int sub (lua_State *L) {
 			luaL_argcheck(L, rowend >= rowstart && rowend <= X->rows, 4, "bad index");
 			colend = luaL_optinteger(L, 5, X->cols);
 			luaL_argcheck(L, colend >= colstart && colend <= X->cols, 5, "bad index");
-			S = wrap_matrix(L, rowend - rowstart + 1, colend - colstart + 1, X->order,
-					&X->values[(rowstart - 1) * X->ld + colstart - 1]);
+			push_matrix(L, rowend - rowstart + 1, colend - colstart + 1, X->ld,
+					X->order, X->data, &X->values[(rowstart - 1) * X->ld
+					+ colstart - 1]);
 		} else {
 			colstart = luaL_optinteger(L, 2, 1);
 			luaL_argcheck(L, colstart >= 1 && colstart <= X->cols, 2, "bad index");
@@ -525,12 +518,10 @@ static int sub (lua_State *L) {
 			luaL_argcheck(L, colend >= colstart && colend <= X->cols, 4, "bad index");
 			rowend = luaL_optinteger(L, 5, X->rows);
 			luaL_argcheck(L, rowend >= rowstart && rowend <= X->rows, 5, "bad index");
-			S = wrap_matrix(L, rowend - rowstart + 1, colend - colstart + 1, X->order,
-					&X->values[(colstart - 1) * X->ld + rowstart - 1]);
+			push_matrix(L, rowend - rowstart + 1, colend - colstart + 1, X->ld,
+					X->order, X->data, &X->values[(colstart - 1) * X->ld
+					+ rowstart - 1]);
 		}
-		S->ld = X->ld;
-		lua_pushvalue(L, 1);
-		S->ref = luaL_ref(L, LUA_REGISTRYINDEX);
 		return 1;
 	}
 	return argerror(L, 1);
@@ -1767,7 +1758,7 @@ int luaopen_linear (lua_State *L) {
 	lua_setfield(L, -2, "__ipairs");
 	lua_pushcfunction(L, matrix_tostring);
 	lua_setfield(L, -2, "__tostring");
-	lua_pushcfunction(L, matrix_free);
+	lua_pushcfunction(L, matrix_gc);
 	lua_setfield(L, -2, "__gc");
 	lua_pop(L, 1);
 
