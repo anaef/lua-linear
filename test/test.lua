@@ -80,13 +80,22 @@ local function testSub ()
 	assert(#s == 1)
 	assert(s[1] == 1)
 
-	-- matrix
+	-- matrix, row major
 	local X = linear.matrix(2, 3)
 	X[2][3] = 1
 	local S = linear.sub(X, 2, 3)
 	assert(#S == 1)
 	assert(#S[1] == 1)
 	assert(S[1][1] == 1)
+
+	-- matrix, col major
+	local X = linear.matrix(2, 3, "col")
+	X[3][1] = 1
+	local S = linear.sub(X, 1, 2, 1, 3)
+	assert(select(3, linear.size(S)) == "col")
+	assert(#S == 2)
+	assert(#S[1] == 1)
+	assert(S[2][1] == 1)
 end
 
 -- Tests the unwind function
@@ -201,6 +210,10 @@ end
 
 -- Tests the sign function
 local function testSgn ()
+	assert(linear.sgn(2) == 1)
+	assert(linear.sgn(0) == 0)
+	assert(linear.sgn(-1) == -1)
+	assert(linear.sgn(0 / 0) ~= linear.sgn(0 / 0))
 	testElementaryFunction({ 2, 0, -1, 0 / 0 }, { 1, 0, -1, 0 / 0 }, linear.sgn)
 end
 
@@ -348,12 +361,6 @@ local function testApply ()
 	assert(A[2][2] == 2)
 end
 
--- Tests the dot function
-local function testDot ()
-	local x = linear.tolinear({ 1, 2 })
-	assert(linear.dot(x, x) == 5)
-end
-
 -- Tests the nrm2 function
 local function testNrm2 ()
 	local x = linear.tolinear({ 1, 2 })
@@ -499,7 +506,7 @@ local function testAxpy ()
 	for i = 1, 2 do
 		x[i] = i
 	end
-	linear.axpy(x, Y, 2, "col")
+	linear.axpy(x, Y, "col", 2)
 	assert(Y[1][1] == 3)
 	assert(Y[1][2] == 3)
 	assert(Y[1][3] == 3)
@@ -515,7 +522,7 @@ local function testAxpy ()
 	for i = 1, 3 do
 		x[i] = i
 	end
-	linear.axpy(x, Y, 1, "row")
+	linear.axpy(x, Y, "row")
 	assert(Y[1][1] == 2)
 	assert(Y[2][1] == 3)
 	assert(Y[3][1] == 4)
@@ -528,7 +535,7 @@ local function testAxpy ()
 	for i = 1, 2 do
 		x[i] = i
 	end
-	linear.axpy(x, Y, 3, "col")
+	linear.axpy(x, Y, "col", 3)
 	assert(Y[1][1] == 4)
 	assert(Y[2][1] == 4)
 	assert(Y[3][1] == 4)
@@ -574,7 +581,6 @@ end
 local function testMul ()
 	-- vector-vector
 	local x = linear.tolinear({ 1, 2 })
-	x[1], x[2] = 1, 2
 	linear.mul(x, x)
 	assert(x[1] == 1)
 	assert(x[2] == 4)
@@ -592,17 +598,35 @@ local function testMul ()
 	assert(X[1][2] == 4)
 	assert(X[2][1] == 4)
 	assert(X[2][2] == 16)
-	x[2] = 2
-	linear.mul(x, X, -1)
+	x = linear.tolinear({ 1, 2 })
+	linear.mul(x, X, nil, -1)
 	assert(X[1][1] == 1)
 	assert(X[1][2] == 2)
 	assert(X[2][1] == 4)
 	assert(X[2][2] == 8)
-	linear.mul(x, X, 0.5)
+	linear.mul(x, X, nil, 0.5)
 	assert(X[1][1] == 1)
 	assert(math.abs(X[1][2] - 2 * math.sqrt(2)) < EPSILON)
 	assert(X[2][1] == 4)
 	assert(math.abs(X[2][2] - 8 * math.sqrt(2)) < EPSILON)
+end
+
+-- Tests the dot function
+local function testDot ()
+	local x = linear.tolinear({ 1, 2 })
+	assert(linear.dot(x, x) == 5)
+end
+
+-- Tests the ger function
+local function testGer ()
+	local x, y = linear.tolinear({ 1, 2 }), linear.tolinear({ 1, 2, 3 })
+	local A = linear.matrix(2, 3)
+	linear.ger(x, y, A)
+	for i = 1, #x do
+		for j = 1, #y do
+			assert(A[i][j] == x[i] * y[j])
+		end
+	end
 end
 
 -- Tests the gemv function
@@ -617,21 +641,9 @@ local function testGemv ()
 
 	-- transposed
 	local A = linear.tolinear({ { 1, 4 }, { 2, 5 }, { 3, 6 } })
-	linear.gemv(A, x, y, 2, nil, "trans")
+	linear.gemv(A, x, y, "trans", 2)
 	assert(y[1] == 28)
 	assert(y[2] == 64)
-end
-
--- Tests the ger function
-local function testGer ()
-	local x, y = linear.tolinear({ 1, 2 }), linear.tolinear({ 1, 2, 3 })
-	local A = linear.matrix(2, 3)
-	linear.ger(x, y, A)
-	for i = 1, #x do
-		for j = 1, #y do
-			assert(A[i][j] == x[i] * y[j])
-		end
-	end
 end
 
 -- Tests the gemm function
@@ -650,7 +662,7 @@ local function testGemm ()
 	-- transposed
 	local C = linear.matrix(3, 3)
 	local C1, C2, C3 = C[1], C[2], C[3]
-	linear.gemm(A, B, C, 2, nil, "trans", "trans")
+	linear.gemm(A, B, C, "trans", "trans", 2)
 	assert(C1[1] == 18)
 	assert(C1[2] == 38)
 	assert(C1[3] == 58)
@@ -759,8 +771,7 @@ testScal()
 testPow()
 testApply()
 
--- Vector function tests
-testDot()
+-- Unary vector function tests
 testNrm2()
 testAsum()
 testSum()
@@ -770,16 +781,17 @@ testStd()
 testIamax()
 testIamin()
 
--- Vector-matrix function tests
+-- Binary vector function tests
 testSwap()
 testCopy()
 testAxpy()
 testAxpby()
 testMul()
 
--- Matrix function tests
-testGemv()
+-- Program function tests
+testDot()
 testGer()
+testGemv()
 testGemm()
 testGesv()
 testGels()
