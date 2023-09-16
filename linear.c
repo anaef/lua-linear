@@ -183,7 +183,7 @@ static struct vector *create_vector (lua_State *L, size_t length) {
 	}
 	vector->data->refs = 1;
 	vector->values = (double *)((char *)vector->data + sizeof(struct data));
-        return vector;
+	return vector;
 }
 
 static void push_vector (lua_State *L, size_t length, size_t inc, struct data *data,

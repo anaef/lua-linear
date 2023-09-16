@@ -14,10 +14,10 @@ linear.o: linear.h linear.c
 linear.so: linear.o
 	gcc $(LDFLAGS) -o linear.so linear.o -lblas -llapacke
 
+all: linear.so
+
 test:
 	$(LUA_BIN) test.lua
-
-all: linear.so
 
 install:
 	cp linear.so $(LIB_INSTALL)
