@@ -991,27 +991,10 @@ static int unary (lua_State *L, unary_function f, int hasddof) {
 		/* matrix-vector */
 		y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
 		if (checkorder(L, 3) == CblasRowMajor) {
-			luaL_argcheck(L, y->length == X->cols, 2, "dimension mismatch");
-			if (hasddof) {
-				ddof = luaL_optinteger(L, 4, 0);
-				luaL_argcheck(L, ddof < X->rows, 4, "bad ddof");
-			}
-			if (X->order == CblasRowMajor) {
-				for (i = 0; i < X->cols; i++) {
-					y->values[i * y->inc] = f(X->rows, &X->values[i], X->ld,
-							ddof);
-				}
-			} else {
-				for (i = 0; i < X->cols; i++) {
-					y->values[i * y->inc] = f(X->rows, &X->values[i * X->ld],
-							1, ddof);
-				}
-			}
-		} else {
 			luaL_argcheck(L, y->length == X->rows, 2, "dimension mismatch");
 			if (hasddof) {
 				ddof = luaL_optinteger(L, 4, 0);
-				luaL_argcheck(L, ddof < X->cols, 3, "bad ddof");
+				luaL_argcheck(L, ddof < X->rows, 4, "bad ddof");
 			}
 			if (X->order == CblasRowMajor) {
 				for (i = 0; i < X->rows; i++) {
@@ -1022,6 +1005,23 @@ static int unary (lua_State *L, unary_function f, int hasddof) {
 				for (i = 0; i < X->rows; i++) {
 					y->values[i * y->inc] = f(X->cols, &X->values[i], X->ld,
 							ddof);
+				}
+			}
+		} else {
+			luaL_argcheck(L, y->length == X->cols, 2, "dimension mismatch");
+			if (hasddof) {
+				ddof = luaL_optinteger(L, 4, 0);
+				luaL_argcheck(L, ddof < X->cols, 3, "bad ddof");
+			}
+			if (X->order == CblasRowMajor) {
+				for (i = 0; i < X->cols; i++) {
+					y->values[i * y->inc] = f(X->rows, &X->values[i], X->ld,
+							ddof);
+				}
+			} else {
+				for (i = 0; i < X->cols; i++) {
+					y->values[i * y->inc] = f(X->rows, &X->values[i * X->ld],
+							1, ddof);
 				}
 			}
 		}
