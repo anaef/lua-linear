@@ -849,13 +849,13 @@ static void _sgn (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		if (x[i * incx] > 0) {
-			x[i * incx] = 1;
-		} else if (x[i * incx] < 0) {
-			x[i * incx] = -1;
+		if (*x > 0) {
+			*x = 1;
+		} else if (*x < 0) {
+			*x = -1;
 		}
+		x += incx;
 	}
 }
 
@@ -867,9 +867,9 @@ static void _abs (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] = fabs(x[i * incx]);
+		*x = fabs(*x);
+		x += incx;
 	}
 }
 
@@ -881,9 +881,9 @@ static void _exp (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] = exp(x[i * incx]);
+		*x = exp(*x);
+		x += incx;
 	}
 }
 
@@ -895,9 +895,9 @@ static void _log (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] = log(x[i * incx]);
+		*x = log(*x);
+		x += incx;
 	}
 }
 
@@ -909,9 +909,9 @@ static void _logistic (const int size, double alpha, double *x, const int incx) 
 	size_t  i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] = 1.0 / (1.0 + exp(-x[i * incx]));
+		*x = 1.0 / (1.0 + exp(-*x));
+		x += incx;
 	}
 }
 
@@ -923,9 +923,9 @@ static void _tanh (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] = tanh(x[i * incx]);
+		*x = tanh(*x);
+		x += incx;
 	}
 }
 
@@ -937,9 +937,9 @@ static void _softplus (const int size, double alpha, double *x, const int incx) 
 	size_t  i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] = log(1.0 + exp(x[i * incx]));
+		*x = log(1.0 + exp(*x));
+		x += incx;
 	}
 }
 
@@ -951,9 +951,9 @@ static void _rectifier (const int size, double alpha, double *x, const int incx)
 	size_t  i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] = x[i * incx] > 0 ? x[i * incx] : 0.0;
+		*x = *x > 0 ? *x : 0.0;
+		x += incx;
 	}
 }
 
@@ -964,9 +964,9 @@ static int rectifier (lua_State *L) {
 static void _set (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] = alpha;
+		*x = alpha;
+		x += incx;
 	}
 
 }
@@ -979,9 +979,9 @@ static void _uniform (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
 	(void)alpha;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] = random() / (RAND_MAX + 1.0);
+		*x = random() / (RAND_MAX + 1.0);
+		x += incx;
 	}
 }
 
@@ -1020,9 +1020,9 @@ static int normal (lua_State *L) {
 static void _inc (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] += alpha;
+		*x += alpha;
+		x += incx;
 	}
 }
 
@@ -1037,9 +1037,9 @@ static int scal (lua_State *L) {
 static void _pow (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < (size_t)size; i++) {
-		x[i * incx] = pow(x[i * incx], alpha);
+		*x = pow(*x, alpha);
+		x += incx;
 	}
 }
 
@@ -1084,8 +1084,7 @@ static int dot (lua_State *L) {
 }
 
 static int _vector (lua_State *L, vector_function f, int hasddof) {
-	size_t          ddof;
-	size_t          i;
+	size_t          i, ddof;
 	struct vector  *x, *y;
 	struct matrix  *X;
 
@@ -1169,10 +1168,9 @@ static double _sum (int size, const double *x, const int incx, const int ddof) {
 
 	(void)ddof;
 	sum = 0.0;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE) \
-			reduction(+:sum)
 	for (i = 0; i < (size_t)size; i++) {
-		sum += x[i * incx];
+		sum += *x;
+		x += incx;
 	}
 	return sum;
 }
@@ -1188,7 +1186,8 @@ static double _mean (int size, const double *x, const int incx, const int ddof) 
 	(void)ddof;
 	sum = 0.0;
 	for (i = 0; i < (size_t)size; i++) {
-		sum += x[i * incx];
+		sum += *x;
+		x += incx;
 	}
 	return sum / size;
 }
@@ -1208,7 +1207,8 @@ static double _std (int size, const double *x, const int incx, const int ddof) {
 	mean = sum / size;
 	sum = 0.0;
 	for (i = 0; i < (size_t)size; i++) {
-		sum += (x[i * incx] - mean) * (x[i * incx] - mean);
+		sum += (*x - mean) * (*x - mean);
+		x += incx;
 	}
 	return sqrt(sum / (size - ddof));
 }
@@ -1291,15 +1291,15 @@ static int vector_matrix (lua_State *L, vector_matrix_function f, int hasalpha, 
 				}
 			} else {
 				luaL_argcheck(L, 1, x->size == Y->cols, "dimension mismatch");
-				if (Y->order == CblasRowMajor) {
+				if (Y->order == CblasColMajor) {
 					for (i = 0; i < Y->cols; i++) {
 						f(x->size, alpha, x->values, x->inc, beta,
-								&Y->values[i], Y->ld);
+								&Y->values[i * Y->ld], 1);
 					}
 				} else {
 					for (i = 0; i < Y->cols; i++) {
 						f(x->size, alpha, x->values, x->inc, beta,
-								&Y->values[i * Y->ld], 1);
+								&Y->values[i], Y->ld);
 					}
 				}
 			}
@@ -1371,9 +1371,10 @@ static void _mul1 (const int size, const double alpha, double *x, int incx, cons
 
 	(void)alpha;
 	(void)beta;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
-		y[i * incy] *= x[i * incx];
+		*y *= *x;
+		x += incx;
+		y += incy;
 	}
 }
 
@@ -1383,9 +1384,10 @@ static void _mulm1 (const int size, const double alpha, double *x, int incx, con
 
 	(void)alpha;
 	(void)beta;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
-		y[i * incy] /= x[i * incx];
+		*y /= *x;
+		x += incx;
+		y += incy;
 	}
 }
 
@@ -1394,9 +1396,10 @@ static void _mul (const int size, const double alpha, double *x, int incx, const
 	int  i;
 
 	(void)beta;
-	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE)
 	for (i = 0; i < size; i++) {
-		y[i * incy] *= pow(x[i * incx], alpha);
+		*y *= pow(*x, alpha);
+		x += incx;
+		y += incy;
 	}
 }
 
@@ -1634,8 +1637,6 @@ static int cov (lua_State *L) {
 		return luaL_error(L, "cannot allocate values");
 	}
 	if (A->order == CblasRowMajor) {
-		#pragma omp parallel for private(i, j, sum, v) schedule(auto) \
-				if(A->rows * A->cols >= LUALINEAR_OMP_MINSIZE)
 		for (i = 0; i < A->cols; i++) {
 			sum = 0.0;
 			v = &A->values[i];
@@ -1646,8 +1647,6 @@ static int cov (lua_State *L) {
 			means[i] = sum / A->rows;
 		}
 	} else {
-		#pragma omp parallel for private(i, j, sum, v) schedule(auto) \
-				if(A->rows * A->cols >= LUALINEAR_OMP_MINSIZE)
 		for (i = 0; i < A->cols; i++) {
 			sum = 0.0;
 			v = &A->values[i * A->ld];
@@ -1662,8 +1661,6 @@ static int cov (lua_State *L) {
 	/* calculate covariance */
 	if (A->order == CblasRowMajor) {
 		for (i = 0; i < A->cols; i++) {
-			#pragma omp parallel for private(j, k, sum, vi, vj) schedule(auto) \
-					if(A->rows * (A->cols - i) >= LUALINEAR_OMP_MINSIZE)
 			for (j = i; j < A->cols; j++) {
 				sum = 0.0;
 				vi = &A->values[i];
@@ -1679,8 +1676,6 @@ static int cov (lua_State *L) {
 		}
 	} else {
 		for (i = 0; i < A->cols; i++) {
-			#pragma omp parallel for private(j, k, sum, vi, vj) schedule(auto) \
-					if(A->rows * (A->cols - i) >= LUALINEAR_OMP_MINSIZE)
 			for (j = i; j < A->cols; j++) {
 				sum = 0.0;
 				vi = &A->values[i * A->ld];
@@ -1721,8 +1716,6 @@ static int corr (lua_State *L) {
 		return luaL_error(L, "cannot allocate values");
 	}
 	if (A->order == CblasRowMajor) {
-		#pragma omp parallel for private(i, j, sum, v) schedule(auto) \
-				if(A->rows * A->cols >= LUALINEAR_OMP_MINSIZE)
 		for (i = 0; i < A->cols; i++) {
 			sum = 0.0;
 			v = &A->values[i];
@@ -1740,8 +1733,6 @@ static int corr (lua_State *L) {
 			stds[i] = sqrt(sum);
 		}
 	} else {
-		#pragma omp parallel for private(i, j, sum, v) schedule(auto) \
-				if(A->rows * A->cols >= LUALINEAR_OMP_MINSIZE)
 		for (i = 0; i < A->cols; i++) {
 			sum = 0.0;
 			v = &A->values[i * A->ld];
@@ -1763,8 +1754,6 @@ static int corr (lua_State *L) {
 	/* calculate correlation */
 	if (A->order == CblasRowMajor) {
 		for (i = 0; i < A->cols; i++) {
-			#pragma omp parallel for private(j, k, sum, vi, vj) schedule(auto) \
-					if(A->rows * (A->cols - i) >= LUALINEAR_OMP_MINSIZE)
 			for (j = i; j < A->cols; j++) {
 				sum = 0.0;
 				vi = &A->values[i];
@@ -1780,8 +1769,6 @@ static int corr (lua_State *L) {
 		}
 	} else {
 		for (i = 0; i < A->cols; i++) {
-			#pragma omp parallel for private(j, k, sum, vi, vj) schedule(auto) \
-					if(A->rows * (A->cols - i) >= LUALINEAR_OMP_MINSIZE)
 			for (j = i; j < A->cols; j++) {
 				sum = 0.0;
 				vi = &A->values[i * A->ld];

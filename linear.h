@@ -18,7 +18,6 @@
 
 #define LUALINEAR_VECTOR_METATABLE  "linear.vector"
 #define LUALINEAR_MATRIX_METATABLE  "linear.matrix"
-#define LUALINEAR_OMP_MINSIZE       2048
 
 
 struct vector {

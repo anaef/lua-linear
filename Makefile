@@ -1,8 +1,8 @@
 LUA_INCLUDE=/usr/include/lua5.3
 LUA_BIN=/usr/bin/lua5.3
 LIB_INSTALL=/usr/local/lib/lua/5.3
-CFLAGS=-Wall -Wextra -Wpointer-arith -Werror -fPIC -fopenmp -O3 -D_REENTRANT -D_GNU_SOURCE
-LDFLAGS=-shared -fPIC -fopenmp
+CFLAGS=-Wall -Wextra -Wpointer-arith -Werror -fPIC -O3 -D_REENTRANT -D_GNU_SOURCE
+LDFLAGS=-shared -fPIC
 
 export LUA_CPATH=$(PWD)/?.so
 
