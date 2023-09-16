@@ -8,19 +8,20 @@ export LUA_CPATH=$(PWD)/?.so
 
 default: all test
 
-linear.o: linear.h linear.c
-	gcc -c -o linear.o $(CFLAGS) -I$(LUA_INCLUDE) linear.c
+linear.o: src/linear.h src/linear.c
+	gcc -c -o linear.o $(CFLAGS) -I$(LUA_INCLUDE) src/linear.c
 
 linear.so: linear.o
 	gcc $(LDFLAGS) -o linear.so linear.o -lblas -llapacke
 
 all: linear.so
 
+.PHONY: test
 test:
-	$(LUA_BIN) test.lua
+	$(LUA_BIN) test/test.lua
 
 install:
 	cp linear.so $(LIB_INSTALL)
 
 clean:
-	-rm linear.o linear.so
+	-rm -f linear.o linear.so
