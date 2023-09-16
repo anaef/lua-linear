@@ -456,20 +456,6 @@ local function testIamin ()
 	assert(linear.iamin(x) == 1)
 end
 
--- Tests the imax function
-local function testImax ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, -2
-	assert(linear.imax(x) == 1)
-end
-
--- Tests the imin function
-local function testImin ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, -2
-	assert(linear.imin(x) == 2)
-end
-
 -- Tests the swap function
 local function testSwap ()
 	local x, y = linear.vector(2), linear.vector(2)
@@ -841,8 +827,6 @@ testVar()
 testStd()
 testIamax()
 testIamin()
-testImax()
-testImin()
 
 -- Vector-matrix function tests
 testSwap()

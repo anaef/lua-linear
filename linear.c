@@ -107,8 +107,6 @@ static double _std(int size, const double *values, const int inc, const int ddof
 static int std(lua_State *L);
 static int iamax(lua_State *L);
 static int iamin(lua_State *L);
-static int imax(lua_State *L);
-static int imin(lua_State *L);
 
 static int vector_matrix(lua_State *L, vector_matrix_function s, int hasalpha, int hasbeta);
 static void _swap(const int size, const double alpha, double *x, int incx, const double beta,
@@ -1247,22 +1245,6 @@ static int iamin (lua_State *L) {
 	return 1;
 }
 
-static int imax (lua_State *L) {
-	struct vector  *x;
-
-	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	lua_pushinteger(L, cblas_idmax(x->size, x->values, x->inc) + 1);
-	return 1;
-}
-
-static int imin (lua_State *L) {
-	struct vector  *x;
-
-	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	lua_pushinteger(L, cblas_idmin(x->size, x->values, x->inc) + 1);
-	return 1;
-}
-
 
 /*
  * vector-matrix functions
@@ -1848,8 +1830,6 @@ int luaopen_linear (lua_State *L) {
 		{ "std", std },
 		{ "iamax", iamax },
 		{ "iamin", iamin },
-		{ "imax", imax },
-		{ "imin", imin },
 
 		/* vector-matrix functions */
 		{ "swap", swap },
