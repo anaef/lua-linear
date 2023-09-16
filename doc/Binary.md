@@ -10,7 +10,7 @@ If called with a vector `x` and a matrix `Y`, the function applies vector `x` to
 vectors of matrix `Y`. If `order` is `row` (default), vector `x` is applied to the row vectors of
 matrix `Y`; if order is `col`, vector `x` is applied to the column vectors of matrix `Y`. The
 lengths of the vectors must match. The `order` argument is required if the function takes extra
-arguments; it can be set to `nil`.
+arguments; it can be set to `nil` to imply the default order.
 
 If called with two matrices `X` and `Y`, the function applies the major order vectors of matrix
 `X` to the major order vectors of matrix `Y`. The size and order of matrices `X` and `Y` must
@@ -35,8 +35,9 @@ The argument `alpha` defaults to `1.0`.
 
 ## `linear.axpby (x|X, y|Y [, order] [, alpha [, beta]])`
 
-Scales and adds the elements of vector `x` to scaled vector `y`, formally $y \leftarrow \alpha x
-+ \beta y$. The arguments `alpha` and `beta` default to `1.0` and `0.0`, respectively.
+Scales and adds the elements of vector `x` to scaled vector `y`, formally
+$y \leftarrow \alpha x + \beta y$. The arguments `alpha` and `beta` default to `1.0` and `0.0`,
+respectively.
 
 
 ## `linear.mul (x|X, y|Y [, order] [, alpha])`

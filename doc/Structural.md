@@ -16,7 +16,8 @@ creating a matrix with row major order.
 
 ## `linear.type (x|X)`
 
-Returns `vector` if the value is a vector, `matrix` if the value is a matrix, or `nil` otherwise.
+Returns the string `"vector"` if the value is a vector, `"matrix"` if the value is a matrix, or
+`nil` otherwise.
 
 
 ## `linear.size (x|X)`
@@ -44,13 +45,13 @@ Start values default to 1, and end values default to the number of rows or colum
 respectively.
 
 
-## `linear.unwind (X1 {, Xn}, x)`
+## `linear.unwind (X1 {, Xi}, x)`
 
 Unwinds one or more matrices `X1`, ..., `Xn` into a vector `x`. The number of elements of the
 matrices and the vector must match.
 
 
-## `linear.reshape (x, X1 {, Xn})`
+## `linear.reshape (x, X1 {, Xi})`
 
 Reshapes a vector `x` into one or more matrices `X1`, ..., `Xn`. The number of elements of the
 vector and the matrices must match.
@@ -60,9 +61,9 @@ vector and the matrices must match.
 
 Returns the values of vector `x` or matrix `X` as a table.
 
-For a vector, the function returns an list of numbers.
+For a vector, the function returns a list of numbers.
 
-For a matrix, the functions returns an list of list of numbers. The nested lists of numbers are
+For a matrix, the function returns a list of lists of numbers. The nested lists of numbers are
 the major order vectors of the matrix.
 
 

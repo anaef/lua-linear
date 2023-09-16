@@ -12,7 +12,7 @@ values of `x` or `X`.
 ## `linear.sgn (n|x|X)`
 
 Applies the sign function, formally $\mathop{\mathrm{sgn}} \ x$. The result of the sign function
-is `1` if `x` is larger than zero, `-1` is x is less than zero, and `x` otherwise.
+is `1` if `x` is larger than zero, `-1` if `x` is less than zero, and `x` otherwise.
 
 
 ## `linear.abs (n|x|X)`
