@@ -99,6 +99,12 @@ static double _asum(int size, const double *values, const int inc, const int ddo
 static int asum(lua_State *L);
 static double _sum(int size, const double *values, const int inc, const int ddof);
 static int sum(lua_State *L);
+static double _mean(int size, const double *values, const int inc, const int ddof);
+static int mean(lua_State *L);
+static double _var(int size, const double *values, const int inc, const int ddof);
+static int var(lua_State *L);
+static double _std(int size, const double *values, const int inc, const int ddof);
+static int std(lua_State *L);
 static int iamax(lua_State *L);
 static int iamin(lua_State *L);
 static int imax(lua_State *L);
@@ -1196,7 +1202,7 @@ static int mean (lua_State *L) {
 	return _vector(L, _mean, 0);
 }
 
-static double _std (int size, const double *x, const int incx, const int ddof) {
+static double _var (int size, const double *x, const int incx, const int ddof) {
 	size_t  i;
 	double  sum, mean;
 
@@ -1210,7 +1216,15 @@ static double _std (int size, const double *x, const int incx, const int ddof) {
 		sum += (*x - mean) * (*x - mean);
 		x += incx;
 	}
-	return sqrt(sum / (size - ddof));
+	return sum / (size - ddof);
+}
+
+static int var (lua_State *L) {
+	return _vector(L, _var, 1);
+}
+
+static double _std (int size, const double *x, const int incx, const int ddof) {
+	return sqrt(_var(size, x, incx, ddof));
 }
 
 static int std (lua_State *L) {
@@ -1830,6 +1844,7 @@ int luaopen_linear (lua_State *L) {
 		{ "asum", asum },
 		{ "sum", sum },
 		{ "mean", mean },
+		{ "var", var },
 		{ "std", std },
 		{ "iamax", iamax },
 		{ "iamin", iamin },

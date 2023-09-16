@@ -420,6 +420,17 @@ local function testMean ()
 	assert(linear.mean(x) == 4)
 end
 
+-- Tests the var function
+local function testVar ()
+	local x = linear.vector(3)
+	for i = 1, 3 do
+		x[i] = i
+	end
+	assert(math.abs(linear.var(x) - 2 / 3) < EPSILON)
+	assert(math.abs(linear.var(x, 1) - 1) < EPSILON)
+	assert(math.abs(linear.var(x, 2) - 2) < EPSILON)
+end
+
 -- Tests the std function
 local function testStd ()
 	local x = linear.vector(3)
@@ -826,6 +837,7 @@ testNrm2()
 testAsum()
 testSum()
 testMean()
+testVar()
 testStd()
 testIamax()
 testIamin()
