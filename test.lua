@@ -73,12 +73,14 @@ end
 
 -- Tests the sub function
 local function testSub ()
+	-- vector
 	local x = linear.vector(2)
 	x[2] = 1
 	local s = linear.sub(x, 2)
 	assert(#s == 1)
 	assert(s[1] == 1)
 
+	-- matrix
 	local X = linear.matrix(2, 3)
 	X[2][3] = 1
 	local S = linear.sub(X, 2, 3)
@@ -118,7 +120,7 @@ end
 
 -- Tests the totable function
 local function testTotable ()
-	-- Vector
+	-- vector
 	local x = linear.vector(2)
 	x[1] = 2
 	x[2] = 3
@@ -128,7 +130,7 @@ local function testTotable ()
 	assert(t[1] == 2)
 	assert(t[2] == 3)
 
-	-- Matrix
+	-- matrix
 	local X = linear.matrix(3, 2)
 	X[1][1] = 2
 	X[3][2] = 4
@@ -143,7 +145,7 @@ end
 
 -- Tests the tolinear function
 local function testTolinear ()
-	-- Vector
+	-- vector
 	local x = linear.tolinear({ 1, 2, 3 })
 	assert(linear.type(x) == "vector")
 	assert(#x == 3)
@@ -151,7 +153,7 @@ local function testTolinear ()
 	assert(x[2] == 2)
 	assert(x[3] == 3)
 
-	-- Table, row major
+	-- matrix, row major
 	local X = linear.tolinear({ { 1, 2, 3 }, { 3, 2, 1 } })
 	assert(linear.type(X) == "matrix")
 	assert(select(3, linear.size(X)) == "row")
@@ -164,7 +166,7 @@ local function testTolinear ()
 	assert(X[2][2] == 2)
 	assert(X[2][3] == 1)
 
-	-- Table, column major
+	-- matrix, column major
 	local X = linear.tolinear({ { 1, 2, 3 }, { 3, 2, 1 } }, "col")
 	assert(linear.type(X) == "matrix")
 	assert(select(3, linear.size(X)) == "col")
@@ -308,11 +310,13 @@ end
 
 -- Tests the scal function
 local function testScal ()
+	-- vector
 	local x = linear.tolinear({ 1, 2 })
 	linear.scal(x, 2)
 	assert(x[1] == 2)
 	assert(x[2] == 4)
 
+	-- matrix
 	local X = linear.tolinear({ { 0, 0 }, { 0, 1 } })
 	linear.scal(X, 2)
 	assert(X[2][2] == 2)
@@ -320,11 +324,13 @@ end
 
 -- Tests the pow function
 local function testPow ()
+	-- vector
 	local x = linear.tolinear({ 1, 2 })
 	linear.pow(x, 0.5)
 	assert(x[1] == 1)
 	assert(math.abs(x[2] - math.sqrt(2)) < EPSILON)
 
+	-- matrix
 	local X = linear.tolinear({ { 0, 0, 0 }, { 0, 0, 2 }})
 	linear.pow(X, 3)
 	assert(X[1][1] == 0)
@@ -362,8 +368,11 @@ end
 
 -- Tests the sum function
 local function testSum ()
+	-- vector
 	local x = linear.tolinear({ 1, -2 })
 	assert(linear.sum(x) == -1)
+
+	-- matrix, row major
 	local X = linear.tolinear({ { 1, 1, 1, 1 }, { 1, 2, 3, 4 } })
 	local x = linear.vector(4)
 	linear.sum(X, x)
@@ -376,6 +385,7 @@ local function testSum ()
 	assert(x[1] == 4)
 	assert(x[2] == 10)
 
+	-- matrix, col major
 	local X = linear.tolinear({ { 1, 1 }, { 1, 2 }, { 1, 3 }, { 1, 4 } }, "col")
 	local x = linear.vector(4)
 	linear.sum(X, x, "row")
@@ -425,6 +435,7 @@ end
 
 -- Tests the swap function
 local function testSwap ()
+	-- vector
 	local x, y = linear.tolinear({ 1, 0 }), linear.tolinear({ 0, 2 })
 	linear.swap(x, y)
 	assert(x[1] == 0)
@@ -432,6 +443,7 @@ local function testSwap ()
 	assert(y[1] == 1)
 	assert(y[2] == 0)
 
+	-- matrix
 	local X = linear.matrix(2, 3)
 	local Y = linear.matrix(2, 3)
 	X[2][3], Y[2][3] = 1, 2
@@ -442,12 +454,14 @@ end
 
 -- Tests the copy function
 local function testCopy ()
+	-- vector
 	local x = linear.tolinear({ 1, 2 })
 	local y = linear.vector(2)
 	linear.copy(x, y)
 	assert(y[1] == 1)
 	assert(y[2] == 2)
 
+	-- matrix
 	local X = linear.matrix(2, 3)
 	local Y = linear.matrix(2, 3)
 	X[2][3] = 1
@@ -457,12 +471,14 @@ end
 
 -- Tests the axpy function
 local function testAxpy ()
+	-- vector-vector
 	local x = linear.tolinear({ 1, 2 })
 	local y = linear.tolinear({ 3, 4 })
 	linear.axpy(x, y, 2)
 	assert(y[1] == 5)
 	assert(y[2] == 8)
 
+	-- vector-matrix, row major
 	local Y = linear.matrix(2, 3)
 	linear.set(Y[1], 1)
 	linear.set(Y[2], 2)
@@ -491,6 +507,7 @@ local function testAxpy ()
 	assert(Y[2][2] == 6)
 	assert(Y[2][3] == 6)
 
+	-- vector-matrix, col major
 	local Y = linear.matrix(2, 3, "col")
 	linear.set(linear.tvector(Y, 1), 1)
 	linear.set(linear.tvector(Y, 2), 2)
@@ -519,39 +536,43 @@ local function testAxpy ()
 	assert(Y[2][2] == 8)
 	assert(Y[3][2] == 8)
 
+	-- matrix-matrix
 	local X = linear.matrix(2, 2)
 	local Y = linear.matrix(2, 2)
 	X[2][2] = 1
 	Y[2][2] = 2
 	linear.axpy(X, Y, 2)
 	assert(Y[2][2] == 4)
-
 end
 
 -- Tests the axpby function
 local function testAxpby ()
+	-- vector-vector
 	local x = linear.tolinear({ 1, 2 })
 	local y = linear.tolinear({ 3, 4 })
 	linear.axpby(x, y, 2, 3)
 	assert(y[1] == 11)
 	assert(y[2] == 16)
 
-	local X = linear.matrix(2, 2)
+	-- vector-matrix
 	local Y = linear.matrix(2, 2)
-	X[2][2] = 1
-	Y[2][2] = 2
-	linear.axpby(X, Y, 2, 3)
-	assert(Y[2][2] == 8)
-
+	Y[2][2] = -1
 	linear.axpby(x, Y)
 	assert(Y[1][1] == 1)
 	assert(Y[1][2] == 2)
 	assert(Y[2][1] == 1)
 	assert(Y[2][2] == 2)
+
+	-- matrix-matrix
+	local X = linear.matrix(2, 2)
+	X[2][2] = 1
+	linear.axpby(X, Y, 2, 3)
+	assert(Y[2][2] == 8)
 end
 
 -- Tests the mul function
 local function testMul ()
+	-- vector-vector
 	local x = linear.tolinear({ 1, 2 })
 	x[1], x[2] = 1, 2
 	linear.mul(x, x)
@@ -564,6 +585,7 @@ local function testMul ()
 	assert(x[1] == 1)
 	assert(x[2] == 1)
 
+	-- vector-matrix
 	local X = linear.tolinear({ { 1, 2 }, { 2, 4 } })
 	linear.mul(X, X)
 	assert(X[1][1] == 1)
@@ -585,6 +607,7 @@ end
 
 -- Tests the gemv function
 local function testGemv ()
+	-- direct
 	local A = linear.tolinear({ { 1, 2, 3 }, { 4, 5, 6 } })
 	local x = linear.tolinear({ 1, 2, 3 })
 	local y = linear.vector(2)
@@ -592,6 +615,7 @@ local function testGemv ()
 	assert(y[1] == 14)
 	assert(y[2] == 32)
 
+	-- transposed
 	local A = linear.tolinear({ { 1, 4 }, { 2, 5 }, { 3, 6 } })
 	linear.gemv(A, x, y, 2, nil, "trans")
 	assert(y[1] == 28)
@@ -612,6 +636,7 @@ end
 
 -- Tests the gemm function
 local function testGemm ()
+	-- direct
 	local A = linear.tolinear({ { 1, 2, 3 }, { 4, 5, 6 } })
 	local B = linear.tolinear({ { 1, 2 }, { 3, 4 }, { 5, 6 } })
 	local C = linear.matrix(2, 2)
@@ -622,6 +647,7 @@ local function testGemm ()
 	assert(C2[1] == 49)
 	assert(C2[2] == 64)
 
+	-- transposed
 	local C = linear.matrix(3, 3)
 	local C1, C2, C3 = C[1], C[2], C[3]
 	linear.gemm(A, B, C, 2, nil, "trans", "trans")
@@ -759,7 +785,5 @@ testGesv()
 testGels()
 testInv()
 testDet()
-
--- Statistical function tests
 testCov()
 testCorr()

@@ -132,7 +132,6 @@ static int gesv(lua_State *L);
 static int gels(lua_State *L);
 static int inv(lua_State *L);
 static int det(lua_State *L);
-
 static int cov(lua_State *L);
 static int corr(lua_State *L);
 
@@ -203,11 +202,8 @@ struct vector *wrap_vector (lua_State *L, size_t size, double *values) {
 static int vector (lua_State *L) {
 	size_t  size;
 
-	/* process arguments */
 	size = luaL_checkinteger(L, 1);
 	luaL_argcheck(L, size >= 1 && size <= INT_MAX, 1, "bad dimension");
-
-	/* create */
 	create_vector(L, size);
 	return 1;
 }
@@ -333,14 +329,11 @@ static int matrix (lua_State *L) {
 	size_t       rows, cols;
 	CBLAS_ORDER  order;
 
-	/* process arguments */
 	rows = luaL_checkinteger(L, 1);
 	luaL_argcheck(L, rows >= 1 && rows <= INT_MAX, 1, "bad dimension");
 	cols = luaL_checkinteger(L, 2);
 	luaL_argcheck(L, cols >= 1 && cols <= INT_MAX, 2, "bad dimension");
 	order = checkorder(L, 3);
-
-	/* create */
 	create_matrix(L, rows, cols, order);
 	return 1;
 }
@@ -362,7 +355,6 @@ static int matrix_index (lua_State *L) {
 	struct vector  *x;
 	struct matrix  *X;
 
-	/* process arguments */
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	index = luaL_checkinteger(L, 2);
 	luaL_argcheck(L, index >= 1, 2, "bad index");
@@ -373,8 +365,6 @@ static int matrix_index (lua_State *L) {
 		luaL_argcheck(L, index <= X->cols, 2, "bad index");
 		size = X->rows;
 	}
-
-	/* create vector */
 	x = wrap_vector(L, size, &X->values[(index - 1) * X->ld]);
 	lua_pushvalue(L, 1);
 	x->ref = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -476,7 +466,6 @@ static int tvector (lua_State *L) {
 	struct vector  *x;
 	struct matrix  *X;
 
-	/* process arguments */
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	index = luaL_checkinteger(L, 2);
 	luaL_argcheck(L, index >= 1, 2, "bad index");
@@ -487,8 +476,6 @@ static int tvector (lua_State *L) {
 		luaL_argcheck(L, index <= X->rows, 2, "bad index");
 		size = X->cols;
 	}
-
-	/* create vector */
 	x = wrap_vector(L, size, &X->values[index - 1]);
 	x->inc = X->ld;
 	lua_pushvalue(L, 1);
@@ -1085,7 +1072,6 @@ static int asum (lua_State *L) {
 	return _vector(L, _asum, 0);
 }
 
-/* cblas_dsum does not work as expected */
 static double _sum (int size, const double *x, const int incx, const int ddof) {
 	size_t  i;
 	double  sum;
@@ -1344,7 +1330,6 @@ static int gemv (lua_State *L) {
 	struct vector   *x, *y;	
 	CBLAS_TRANSPOSE  ta;
 
-	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	x = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
 	y = luaL_checkudata(L, 3, LUALINEAR_VECTOR_METATABLE);
@@ -1355,8 +1340,6 @@ static int gemv (lua_State *L) {
 	n = ta == CblasNoTrans ? A->cols : A->rows;
 	luaL_argcheck(L, x->length == n, 2, "dimension mismatch");
 	luaL_argcheck(L, y->length == m, 3, "dimension mismatch");
-
-	/* invoke subprogram */
 	cblas_dgemv(A->order, ta, A->rows, A->cols, alpha, A->values, A->ld, x->values, x->inc,
 			beta, y->values, y->inc);
 	return 0;
@@ -1367,15 +1350,12 @@ static int ger (lua_State *L) {
 	struct vector  *x, *y;	
 	struct matrix  *A;
 
-	/* check and process arguments */
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
 	A = luaL_checkudata(L, 3, LUALINEAR_MATRIX_METATABLE);
 	alpha = luaL_optnumber(L, 4, 1.0);
 	luaL_argcheck(L, x->length == A->rows, 1, "dimension mismatch");
 	luaL_argcheck(L, y->length == A->cols, 2, "dimension mismatch");
-
-	/* invoke subprogram */
 	cblas_dger(A->order, A->rows, A->cols, alpha, x->values, x->inc, y->values, y->inc,
 			A->values, A->ld);
 	return 0;
@@ -1387,7 +1367,6 @@ static int gemm (lua_State *L) {
 	struct matrix    *A, *B, *C;
 	CBLAS_TRANSPOSE   ta, tb;
 
-	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	B = luaL_checkudata(L, 2, LUALINEAR_MATRIX_METATABLE);
 	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
@@ -1402,8 +1381,6 @@ static int gemm (lua_State *L) {
 	ka = ta == CblasNoTrans ? A->cols : A->rows;
 	kb = tb == CblasNoTrans ? B->rows : B->cols;
 	luaL_argcheck(L, ka == kb, 2, "dimension mismatch");
-
-	/* invoke subprogramm */
 	cblas_dgemm(A->order, ta, tb, m, n, ka, alpha, A->values, A->ld, B->values, B->ld, beta,
 			C->values, C->ld);
 	return 0;
@@ -1414,14 +1391,11 @@ static int gesv (lua_State *L) {
 	int            *ipiv, result;
 	struct matrix  *A, *B;
 
-	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	luaL_argcheck(L, A->rows == A->cols, 1, "not square");
 	B = luaL_checkudata(L, 2, LUALINEAR_MATRIX_METATABLE);
 	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
 	luaL_argcheck(L, B->rows == A->rows, 2, "dimension mismatch");
-
-	/* invoke subprogramm */
 	ipiv = calloc(A->rows, sizeof(lapack_int));
 	if (ipiv == NULL) {
 		return luaL_error(L, "cannot allocate indexes");
@@ -1432,20 +1406,16 @@ static int gesv (lua_State *L) {
 	return 1;
 }
 
-/* invokes the GELS subprogram */
 static int gels (lua_State *L) {
 	char            ta;
 	struct matrix  *A, *B;
 
-	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	B = luaL_checkudata(L, 2, LUALINEAR_MATRIX_METATABLE);
 	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
 	ta = lapacktranspose(checktranspose(L, 3));
 	luaL_argcheck(L, B->rows == (A->rows >= A->cols ? A->rows : A->cols), 2,
 			"dimension mismatch");
-
-	/* invoke subprogramm */
 	lua_pushinteger(L, LAPACKE_dgels(A->order, ta, A->rows, A->cols, B->cols, A->values, A->ld,
 			B->values, B->ld));
 	return 1;
@@ -1455,11 +1425,8 @@ static int inv (lua_State *L) {
 	int            *ipiv, result;
 	struct matrix  *A;
 
-	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	luaL_argcheck(L, A->rows == A->cols, 1, "not square");
-
-	/* invoke subprograms */
 	ipiv = calloc(A->rows, sizeof(lapack_int));
 	if (ipiv == NULL) {
 		return luaL_error(L, "cannot allocate indexes");
@@ -1529,11 +1496,6 @@ static int det (lua_State *L) {
 	return 1;
 }
 
-
-/*
- * statistical functions
- */
-
 static int cov (lua_State *L) {
 	size_t          i, j, k, ddof;
 	double         *means, *v, *vi, *vj, sum;
@@ -1574,7 +1536,7 @@ static int cov (lua_State *L) {
 		}
 	}
 
-	/* calculate covariance */
+	/* calculate covariances */
 	if (A->order == CblasRowMajor) {
 		for (i = 0; i < A->cols; i++) {
 			for (j = i; j < A->cols; j++) {
@@ -1667,7 +1629,7 @@ static int corr (lua_State *L) {
 		}
 	}
 
-	/* calculate correlation */
+	/* calculate Pearson correlations */
 	if (A->order == CblasRowMajor) {
 		for (i = 0; i < A->cols; i++) {
 			for (j = i; j < A->cols; j++) {
@@ -1766,8 +1728,6 @@ int luaopen_linear (lua_State *L) {
 		{ "gels", gels },
 		{ "inv", inv },
 		{ "det", det },
-
-		/* statistical functions */
 		{ "cov", cov },
 		{ "corr", corr },
 

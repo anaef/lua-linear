@@ -21,19 +21,19 @@
 
 
 struct vector {
-        size_t   length;
-        size_t   inc;
-        double  *values;
-        int      ref;
+        size_t   length;  /* length*/
+        size_t   inc;     /* increment to next value*/
+        double  *values;  /* values */
+        int      ref;     /* Lua reference */
 };
 
 struct matrix {
-        size_t        rows;
-        size_t        cols;
-        size_t        ld;
-        CBLAS_ORDER   order;
-        double       *values;
-        int           ref;
+        size_t        rows;    /* number of rows */
+        size_t        cols;    /* number of columns*/
+        size_t        ld;      /* increment to next major vector */
+        CBLAS_ORDER   order;   /* order */
+        double       *values;  /* values */
+        int           ref;     /* Lua reference */
 };
 
 
