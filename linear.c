@@ -173,7 +173,7 @@ struct vector *create_vector (lua_State *L, size_t size) {
 
 	assert(size >= 1 && size <= INT_MAX);
 	vector = lua_newuserdata(L, sizeof(struct vector));
-	vector->size = size;
+	vector->length = size;
 	vector->inc = 1;
 	vector->values = NULL;
 	vector->ref = LUA_NOREF;
@@ -191,7 +191,7 @@ struct vector *wrap_vector (lua_State *L, size_t size, double *values) {
 
 	assert(size >= 1 && size <= INT_MAX);
 	vector = lua_newuserdata(L, sizeof(struct vector));
-	vector->size = size;
+	vector->length = size;
 	vector->inc = 1;
 	vector->values = values;
 	vector->ref = LUA_REFNIL;
@@ -216,7 +216,7 @@ static int vector_len (lua_State *L) {
 	struct vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	lua_pushinteger(L, x->size);
+	lua_pushinteger(L, x->length);
 	return 1;
 }
 
@@ -226,7 +226,7 @@ static int vector_index (lua_State *L) {
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	index = luaL_checkinteger(L, 2);
-	luaL_argcheck(L, index >= 1 && index <= x->size, 2, "bad index");
+	luaL_argcheck(L, index >= 1 && index <= x->length, 2, "bad index");
 	lua_pushnumber(L, x->values[(index - 1) * x->inc]);
 	return 1;
 }
@@ -238,7 +238,7 @@ static int vector_newindex (lua_State *L) {
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	index = luaL_checkinteger(L, 2);
-	luaL_argcheck(L, index >= 1 && index <= x->size, 2, "bad index");
+	luaL_argcheck(L, index >= 1 && index <= x->length, 2, "bad index");
 	value = luaL_checknumber(L, 3);
 	x->values[(index - 1) * x->inc] = value;
 	return 0;
@@ -250,7 +250,7 @@ static int vector_next (lua_State *L) {
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	index = luaL_checkinteger(L, 2);
-	if (index < x->size) {
+	if (index < x->length) {
 		lua_pushinteger(L, index + 1);
 		lua_pushnumber(L, x->values[index]);
 		return 2;
@@ -458,7 +458,7 @@ static int size (lua_State *L) {
 
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
-		lua_pushinteger(L, x->size);
+		lua_pushinteger(L, x->length);
 		return 1;
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
@@ -505,9 +505,9 @@ static int sub (lua_State *L) {
 		size_t  start, end;
 
 		start = luaL_optinteger(L, 2, 1);
-		luaL_argcheck(L, start >= 1 && start <= x->size, 2, "bad index");
-		end = luaL_optinteger(L, 3, x->size);
-		luaL_argcheck(L, end >= start && end <= x->size, 3, "bad index");
+		luaL_argcheck(L, start >= 1 && start <= x->length, 2, "bad index");
+		end = luaL_optinteger(L, 3, x->length);
+		luaL_argcheck(L, end >= start && end <= x->length, 3, "bad index");
 		s = wrap_vector(L, end - start + 1, &x->values[(start - 1) * x->inc]);
 		s->inc = x->inc;
 		lua_pushvalue(L, 1);
@@ -561,9 +561,9 @@ static int unwind (lua_State *L) {
 	x = luaL_checkudata(L, lua_gettop(L), LUALINEAR_VECTOR_METATABLE);
 	index = 1;
 	i = 0;
-	while (i < x->size) {
+	while (i < x->length) {
 		X = luaL_checkudata(L, index, LUALINEAR_MATRIX_METATABLE);
-		luaL_argcheck(L, X->rows * X->cols <= x->size - i, index, "matrix too large");
+		luaL_argcheck(L, X->rows * X->cols <= x->length - i, index, "matrix too large");
 		if (X->order == CblasRowMajor) {
 			for (j = 0; j < X->rows; j++) {
 				base = j * X->ld;
@@ -595,9 +595,9 @@ static int reshape (lua_State *L) {
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	index = 2;
 	i = 0;
-	while (i < x->size) {
+	while (i < x->length) {
 		X = luaL_checkudata(L, index, LUALINEAR_MATRIX_METATABLE);
-		luaL_argcheck(L, X->rows * X->cols <= x->size - i, index, "matrix too large");
+		luaL_argcheck(L, X->rows * X->cols <= x->length - i, index, "matrix too large");
 		if (X->order == CblasRowMajor) {
 			for (j = 0; j < X->rows; j++) {
 				base = j * X->ld;
@@ -628,9 +628,9 @@ static int totable (lua_State *L) {
 
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
-		lua_createtable(L, x->size, 0);
+		lua_createtable(L, x->length, 0);
 		value = x->values;
-		for (i = 0; i < x->size; i++) {
+		for (i = 0; i < x->length; i++) {
 			lua_pushnumber(L, *value);
 			lua_rawseti(L, -2, i + 1);
 			value += x->inc;
@@ -750,7 +750,7 @@ static int elementary (lua_State *L, elementary_function f, int hasalpha) {
 	alpha = hasalpha ? luaL_optnumber(L, 2, 1.0) : 0.0;
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
-		f(x->size, alpha, x->values, x->inc);
+		f(x->length, alpha, x->values, x->inc);
 		return 0;
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
@@ -1002,8 +1002,8 @@ static int dot (lua_State *L) {
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
-	luaL_argcheck(L, y->size == x->size, 2, "dimension mismatch");
-	lua_pushnumber(L, cblas_ddot(x->size, x->values, x->inc, y->values, y->inc));
+	luaL_argcheck(L, y->length == x->length, 2, "dimension mismatch");
+	lua_pushnumber(L, cblas_ddot(x->length, x->values, x->inc, y->values, y->inc));
 	return 1;
 }
 
@@ -1018,9 +1018,9 @@ static int _vector (lua_State *L, vector_function f, int hasddof) {
 		/* vector */
 		if (hasddof) {
 			ddof = luaL_optinteger(L, 2, 0);
-			luaL_argcheck(L, ddof < x->size, 2, "bad ddof");
+			luaL_argcheck(L, ddof < x->length, 2, "bad ddof");
 		}
-		lua_pushnumber(L, f(x->size, x->values, x->inc, ddof));
+		lua_pushnumber(L, f(x->length, x->values, x->inc, ddof));
 		return 1;
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
@@ -1028,7 +1028,7 @@ static int _vector (lua_State *L, vector_function f, int hasddof) {
 		/* matrix-vector */
 		y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
 		if (checkorder(L, 3) == CblasRowMajor) {
-			luaL_argcheck(L, y->size == X->cols, 2, "dimension mismatch");
+			luaL_argcheck(L, y->length == X->cols, 2, "dimension mismatch");
 			if (hasddof) {
 				ddof = luaL_optinteger(L, 3, 0);
 				luaL_argcheck(L, ddof < X->rows, 3, "bad ddof");
@@ -1045,7 +1045,7 @@ static int _vector (lua_State *L, vector_function f, int hasddof) {
 				}
 			}
 		} else {
-			luaL_argcheck(L, y->size == X->rows, 2, "dimension mismatch");
+			luaL_argcheck(L, y->length == X->rows, 2, "dimension mismatch");
 			if (hasddof) {
 				ddof = luaL_optinteger(L, 3, 0);
 				luaL_argcheck(L, ddof < X->cols, 3, "bad ddof");
@@ -1153,7 +1153,7 @@ static int iamax (lua_State *L) {
 	struct vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	lua_pushinteger(L, cblas_idamax(x->size, x->values, x->inc) + 1);
+	lua_pushinteger(L, cblas_idamax(x->length, x->values, x->inc) + 1);
 	return 1;
 }
 
@@ -1161,7 +1161,7 @@ static int iamin (lua_State *L) {
 	struct vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	lua_pushinteger(L, cblas_idamin(x->size, x->values, x->inc) + 1);
+	lua_pushinteger(L, cblas_idamin(x->length, x->values, x->inc) + 1);
 	return 1;
 }
 
@@ -1185,36 +1185,36 @@ static int vector_matrix (lua_State *L, vector_matrix_function f, int hasalpha, 
 		y = luaL_testudata(L, 2, LUALINEAR_VECTOR_METATABLE);
 		if (y != NULL) {
 			/* vector-vector */
-			luaL_argcheck(L, y->size == x->size, 2, "dimension mismatch");
-			f(x->size, alpha, x->values, x->inc, beta, y->values, y->inc);
+			luaL_argcheck(L, y->length == x->length, 2, "dimension mismatch");
+			f(x->length, alpha, x->values, x->inc, beta, y->values, y->inc);
 			return 0;
 		}
 		Y = luaL_testudata(L, 2, LUALINEAR_MATRIX_METATABLE);
 		if (Y != NULL) {
 			/* vector-matrix */
 			if (checkorder(L, index) == CblasRowMajor) {
-				luaL_argcheck(L, 1, x->size == Y->cols, "dimension mismatch");
+				luaL_argcheck(L, 1, x->length == Y->cols, "dimension mismatch");
 				if (Y->order == CblasRowMajor) {
 					for (i = 0; i < Y->rows; i++) {
-						f(x->size, alpha, x->values, x->inc, beta,
+						f(x->length, alpha, x->values, x->inc, beta,
 								&Y->values[i * Y->ld], 1);
 					}
 				} else {
 					for (i = 0;i < Y->rows; i++) {
-						f(x->size, alpha, x->values, x->inc, beta,
+						f(x->length, alpha, x->values, x->inc, beta,
 								&Y->values[i], Y->ld);
 					}
 				}
 			} else {
-				luaL_argcheck(L, 1, x->size == Y->cols, "dimension mismatch");
+				luaL_argcheck(L, 1, x->length == Y->cols, "dimension mismatch");
 				if (Y->order == CblasColMajor) {
 					for (i = 0; i < Y->cols; i++) {
-						f(x->size, alpha, x->values, x->inc, beta,
+						f(x->length, alpha, x->values, x->inc, beta,
 								&Y->values[i * Y->ld], 1);
 					}
 				} else {
 					for (i = 0; i < Y->cols; i++) {
-						f(x->size, alpha, x->values, x->inc, beta,
+						f(x->length, alpha, x->values, x->inc, beta,
 								&Y->values[i], Y->ld);
 					}
 				}
@@ -1353,8 +1353,8 @@ static int gemv (lua_State *L) {
 	ta = checktranspose(L, 6);
 	m = ta == CblasNoTrans ? A->rows : A->cols;
 	n = ta == CblasNoTrans ? A->cols : A->rows;
-	luaL_argcheck(L, x->size == n, 2, "dimension mismatch");
-	luaL_argcheck(L, y->size == m, 3, "dimension mismatch");
+	luaL_argcheck(L, x->length == n, 2, "dimension mismatch");
+	luaL_argcheck(L, y->length == m, 3, "dimension mismatch");
 
 	/* invoke subprogram */
 	cblas_dgemv(A->order, ta, A->rows, A->cols, alpha, A->values, A->ld, x->values, x->inc,
@@ -1372,8 +1372,8 @@ static int ger (lua_State *L) {
 	y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
 	A = luaL_checkudata(L, 3, LUALINEAR_MATRIX_METATABLE);
 	alpha = luaL_optnumber(L, 4, 1.0);
-	luaL_argcheck(L, x->size == A->rows, 1, "dimension mismatch");
-	luaL_argcheck(L, y->size == A->cols, 2, "dimension mismatch");
+	luaL_argcheck(L, x->length == A->rows, 1, "dimension mismatch");
+	luaL_argcheck(L, y->length == A->cols, 2, "dimension mismatch");
 
 	/* invoke subprogram */
 	cblas_dger(A->order, A->rows, A->cols, alpha, x->values, x->inc, y->values, y->inc,

@@ -21,7 +21,7 @@
 
 
 struct vector {
-        size_t   size;
+        size_t   length;
         size_t   inc;
         double  *values;
         int      ref;
