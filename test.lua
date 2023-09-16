@@ -123,65 +123,59 @@ local function testTotable ()
 	x[1] = 2
 	x[2] = 3
 	local t = linear.totable(x)
-	assert(t.type == "vector")
-	assert(t.length == 2)
-	assert(type(t.values) == "table")
-	assert(#t.values == 2)
-	assert(t.values[1] == 2)
-	assert(t.values[2] == 3)
+	assert(type(t) == "table")
+	assert(#t == 2)
+	assert(t[1] == 2)
+	assert(t[2] == 3)
 
 	-- Matrix
 	local X = linear.matrix(3, 2)
 	X[1][1] = 2
 	X[3][2] = 4
 	local t = linear.totable(X)
-	assert(t.type == "matrix")
-	assert(t.rows == 3)
-	assert(t.cols == 2)
-	assert(t.order == "row")
-	assert(type(t.values) == "table")
-	assert(#t.values == 3)
-	assert(type(t.values[1]) == "table")
-	assert(#t.values[1] == 2)
-	assert(t.values[1][1] == 2)
-	assert(t.values[3][2] == 4)
+	assert(type(t) == "table")
+	assert(#t == 3)
+	assert(type(t[1]) == "table")
+	assert(#t[1] == 2)
+	assert(t[1][1] == 2)
+	assert(t[3][2] == 4)
 end
 
 -- Tests the tolinear function
 local function testTolinear ()
 	-- Vector
-	local vector = {
-		type = "vector",
-		length = 2,
-		values = { 2, 3 }
-	}
-	local x = linear.tolinear(vector)
-	assert(type(x) == "userdata")
+	local x = linear.tolinear({ 1, 2, 3 })
 	assert(linear.type(x) == "vector")
-	assert(#x == 2)
-	assert(x[1] == 2)
-	assert(x[2] == 3)
+	assert(#x == 3)
+	assert(x[1] == 1)
+	assert(x[2] == 2)
+	assert(x[3] == 3)
 
-	-- Matrix
-	local matrix = {
-		type = "matrix",
-		rows = 3,
-		cols = 2,
-		order = "row",
-		values = {
-			{ 2, 0 },
-			{ 0, 0 },
-			{ 0, 3 }
-		}
-	}
-	local X = linear.tolinear(matrix)
-	assert(type(X) == "userdata")
+	-- Table, row major
+	local X = linear.tolinear({ { 1, 2, 3 }, { 3, 2, 1 } })
 	assert(linear.type(X) == "matrix")
-	assert(#X == 3)
-	assert(linear.type(X[1]) == "vector")
-	assert(#X[1] == 2)
-	assert(X[1][1] == 2)
-	assert(X[3][2] == 3)
+	assert(select(3, linear.size(X)) == "row")
+	assert(#X == 2)
+	assert(#X[1] == 3)
+	assert(X[1][1] == 1)
+	assert(X[1][2] == 2)
+	assert(X[1][3] == 3)
+	assert(X[2][1] == 3)
+	assert(X[2][2] == 2)
+	assert(X[2][3] == 1)
+
+	-- Table, column major
+	local X = linear.tolinear({ { 1, 2, 3 }, { 3, 2, 1 } }, "col")
+	assert(linear.type(X) == "matrix")
+	assert(select(3, linear.size(X)) == "col")
+	assert(#X == 2)
+	assert(#X[1] == 3)
+	assert(X[1][1] == 1)
+	assert(X[1][2] == 2)
+	assert(X[1][3] == 3)
+	assert(X[2][1] == 3)
+	assert(X[2][2] == 2)
+	assert(X[2][3] == 1)
 end
 
 local function testElementaryFunction (inputs, outputs, f)
@@ -314,28 +308,24 @@ end
 
 -- Tests the scal function
 local function testScal ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, 2
+	local x = linear.tolinear({ 1, 2 })
 	linear.scal(x, 2)
 	assert(x[1] == 2)
 	assert(x[2] == 4)
 
-	local X = linear.matrix(2, 2)
-	X[2][2] = 1
+	local X = linear.tolinear({ { 0, 0 }, { 0, 1 } })
 	linear.scal(X, 2)
 	assert(X[2][2] == 2)
 end
 
 -- Tests the pow function
 local function testPow ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, 2
+	local x = linear.tolinear({ 1, 2 })
 	linear.pow(x, 0.5)
 	assert(x[1] == 1)
 	assert(math.abs(x[2] - math.sqrt(2)) < EPSILON)
 
-	local X = linear.matrix(2, 3)
-	X[2][3] = 2
+	local X = linear.tolinear({ { 0, 0, 0 }, { 0, 0, 2 }})
 	linear.pow(X, 3)
 	assert(X[1][1] == 0)
 	assert(X[2][3] == 8)
@@ -354,35 +344,27 @@ end
 
 -- Tests the dot function
 local function testDot ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, 2
+	local x = linear.tolinear({ 1, 2 })
 	assert(linear.dot(x, x) == 5)
 end
 
 -- Tests the nrm2 function
 local function testNrm2 ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, 2
+	local x = linear.tolinear({ 1, 2 })
 	assert(math.abs(linear.nrm2(x) - math.sqrt(5)) <= EPSILON)
 end
 
 -- Tests the asum function
 local function testAsum ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, -2
+	local x = linear.tolinear({ 1, -2 })
 	assert(linear.asum(x) == 3)
 end
 
 -- Tests the sum function
 local function testSum ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, -2
+	local x = linear.tolinear({ 1, -2 })
 	assert(linear.sum(x) == -1)
-	local X = linear.matrix(2, 4)
-	linear.set(X[1], 1)
-	for i = 1, 4 do
-		X[2][i] = i
-	end
+	local X = linear.tolinear({ { 1, 1, 1, 1 }, { 1, 2, 3, 4 } })
 	local x = linear.vector(4)
 	linear.sum(X, x)
 	assert(x[1] == 2)
@@ -394,11 +376,7 @@ local function testSum ()
 	assert(x[1] == 4)
 	assert(x[2] == 10)
 
-	local X = linear.matrix(2, 4, "col")
-	linear.set(linear.tvector(X, 1), 1)
-	for i = 1, 4 do
-		X[i][2] = i
-	end
+	local X = linear.tolinear({ { 1, 1 }, { 1, 2 }, { 1, 3 }, { 1, 4 } }, "col")
 	local x = linear.vector(4)
 	linear.sum(X, x, "row")
 	assert(x[1] == 2)
@@ -413,19 +391,13 @@ end
 
 -- Tests the mean function
 local function testMean ()
-	local x = linear.vector(3)
-	for i = 1, 3 do
-		x[i] = 2 * i
-	end
+	local x = linear.tolinear({ 2, 4, 6 })
 	assert(linear.mean(x) == 4)
 end
 
 -- Tests the var function
 local function testVar ()
-	local x = linear.vector(3)
-	for i = 1, 3 do
-		x[i] = i
-	end
+	local x = linear.tolinear({ 1, 2, 3 })
 	assert(math.abs(linear.var(x) - 2 / 3) < EPSILON)
 	assert(math.abs(linear.var(x, 1) - 1) < EPSILON)
 	assert(math.abs(linear.var(x, 2) - 2) < EPSILON)
@@ -433,10 +405,7 @@ end
 
 -- Tests the std function
 local function testStd ()
-	local x = linear.vector(3)
-	for i = 1, 3 do
-		x[i] = i
-	end
+	local x = linear.tolinear({ 1, 2, 3 })
 	assert(math.abs(linear.std(x) - math.sqrt(2 / 3)) < EPSILON)
 	assert(math.abs(linear.std(x, 1) - 1) < EPSILON)
 	assert(math.abs(linear.std(x, 2) - math.sqrt(2)) < EPSILON)
@@ -444,22 +413,19 @@ end
 
 -- Tests the iamax function
 local function testIamax ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, -2
+	local x = linear.tolinear({ 1, -2 })
 	assert(linear.iamax(x) == 2)
 end
 
 -- Tests the iamin function
 local function testIamin ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, -2
+	local x = linear.tolinear({ 1, -2 })
 	assert(linear.iamin(x) == 1)
 end
 
 -- Tests the swap function
 local function testSwap ()
-	local x, y = linear.vector(2), linear.vector(2)
-	x[1], y[2] = 1, 2
+	local x, y = linear.tolinear({ 1, 0 }), linear.tolinear({ 0, 2 })
 	linear.swap(x, y)
 	assert(x[1] == 0)
 	assert(x[2] == 2)
@@ -476,8 +442,7 @@ end
 
 -- Tests the copy function
 local function testCopy ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, 2
+	local x = linear.tolinear({ 1, 2 })
 	local y = linear.vector(2)
 	linear.copy(x, y)
 	assert(y[1] == 1)
@@ -492,10 +457,8 @@ end
 
 -- Tests the axpy function
 local function testAxpy ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, 2
-	local y = linear.vector(2)
-	y[1], y[2] = 3, 4
+	local x = linear.tolinear({ 1, 2 })
+	local y = linear.tolinear({ 3, 4 })
 	linear.axpy(x, y, 2)
 	assert(y[1] == 5)
 	assert(y[2] == 8)
@@ -567,10 +530,8 @@ end
 
 -- Tests the axpby function
 local function testAxpby ()
-	local x = linear.vector(2)
-	x[1], x[2] = 1, 2
-	local y = linear.vector(2)
-	y[1], y[2] = 3, 4
+	local x = linear.tolinear({ 1, 2 })
+	local y = linear.tolinear({ 3, 4 })
 	linear.axpby(x, y, 2, 3)
 	assert(y[1] == 11)
 	assert(y[2] == 16)
@@ -591,7 +552,7 @@ end
 
 -- Tests the mul function
 local function testMul ()
-	local x = linear.vector(2)
+	local x = linear.tolinear({ 1, 2 })
 	x[1], x[2] = 1, 2
 	linear.mul(x, x)
 	assert(x[1] == 1)
@@ -603,11 +564,7 @@ local function testMul ()
 	assert(x[1] == 1)
 	assert(x[2] == 1)
 
-	local X = linear.matrix(2, 2)
-	X[1][1] = 1
-	X[1][2] = 2
-	X[2][1] = 2
-	X[2][2] = 4
+	local X = linear.tolinear({ { 1, 2 }, { 2, 4 } })
 	linear.mul(X, X)
 	assert(X[1][1] == 1)
 	assert(X[1][2] == 4)
@@ -628,22 +585,14 @@ end
 
 -- Tests the gemv function
 local function testGemv ()
-	local A = linear.matrix(2, 3)
-	local A1, A2 = A[1], A[2]
-	A1[1], A1[2], A1[3] = 1, 2, 3
-	A2[1], A2[2], A2[3] = 4, 5, 6
-	local x = linear.vector(3)
-	x[1], x[2], x[3] = 1, 2, 3
+	local A = linear.tolinear({ { 1, 2, 3 }, { 4, 5, 6 } })
+	local x = linear.tolinear({ 1, 2, 3 })
 	local y = linear.vector(2)
 	linear.gemv(A, x, y)
 	assert(y[1] == 14)
 	assert(y[2] == 32)
 
-	local A = linear.matrix(3, 2)
-	local A1, A2, A3 = A[1], A[2], A[3]
-	A1[1], A1[2] = 1, 4
-	A2[1], A2[2] = 2, 5
-	A3[1], A3[2] = 3, 6
+	local A = linear.tolinear({ { 1, 4 }, { 2, 5 }, { 3, 6 } })
 	linear.gemv(A, x, y, 2, nil, "trans")
 	assert(y[1] == 28)
 	assert(y[2] == 64)
@@ -651,10 +600,8 @@ end
 
 -- Tests the ger function
 local function testGer ()
-	local x, y = linear.vector(2), linear.vector(3)
+	local x, y = linear.tolinear({ 1, 2 }), linear.tolinear({ 1, 2, 3 })
 	local A = linear.matrix(2, 3)
-	x[1], x[2] = 1, 2
-	y[1], y[2], y[3] = 1, 2, 3
 	linear.ger(x, y, A)
 	for i = 1, #x do
 		for j = 1, #y do
@@ -665,15 +612,8 @@ end
 
 -- Tests the gemm function
 local function testGemm ()
-	local A = linear.matrix(2, 3)
-	local A1, A2 = A[1], A[2]
-	A1[1], A1[2], A1[3] = 1, 2, 3
-	A2[1], A2[2], A2[3] = 4, 5, 6
-	local B = linear.matrix(3, 2)
-	local B1, B2, B3 = B[1], B[2], B[3]
-	B1[1], B1[2] = 1, 2
-	B2[1], B2[2] = 3, 4
-	B3[1], B3[2] = 5, 6
+	local A = linear.tolinear({ { 1, 2, 3 }, { 4, 5, 6 } })
+	local B = linear.tolinear({ { 1, 2 }, { 3, 4 }, { 5, 6 } })
 	local C = linear.matrix(2, 2)
 	local C1, C2 = C[1], C[2]
 	linear.gemm(A, B, C)
@@ -698,11 +638,7 @@ end
 
 -- Tests the gesv function
 local function testGesv ()
-	local A = linear.matrix(3, 3)
-	local A1, A2, A3 = A[1], A[2], A[3]
-	A1[1], A1[2], A1[3] = 8, 1, 6
-	A2[1], A2[2], A2[3] = 3, 5, 7
-	A3[1], A3[2], A3[3] = 4, 9, 2
+	local A = linear.tolinear({ { 8, 1, 6 }, { 3, 5, 7 }, { 4, 9, 2 } })
 	local B = linear.matrix(3, 1)
 	linear.set(B, 1)
 	linear.gesv(A, B)
@@ -714,13 +650,8 @@ end
 
 -- Tests the gels function
 local function testGels ()
-	local A = linear.matrix(3, 2)
-	local A1, A2, A3 = A[1], A[2], A[3]
-	A1[1], A1[2] = 1, 2
-	A2[1], A2[2] = 3, 4
-	A3[1], A3[2] = 5, 6
-	local B = linear.matrix(3, 1)
-	B[1][1], B[2][1], B[3][1] = 1, 2, 3
+	local A = linear.tolinear({ { 1, 2 }, { 3, 4 }, { 5, 6 } })
+	local B = linear.tolinear({ { 1 }, { 2 }, { 3 } })
 	linear.gels(A, B)
 	assert(math.abs(B[1][1] - 0) < EPSILON)
 	assert(math.abs(B[2][1] - 0.5) < EPSILON)
@@ -729,11 +660,8 @@ end
 
 -- Tests the inv function
 local function testInv ()
-	local A = linear.matrix(3, 3)
+	local A = linear.tolinear({ { 8, 1, 6 }, { 3, 5, 7 }, { 4, 9, 2 } })
 	local A1, A2, A3 = A[1], A[2], A[3]
-	A1[1], A1[2], A1[3] = 8, 1, 6
-	A2[1], A2[2], A2[3] = 3, 5, 7
-	A3[1], A3[2], A3[3] = 4, 9, 2
 	assert(linear.inv(A) == 0)
 	assert(math.abs(A1[1] - 0.147222) < 0.0001)
 	assert(math.abs(A1[2] + 0.144444) < 0.0001)
@@ -748,11 +676,7 @@ end
 
 -- Tests the det function
 local function testDet ()
-	local A = linear.matrix(3, 3)
-	local A1, A2, A3 = A[1], A[2], A[3]
-	A1[1], A1[2], A1[3] = 8, 1, 6
-	A2[1], A2[2], A2[3] = 3, 5, 7
-	A3[1], A3[2], A3[3] = 4, 9, 2
+	local A = linear.tolinear({ { 8, 1, 6 }, { 3, 5, 7 }, { 4, 9, 2 } })
 	assert(math.abs(linear.det(A) - -360) < EPSILON)
 	A[1][1] = -8
 	assert(math.abs(linear.det(A) - 488) < EPSILON)
@@ -760,11 +684,7 @@ end
 
 -- Tests the cov function
 local function testCov ()
-	local A = linear.matrix(3, 2)
-	local A1, A2, A3 = A[1], A[2], A[3]
-	A1[1], A1[2] = 1, 1
-	A2[1], A2[2] = 1, 2
-	A3[1], A3[2] = 2, 2
+	local A = linear.tolinear({ { 1, 1 }, { 1, 2 }, { 2, 2 } })
 	local B = linear.matrix(2, 2)
 	linear.cov(A, B, 1)
 	assert(math.abs(B[1][1] - 1 / 3) < EPSILON)
@@ -775,11 +695,7 @@ end
 
 -- Tests the corr function
 local function testCorr ()
-	local A = linear.matrix(3, 2)
-	local A1, A2, A3 = A[1], A[2], A[3]
-	A1[1], A1[2] = 1, 1
-	A2[1], A2[2] = 1, 2
-	A3[1], A3[2] = 2, 2
+	local A = linear.tolinear({ { 1, 1 }, { 1, 2 }, { 2, 2 } })
 	local B = linear.matrix(2, 2)
 	linear.corr(A, B, 1)
 	assert(math.abs(B[1][1] - 1) < EPSILON)
@@ -847,6 +763,3 @@ testDet()
 -- Statistical function tests
 testCov()
 testCorr()
-
--- Exit
-os.exit(0)

@@ -25,8 +25,6 @@ typedef void (*vector_matrix_function)(const int size, const double alpha, doubl
 static inline CBLAS_ORDER checkorder(lua_State *L, int index);
 static inline CBLAS_TRANSPOSE checktranspose(lua_State *L, int index);
 static inline char lapacktranspose(CBLAS_TRANSPOSE transpose);
-static int intvalue(lua_State *L, const char *key, int dfl);
-static int optionvalue(lua_State *L, const char *key, const char *dfl, const char *const options[]);
 static int argerror(lua_State *L, int index);
 
 struct vector *create_vector(lua_State *L, size_t size);
@@ -139,10 +137,9 @@ static int cov(lua_State *L);
 static int corr(lua_State *L);
 
 
-static const char *const ORDERS[] = {"row", "col", "rowmajor", "colmajor", NULL};  /* legacy */
+static const char *const ORDERS[] = {"row", "col", NULL};
 static const char *const TRANSPOSES[] = {"notrans", "trans", NULL};
-static const char *const TYPES[] = {"vector", "matrix", NULL};
-static __thread lua_State *TL;
+static __thread lua_State  *TL;
 
 
 /*
@@ -159,51 +156,6 @@ static inline CBLAS_TRANSPOSE checktranspose (lua_State *L, int index) {
 
 static inline char lapacktranspose (CBLAS_TRANSPOSE transpose) {
 	return transpose == CblasNoTrans ? 'N' : 'T';
-}
-
-static int intvalue (lua_State *L, const char *key, int dfl) {
-	int  result, isint;
-
-	lua_getfield(L, -1, key);
-	if (!lua_isnil(L, -1)) {
-		result = lua_tointegerx(L, -1, &isint);
-		if (!isint) {
-			luaL_error(L, "bad field " LUA_QS, key);
-		}
-	} else {
-		if (dfl < 0) {
-			luaL_error(L, "missing field " LUA_QS, key);
-		}
-		result = dfl;
-	}
-	lua_pop(L, 1);
-	return result;
-}
-
-static int optionvalue (lua_State *L, const char *key, const char *dfl,
-		const char *const options[]) {
-	const char  *str;
-	int          i;
-	
-	lua_getfield(L, -1, key);
-	if (!lua_isnil(L, -1)) {
-		str = lua_tostring(L, -1);
-		if (str == NULL) {
-			luaL_error(L, "bad field " LUA_QS, key);
-		}
-	} else {
-		if (dfl == NULL) {
-			luaL_error(L, "missing field " LUA_QS, key);
-		}
-		str = dfl;
-	}
-	lua_pop(L, 1);
-	for (i = 0; options[i] != NULL; i++) {
-		if (strcmp(options[i], str) == 0) {
-			return i;
-		}
-	}
-	return luaL_error(L, "bad option " LUA_QS " in field " LUA_QS, str, key);
 }
 
 static int argerror (lua_State *L, int index) {
@@ -676,11 +628,6 @@ static int totable (lua_State *L) {
 
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
-		lua_createtable(L, 0, 3);
-		lua_pushliteral(L, "vector");
-		lua_setfield(L, -2, "type");
-		lua_pushinteger(L, x->size);
-		lua_setfield(L, -2, "length");
 		lua_createtable(L, x->size, 0);
 		value = x->values;
 		for (i = 0; i < x->size; i++) {
@@ -688,21 +635,11 @@ static int totable (lua_State *L) {
 			lua_rawseti(L, -2, i + 1);
 			value += x->inc;
 		}
-		lua_setfield(L, -2, "values");
 		return 1;
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	if (X != NULL) {
-		lua_createtable(L, 0, 5);
-		lua_pushliteral(L, "matrix");
-		lua_setfield(L, -2, "type");
-		lua_pushinteger(L, X->rows);
-		lua_setfield(L, -2, "rows");
-		lua_pushinteger(L, X->cols);
-		lua_setfield(L, -2, "cols");
 		if (X->order == CblasRowMajor) {
-			lua_pushstring(L, ORDERS[0]);
-			lua_setfield(L, -2, "order");
 			lua_createtable(L, X->rows, 0);
 			for (i = 0; i < X->rows; i++) {
 				lua_createtable(L, X->cols, 0);
@@ -713,10 +650,7 @@ static int totable (lua_State *L) {
 				}
 				lua_rawseti(L, -2, i + 1);
 			}
-			lua_setfield(L, -2, "values");
 		} else {
-			lua_pushstring(L, ORDERS[1]);
-			lua_setfield(L, -2, "order");
 			lua_createtable(L, X->cols, 0);
 			for (i = 0; i < X->cols; i++) {
 				lua_createtable(L, X->rows, 0);
@@ -727,7 +661,6 @@ static int totable (lua_State *L) {
 				}
 				lua_rawseti(L, -2, i + 1);
 			}
-			lua_setfield(L, -2, "values");
 		}
 		return 1;
 	}
@@ -742,62 +675,47 @@ static int tolinear (lua_State *L) {
 	struct vector  *x;
 	struct matrix  *X;
 
-	/* check arguments */
 	luaL_checktype(L, 1, LUA_TTABLE);
-	lua_settop(L, 1);
-
-	/* handle types */
-	if (optionvalue(L, "type", NULL, TYPES) == 0) {
-		size = intvalue(L, "length", -1);
-		if (size < 1) {
-			return luaL_error(L, "bad field " LUA_QS, "length");
+	switch (lua_rawgeti(L, 1, 1)) {
+	case LUA_TNUMBER:
+		size = lua_rawlen(L, 1);
+		if (size < 1 || size > INT_MAX) {
+			return luaL_error(L, "bad size");
 		}
 		x = create_vector(L, size);
-		lua_getfield(L, 1, "values");
-		if (lua_type(L, -1) != LUA_TTABLE) {
-			return luaL_error(L, "bad field " LUA_QS, "values");
-		}
 		value = x->values;
 		for (i = 0; i < size; i++) {
-			lua_rawgeti(L, -1, i + 1);
+			lua_rawgeti(L, 1, i + 1);
 			*value++ = lua_tonumberx(L, -1, &isnum);
 			if (!isnum) {
 				return luaL_error(L, "bad value at index %d", i + 1);
 			}
 			lua_pop(L, 1);
 		}
+		return 1;
+
+	case LUA_TTABLE:
+		major = lua_rawlen(L, 1);
+		if (major < 1 || major > INT_MAX) {
+			return luaL_error(L, "bad rows");
+		}
+		minor = lua_rawlen(L, -1);
+		if (minor < 1 || minor > INT_MAX) {
+			return luaL_error(L, "bad columns");
+		}
 		lua_pop(L, 1);
-	} else {
-		rows = intvalue(L, "rows", -1);
-		if (rows < 1) {
-			return luaL_error(L, "bad field " LUA_QS, "rows");
-		}
-		cols = intvalue(L, "cols", -1);
-		if (cols < 1) {
-			return luaL_error(L, "bad field " LUA_QS, "cols");
-		}
-		order = optionvalue(L, "order", NULL, ORDERS);
-		if (order >= 2) {  /* legacy */
-			order -=2 ;
-		}
-		if (order == 0) {
-			order = CblasRowMajor;
-			major = rows;
-			minor = cols;
+		order = checkorder(L, 2);
+		if (order == CblasRowMajor) {
+			rows = major;
+			cols = minor;
 		} else {
-			order = CblasColMajor;
-			major = cols;
-			minor = rows;
+			rows = minor;
+			cols = major;
 		}
 		X = create_matrix(L, rows, cols, order);
-		lua_getfield(L, 1, "values");
-		if (lua_type(L, -1) != LUA_TTABLE) {
-			return luaL_error(L, "bad field " LUA_QS, "values");
-		}
 		for (i = 0; i < major; i++) {
 			value = &X->values[i * X->ld];
-			lua_rawgeti(L, -1, i + 1);
-			if (lua_type(L, -1) != LUA_TTABLE) {
+			if (lua_rawgeti(L, 1, i + 1) != LUA_TTABLE) {
 				return luaL_error(L, "bad value at index %d", i + 1);
 			}
 			for (j = 0; j < minor; j++) {
@@ -811,9 +729,11 @@ static int tolinear (lua_State *L) {
 			}
 			lua_pop(L, 1);
 		}
-		lua_pop(L, 1);
+		return 1;
+
+	default:
+		return luaL_argerror(L, 1, "bad table");
 	}
-	return 1;
 }
 
 
