@@ -17,7 +17,7 @@
 
 
 typedef void (*elementary_function)(const int size, double alpha, double *x, const int incx);
-typedef double (*vector_function)(const int size, const double *x, const int incx);
+typedef double (*vector_function)(const int size, const double *x, const int incx, const int ddof);
 typedef void (*vector_matrix_function)(const int size, const double alpha, double *x,
 		const int incx, const double beta, double *y, const int incy);
 
@@ -92,10 +92,12 @@ static void _apply(const int size, double alpha, double *x, const int incx);
 static int apply(lua_State *L);
 
 static int dot(lua_State *L);
-static int _vector(lua_State *L, vector_function f);
+static int _vector(lua_State *L, vector_function f, int hasddof);
+static double _nrm2(int size, const double *values, const int inc, const int ddof);
 static int nrm2(lua_State *L);
+static double _asum(int size, const double *values, const int inc, const int ddof);
 static int asum(lua_State *L);
-static double _sum(int size, const double *values, int inc);
+static double _sum(int size, const double *values, const int inc, const int ddof);
 static int sum(lua_State *L);
 static int iamax(lua_State *L);
 static int iamin(lua_State *L);
@@ -1081,15 +1083,21 @@ static int dot (lua_State *L) {
 	return 1;
 }
 
-static int _vector (lua_State *L, vector_function f) {
+static int _vector (lua_State *L, vector_function f, int hasddof) {
+	size_t          ddof;
 	size_t          i;
 	struct vector  *x, *y;
 	struct matrix  *X;
 
+	ddof = 0;
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	if (x != NULL) {
 		/* vector */
-		lua_pushnumber(L, f(x->size, x->values, x->inc));
+		if (hasddof) {
+			ddof = luaL_optinteger(L, 2, 0);
+			luaL_argcheck(L, ddof < x->size, 2, "bad ddof");
+		}
+		lua_pushnumber(L, f(x->size, x->values, x->inc, ddof));
 		return 1;
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE);
@@ -1098,26 +1106,36 @@ static int _vector (lua_State *L, vector_function f) {
 		y = luaL_checkudata(L, 2, LUALINEAR_VECTOR_METATABLE);
 		if (checkorder(L, 3) == CblasRowMajor) {
 			luaL_argcheck(L, y->size == X->cols, 2, "dimension mismatch");
+			if (hasddof) {
+				ddof = luaL_optinteger(L, 3, 0);
+				luaL_argcheck(L, ddof < X->rows, 3, "bad ddof");
+			}
 			if (X->order == CblasRowMajor) {
 				for (i = 0; i < X->cols; i++) {
-					y->values[i * y->inc] = f(X->rows, &X->values[i], X->ld);
+					y->values[i * y->inc] = f(X->rows, &X->values[i], X->ld,
+							ddof);
 				}
 			} else {
 				for (i = 0; i < X->cols; i++) {
 					y->values[i * y->inc] = f(X->rows, &X->values[i * X->ld],
-							1);
+							1, ddof);
 				}
 			}
 		} else {
 			luaL_argcheck(L, y->size == X->rows, 2, "dimension mismatch");
+			if (hasddof) {
+				ddof = luaL_optinteger(L, 3, 0);
+				luaL_argcheck(L, ddof < X->cols, 3, "bad ddof");
+			}
 			if (X->order == CblasRowMajor) {
 				for (i = 0; i < X->rows; i++) {
 					y->values[i * y->inc] = f(X->cols, &X->values[i * X->ld],
-							1);
+							1, ddof);
 				}
 			} else {
 				for (i = 0; i < X->rows; i++) {
-					y->values[i * y->inc] = f(X->cols, &X->values[i], X->ld);
+					y->values[i * y->inc] = f(X->cols, &X->values[i], X->ld,
+							ddof);
 				}
 			}
 		}
@@ -1126,19 +1144,30 @@ static int _vector (lua_State *L, vector_function f) {
 	return argerror(L, 1);
 }
 
+static double _nrm2 (int size, const double *x, const int incx, const int ddof) {
+	(void)ddof;
+	return cblas_dnrm2(size, x, incx);
+}
+
 static int nrm2 (lua_State *L) {
-	return _vector(L, cblas_dnrm2);
+	return _vector(L, _nrm2, 0);
+}
+
+static double _asum (int size, const double *x, const int incx, const int ddof) {
+	(void)ddof;
+	return cblas_dasum(size, x, incx);
 }
 
 static int asum (lua_State *L) {
-	return _vector(L, cblas_dasum);
+	return _vector(L, _asum, 0);
 }
 
 /* cblas_dsum does not work as expected */
-static double _sum (int size, const double *x, const int incx) {
+static double _sum (int size, const double *x, const int incx, const int ddof) {
 	size_t  i;
 	double  sum;
 
+	(void)ddof;
 	sum = 0.0;
 	#pragma omp parallel for private(i) schedule(auto) if(size >= LUALINEAR_OMP_MINSIZE) \
 			reduction(+:sum)
@@ -1149,7 +1178,43 @@ static double _sum (int size, const double *x, const int incx) {
 }
 
 static int sum (lua_State *L) {
-	return _vector(L, _sum);
+	return _vector(L, _sum, 0);
+}
+
+static double _mean (int size, const double *x, const int incx, const int ddof) {
+	size_t  i;
+	double  sum;
+
+	(void)ddof;
+	sum = 0.0;
+	for (i = 0; i < (size_t)size; i++) {
+		sum += x[i * incx];
+	}
+	return sum / size;
+}
+
+static int mean (lua_State *L) {
+	return _vector(L, _mean, 0);
+}
+
+static double _std (int size, const double *x, const int incx, const int ddof) {
+	size_t  i;
+	double  sum, mean;
+
+	sum = 0.0;
+	for (i = 0; i < (size_t)size; i++) {
+		sum += x[i * incx];
+	}
+	mean = sum / size;
+	sum = 0.0;
+	for (i = 0; i < (size_t)size; i++) {
+		sum += (x[i * incx] - mean) * (x[i * incx] - mean);
+	}
+	return sqrt(sum / (size - ddof));
+}
+
+static int std (lua_State *L) {
+	return _vector(L, _std, 1);
 }
 
 static int iamax (lua_State *L) {
@@ -1777,6 +1842,8 @@ int luaopen_linear (lua_State *L) {
 		{ "nrm2", nrm2 },
 		{ "asum", asum },
 		{ "sum", sum },
+		{ "mean", mean },
+		{ "std", std },
 		{ "iamax", iamax },
 		{ "iamin", iamin },
 		{ "imax", imax },
