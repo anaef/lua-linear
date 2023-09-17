@@ -64,7 +64,7 @@ value in a factor, implying that matrix `A` does not have full rank.
 
 ## `linear.inv (A)`
 
-Inverts a matrix in place, formally $A \leftarrow A^{-1}$. Matrix `A` must be square.
+Inverts a matrix in-place, formally $A \leftarrow A^{-1}$. Matrix `A` must be square.
 
 The function returns `true` if the calculation was successful, and `false` if the matrix could
 not be inverted due to a zero value in a factor, implying that matrix `A` is singular.
@@ -83,7 +83,7 @@ The functions returns `0.0` if matrix `A` is singular.
 
 Calculates the pairwise covariances of the column vectors of $A$ with the specified delta
 degrees of freedom, `ddof`, and places the covariances into B, formally $B_{i, j}\leftarrow
-\frac{\sum\limits_{x=1}^{N} (A_{x,i} - \bar{A_i}) (A_{x,j} - \bar{A_j})}{N - \textrm{ddof}}$
+\frac{\sum\nolimits_{x=1}^{N} (A_{x,i} - \bar{A_i}) (A_{x,j} - \bar{A_j})}{N - \textrm{ddof}}$
 where $\bar{A_i}$ is the mean value of the $i$-th column vector of $A$, and $N$ is the length
 of the column vectors. The non-negative argument `ddof` defaults to `0` and must be less than $N$.
 
@@ -94,10 +94,10 @@ of the column vectors. The non-negative argument `ddof` defaults to `0` and must
 ## `linear.corr (A, B)`
 
 Calculates the pairwise Pearson product-moment correlation coefficients of the column vectors of
-$A$ and places them into $B$, formally $B_{i, j} \leftarrow \frac{\sum\limits_{x=1}^{N} (A_{x,i} -
-\bar{A_i}) (A_{x,j} - \bar{A_j})}{\sqrt{\sum\limits_{x=1}^{N} (A_{x,i} - \bar{A_i})^2 \times
-\sum\limits_{x=1}^{N} (A_{x,j} - \bar{A_j})^2}}$ where $\bar{A_i}$ is the mean value of the $i$-th
-column vector of $A$, and $N$ is the length of the column vectors.
+$A$ and places them into $B$, formally $B_{i, j} \leftarrow \frac{\sum\nolimits_{x=1}^{N} (A_{x,i} -
+\bar{A_i}) (A_{x,j} - \bar{A_j})}{\sqrt{\sum\nolimits_{x=1}^{N} (A_{x,i} - \bar{A_i})^2 \times
+\sum\nolimits_{x=1}^{N} (A_{x,j} - \bar{A_j})^2}}$ where $\bar{A_i}$ is the mean value of the
+$i$-th column vector of $A$, and $N$ is the length of the column vectors.
 
 > [!NOTE]
 > Performance is generally expected to be better when matrix `A` is a column major matrix.
