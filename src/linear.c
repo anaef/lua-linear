@@ -934,9 +934,21 @@ static int scal (lua_State *L) {
 static void _pow (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
-	for (i = 0; i < (size_t)size; i++) {
-		*x = pow(*x, alpha);
-		x += incx;
+	if (alpha == -1.0) {
+		for (i = 0; i < (size_t)size; i++) {
+			*x = 1 / *x;
+			x += incx;
+		}
+	} else if (alpha == 0.0) {
+		for (i = 0; i < (size_t)size; i++) {
+			*x = 1.0;
+			x += incx;
+		}
+	} else if (alpha != 1.0) {
+		for (i = 0; i < (size_t)size; i++) {
+			*x = pow(*x, alpha);
+			x += incx;
+		}
 	}
 }
 
