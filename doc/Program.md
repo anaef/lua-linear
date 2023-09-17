@@ -37,7 +37,7 @@ Solves systems of linear equations, formally $A X = B$.
 On input, each column of matrix `B` represents the right-hand sides of a system. On output, the
 solutions $X$ are stored in matrix `B`.
 
-The function replaces the values of matrix `A` by a factorization. It returns `true` if the
+The function replaces the elements of matrix `A` with a factorization. It returns `true` if the
 solutions have been computed, and `false` if the solutions could not be computed due to a zero
 value in a factor.
 
@@ -57,7 +57,7 @@ L2 norm solutions.
 The argument transpose is one of `notrans`, `trans`, and defaults to `notrans`. If set to `trans`,
 the operation is performed on $A^T$.
 
-The function replaces the values of matrix `A` by a factorization. It returns `true` if the
+The function replaces the elements of matrix `A` with a factorization. It returns `true` if the
 solutions have been computed, and `false` if the solutions could not be computed due to a zero
 value in a factor, implying that matrix `A` does not have full rank.
 
@@ -69,12 +69,16 @@ Inverts a matrix in-place, formally $A \leftarrow A^{-1}$. Matrix `A` must be sq
 The function returns `true` if the calculation was successful, and `false` if the matrix could
 not be inverted due to a zero value in a factor, implying that matrix `A` is singular.
 
+> [!IMPORTANT]
+> You should _not_ use the inverse of matrices to solve systems of linear equations. A numerically
+> superior result is generally obtained by using a solver program function. 
+
 
 ## `linear.det (A)`
 
 Returns the determinant of a matrix, formally $\det A$. Matrix `A` must be square.
 
-The determinant is computed on a copy of the values of matrix `A`, which remains unchanged.
+The determinant is computed on a copy of the elements of matrix `A`, which remains unchanged.
 
 The functions returns `0.0` if matrix `A` is singular.
 
@@ -82,22 +86,22 @@ The functions returns `0.0` if matrix `A` is singular.
 ## `linear.cov (A, B [, ddof])`
 
 Calculates the pairwise covariances of the column vectors of $A$ with the specified delta
-degrees of freedom, `ddof`, and places the covariances into B, formally $B_{i, j}\leftarrow
-\frac{\sum\nolimits_{x=1}^{N} (A_{x,i} - \bar{A_i}) (A_{x,j} - \bar{A_j})}{N - \textrm{ddof}}$
-where $\bar{A_i}$ is the mean value of the $i$-th column vector of $A$, and $N$ is the length
-of the column vectors. The non-negative argument `ddof` defaults to `0` and must be less than $N$.
+degrees of freedom, `ddof`, and places the covariances into B, formally $B_{ij}\leftarrow
+\frac{\sum\nolimits_{x=1}^{N} (A_{xi} - \bar{A_i}) (A_{xj} - \bar{A_j})}{N - \textrm{ddof}}$
+where $\bar{A_i}$ is the mean value of the $i$-th column vector of $A$, and $N$ is its length.
+The non-negative argument `ddof` defaults to `0` and must be less than $N$.
 
 > [!NOTE]
-> Performance is generally expected to be better when matrix `A` is a column major matrix.
+> The function is generally faster when matrix `A` is a column major matrix.
 
 
 ## `linear.corr (A, B)`
 
 Calculates the pairwise Pearson product-moment correlation coefficients of the column vectors of
-$A$ and places them into $B$, formally $B_{i, j} \leftarrow \frac{\sum\nolimits_{x=1}^{N} (A_{x,i} -
-\bar{A_i}) (A_{x,j} - \bar{A_j})}{\sqrt{\sum\nolimits_{x=1}^{N} (A_{x,i} - \bar{A_i})^2 \times
-\sum\nolimits_{x=1}^{N} (A_{x,j} - \bar{A_j})^2}}$ where $\bar{A_i}$ is the mean value of the
-$i$-th column vector of $A$, and $N$ is the length of the column vectors.
+$A$ and places them into $B$, formally $B_{ij} \leftarrow \frac{\sum\nolimits_{x=1}^{N} (A_{xi} -
+\bar{A_i}) (A_{xj} - \bar{A_j})}{\sqrt{\sum\nolimits_{x=1}^{N} (A_{xi} - \bar{A_i})^2 \times
+\sum\nolimits_{x=1}^{N} (A_{xj} - \bar{A_j})^2}}$ where $\bar{A_i}$ is the mean value of the
+$i$-th column vector of $A$, and $N$ is its length.
 
 > [!NOTE]
-> Performance is generally expected to be better when matrix `A` is a column major matrix.
+> The function is generally faster when matrix `A` is a column major matrix.

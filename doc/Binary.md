@@ -13,8 +13,8 @@ lengths of the vectors must match.
 
 > [!IMPORTANT]
 > If a binary vector function is called with a vector and a matrix, the `order` argument is
-> required if the function receives extra arguments, such as `alpha`; it can be set to `nil`
-> to imply the default order.
+> required if the function receives extra arguments, such as `alpha`; the argument can be set to
+> `nil` to imply the default order.
 
 If called with two matrices `X` and `Y`, the function applies the major order vectors of matrix
 `X` to the major order vectors of matrix `Y`. The size and order of matrices `X` and `Y` must
@@ -25,28 +25,27 @@ The following function descriptions assume a call with two vectors `x` and `y`.
 
 ## `linear.swap (x|X, y|Y [, order])`
 
-Swaps the elements of vectors `x` and `y`, formally $x \leftrightarrow y$.
+Swaps the components of vectors `x` and `y`, formally $x \leftrightarrow y$.
 
 
 ## `linear.copy (x|X, y|Y [, order])`
 
-Copies the elements of vector `x` to vector `y`, formally $y \leftarrow x$.
+Copies the components of vector `x` to vector `y`, formally $y \leftarrow x$.
 
 
 ## `linear.axpy (x|X, y|Y [, order] [, alpha])`
 
-Scales and adds the elements of vector `x` to vector `y`. formally $y \leftarrow \alpha x + y$.
-The argument `alpha` defaults to `1.0`.
+Scales and adds vector `x` to vector `y`, formally $y \leftarrow \alpha x + y$. The argument
+`alpha` defaults to `1.0`.
 
 
 ## `linear.axpby (x|X, y|Y [, order] [, alpha [, beta]])`
 
-Scales and adds the elements of vector `x` to scaled vector `y`, formally
-$y \leftarrow \alpha x + \beta y$. The arguments `alpha` and `beta` default to `1.0` and `0.0`,
-respectively.
+Scales and adds vector `x` to scaled vector `y`, formally $y \leftarrow \alpha x + \beta y$. The
+arguments `alpha` and `beta` default to `1.0` and `0.0`, respectively.
 
 
 ## `linear.mul (x|X, y|Y [, order] [, alpha])`
 
-Multiplies the elements of vector `y` with the elments of vector `x` risen to power `alpha`,
+Multiplies the components of vector `y` with the components of vector `x` risen to power `alpha`,
 formally $y \leftarrow x^\alpha y$. The argument `alpha` defaults to `1.0`.

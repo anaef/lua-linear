@@ -5,8 +5,11 @@ or a matrix.
 
 If called with a number `n`, the result of applying the function to that number is returned.
 
-If called with a vector `x` or a matrix `X`, the function is applied in-place to their current
-values.
+If called with a vector `x`, the function is applied in-place to the current components of the
+vector.
+
+If called with a matrix `X`, the function is applied in-place to the current elements of the
+matrix.
 
 The following function descriptions assume a call with a vector `x`.
 
@@ -14,7 +17,7 @@ The following function descriptions assume a call with a vector `x`.
 ## `linear.sgn (n|x|X)`
 
 Applies the sign function, formally $x_i \leftarrow \mathop{\mathrm{sgn}} \  x_i$. The result of
-the sign function is $1$ if $x$ is larger than zero, $-1$ if $x$ is less than zero, and $x$
+the sign function is $1$ if $x_i$ is larger than zero, $-1$ if $x_i$ is less than zero, and $x_i$
 otherwise.
 
 
@@ -56,7 +59,8 @@ Applies the set function, formally $x_i \leftarrow \alpha$. The argument `alpha`
 ## `linear.uniform (n|x|X)`
 
 Applies the uniform random function, formally $x_i \leftarrow u \in \mathcal{U}(0, 1 - \epsilon)$.
-The function returns statistically random, uniformly distributed values from the interval $[0, 1)$.
+The function returns statistically random, uniformly distributed values from the half-open
+interval $[0, 1)$.
 
 
 ## `linear.normal (n|x|X)`
@@ -74,11 +78,11 @@ defaults to `1.0`.
 
 ## `linear.scal (n|x|X [, alpha])`
 
-Applies the scale function, formally $x_i \leftarrow \alpha x_i$. The argument `alpha` defaults to
-`1.0`.
+Applies the scalar multiplication function, formally $x_i \leftarrow \alpha x_i$. The argument
+`alpha` defaults to `1.0`.
 
 
 ## `linear.pow (n|x|X, [, alpha])`
 
-Applies the power function, formally $x_i \leftarrow x_i^\alpha$. The argument `alpha` defaults to
-`1.0`.
+Applies the power function, formally $x_i \leftarrow {x_i}^\alpha$. The argument `alpha` defaults
+to `1.0`.

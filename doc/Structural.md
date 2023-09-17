@@ -35,7 +35,7 @@ column vector in case of a row major matrix, and a row vector in case of a colum
 ## `linear.sub (x [, start [, end]])`
 
 Returns a sub vector referencing the underlying vector `x`. Start and end are inclusive. The
-argument `start` defaults to `1`, and the argument `end` defaults to the length of `x`.
+argument `start` defaults to `1`, and the argument `end` defaults to the length of vector `x`.
 
 
 ## `linear.sub (X [, rowstart [, colstart [, rowend [, colend]]]])`
@@ -48,13 +48,15 @@ respectively.
 ## `linear.unwind (X1 {, Xi}, x)`
 
 Unwinds one or more matrices `X1`, ..., `Xn` into a vector `x`. The number of elements of the
-matrices and the vector must match.
+matrices must match the length of the vector. The function serializes the major order vectors of
+the matrices into the vector.
 
 
 ## `linear.reshape (x, X1 {, Xi})`
 
-Reshapes a vector `x` into one or more matrices `X1`, ..., `Xn`. The number of elements of the
-vector and the matrices must match.
+Reshapes a vector `x` into one or more matrices `X1`, ..., `Xn`. The length of the vector must
+match the number of elements of the matrices. The function deserializes the major order vectors of
+the matrices from the vector.
 
 
 ## `linear.totable (x|X)`
@@ -63,8 +65,8 @@ Returns the values of vector `x` or matrix `X` as a table.
 
 For a vector, the function returns a list of numbers.
 
-For a matrix, the function returns a list of lists of numbers. The nested lists of numbers are
-the major order vectors of the matrix.
+For a matrix, the function returns a list of lists of numbers. The nested lists of numbers
+correspond to the major order vectors of the matrix.
 
 
 ## `linear.tolinear (t [, order])`
@@ -74,5 +76,5 @@ Returns a vector or matrix based on the contents of table `t`.
 If `t` is a list of numbers, the function returns a vector with the numbers as its values.
 
 If `t` is a list of lists of numbers, the function returns a matrix. The nested lists of
-numbers are the major order vectors of the matrix. The parameter `order` can be one of `row`
-(the default) or `col`, and controls whether a row major or a column major matrix is returned.
+numbers correspond to the major order vectors of the matrix. The parameter `order` can be one of
+`row` (the default) or `col`, and controls whether a row major or a column major matrix is returned.

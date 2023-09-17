@@ -6,7 +6,10 @@ This section descibes the types of Lua Linear.
 ## `linear.vector`
 
 A vector of double values. Vectors have support for the `ipairs` function, the length operator
-`#`, as well as index access to get and set the elements of the vector. Indexing is 1-based.
+`#`, as well as index access to get and set the _components_ of the vector. Indexing is 1-based.
+
+The length of a vector, $N$, must satisfy $1 \le N \le \mathrm{INT\\_MAX}$ where
+$\mathrm{INT\\_MAX}$ is $2^{31} - 1$ on many systems.
 
 
 ## `linear.matrix`
@@ -16,3 +19,6 @@ A matrix of double values. Matrices have support for the `ipairs` function, the 
 
 Each matrix has an order that is either row major or column major. For a row major matrix,
 indexing returns row vectors; for a column major matrix, indexing returns column vectors.
+
+The row and column dimensions of a matrix must each satisfy the requirement given for the length
+of a vector above.
