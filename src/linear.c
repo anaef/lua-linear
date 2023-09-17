@@ -98,7 +98,9 @@ static double _var(int size, const double *values, const int inc, const int ddof
 static int var(lua_State *L);
 static double _std(int size, const double *values, const int inc, const int ddof);
 static int std(lua_State *L);
+static double _iamax(int size, const double *values, const int inc, const int ddof);
 static int iamax(lua_State *L);
+static double _iamin(int size, const double *values, const int inc, const int ddof);
 static int iamin(lua_State *L);
 
 static int binary(lua_State *L, binary_function s, int hasalpha, int hasbeta);
@@ -1095,20 +1097,22 @@ static int std (lua_State *L) {
 	return unary(L, _std, 1);
 }
 
-static int iamax (lua_State *L) {
-	struct vector  *x;
+static double _iamax (int size, const double *x, const int incx, const int ddof) {
+	(void)ddof;
+	return (double)cblas_idamax(size, x, incx) + 1.0;
+}
 
-	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	lua_pushinteger(L, cblas_idamax(x->length, x->values, x->inc) + 1);
-	return 1;
+static int iamax (lua_State *L) {
+	return unary(L, _iamax, 0);
+}
+
+static double _iamin (int size, const double *x, const int incx, const int ddof) {
+	(void)ddof;
+	return cblas_idamin(size, x, incx) + 1.0;
 }
 
 static int iamin (lua_State *L) {
-	struct vector  *x;
-
-	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
-	lua_pushinteger(L, cblas_idamin(x->length, x->values, x->inc) + 1);
-	return 1;
+	return unary(L, _iamin, 0);
 }
 
 
