@@ -302,6 +302,10 @@ local function testUniform ()
 			assert(a[i] >= 0 and a[i] < 1)
 		end
 	end
+	local x = linear.vector(100000)
+	linear.uniform(x)
+	assert(math.abs(linear.mean(x) - 0.5) < 0.01)
+	assert(math.abs(linear.var(x) - 1 / 12) < 0.01)
 end
 
 -- Tests the normal function
@@ -319,6 +323,10 @@ local function testNormal ()
 			assert(type(a[j]) == "number")
 		end
 	end
+	local x = linear.vector(100000)
+	linear.normal(x)
+	assert(math.abs(linear.mean(x) - 0.0) < 0.01)
+	assert(math.abs(linear.var(x) - 1.0) < 0.01)
 end
 
 -- Tests the inc function
