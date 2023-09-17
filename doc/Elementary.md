@@ -40,16 +40,6 @@ Applies the logistic function, formally $\frac{1}{1 + e^{-x}}$.
 Applies the hyperbolic tangent function, formally $\tanh x$.
 
 
-## `linear.softplus (n|x|X)`
-
-Applies the softplus function, formally $\log (1 + e^x)$.
-
-
-## `linear.rectifier (n|x|X)`
-
-Applies the rectifier function, formally $\max_{0, x}$.
-
-
 ## `linear.apply (n|x|X, f)`
 
 Applies function `f`, formally $f(x)$.

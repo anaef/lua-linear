@@ -259,17 +259,6 @@ local function testTanh ()
 	testElementaryFunction({ 0, 1 }, { 0, 0.76159 }, linear.tanh)
 end
 
--- Tests the softplus function
-local function testSoftplus ()
-	testElementaryFunction({ -100, -1, 0, 1, 100 }, { 0, 0.31326, 0.69314, 1.31326, 100 },
-			linear.softplus)
-end
-
--- Tests the rectifier function
-local function testRectifier ()
-	testElementaryFunction({ -0.1, 0.1 }, { 0, 0.1 }, linear.rectifier)
-end
-
 -- Tests the set function
 local function testSet ()
 	local x = linear.vector(3)
@@ -790,8 +779,6 @@ testExp()
 testLog()
 testLogistic()
 testTanh()
-testSoftplus()
-testRectifier()
 testSet()
 testUniform()
 testNormal()

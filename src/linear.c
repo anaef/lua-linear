@@ -71,10 +71,6 @@ static void _logistic(const int size, double alpha, double *x, const int incx);
 static int logistic(lua_State *L);
 static void _tanh(const int size, double alpha, double *x, const int incx);
 static int tanhx(lua_State *L);
-static void _softplus(const int size, double alpha, double *x, const int incx);
-static int softplus(lua_State *L);
-static void _rectifier(const int size, double alpha, double *x, const int incx);
-static int rectifier(lua_State *L);
 static void _set(const int size, double alpha, double *x, const int incx);
 static int set(lua_State *L);
 static void _uniform(const int size, double alpha, double *x, const int incx);
@@ -832,34 +828,6 @@ static void _tanh (const int size, double alpha, double *x, const int incx) {
 
 static int tanhx (lua_State *L) {
 	return elementary(L, _tanh, 0);
-}
-
-static void _softplus (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
-
-	(void)alpha;
-	for (i = 0; i < (size_t)size; i++) {
-		*x = log(1.0 + exp(*x));
-		x += incx;
-	}
-}
-
-static int softplus (lua_State *L) {
-	return elementary(L, _softplus, 0);
-}
-
-static void _rectifier (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
-
-	(void)alpha;
-	for (i = 0; i < (size_t)size; i++) {
-		*x = *x > 0 ? *x : 0.0;
-		x += incx;
-	}
-}
-
-static int rectifier (lua_State *L) {
-	return elementary(L, _rectifier, 0);
 }
 
 static void _set (const int size, double alpha, double *x, const int incx) {
@@ -1692,8 +1660,6 @@ int luaopen_linear (lua_State *L) {
 		{ "log", logx },
 		{ "logistic", logistic },
 		{ "tanh", tanhx },
-		{ "softplus", softplus },
-		{ "rectifier", rectifier },
 		{ "apply", apply },
 		{ "set", set },
 		{ "uniform", uniform },
