@@ -5,13 +5,13 @@ local EPSILON = 6E-5
 
 -- Tests the vector function
 local function testVector ()
-	local X = linear.vector(2)
-	assert(#X == 2)
-	X[1], X[2] = 1, 2
-	assert(X[1] == 1)
-	assert(X[2] == 2)
-	for i, x in ipairs(X) do
-		assert(i == x)
+	local x = linear.vector(2)
+	assert(#x == 2)
+	x[1], x[2] = 1, 2
+	assert(x[1] == 1)
+	assert(x[2] == 2)
+	for i, v in ipairs(x) do
+		assert(i == v)
 	end
 end
 
@@ -29,12 +29,27 @@ local function testMatrix ()
 	assert(A2[1] == 4)
 	assert(A2[2] == 5)
 	assert(A2[3] == 6)
-	local B = linear.matrix(2, 3, "col")
-	assert(#B == 3)
 	for i, a in ipairs(A) do
 		assert(type(i) == "number")
 		assert(linear.type(a) == "vector")
 		assert(#a == 3)
+	end
+	local B = linear.matrix(2, 3, "col")
+	local B1, B2, B3 = B[1], B[2], B[3]
+	assert(#B == 3)
+	B1[1], B1[2] = 1, 2
+	B2[1], B2[2] = 3, 4
+	B3[1], B3[2] = 5, 6
+	assert(B[1][1] == 1)
+	assert(B[1][2] == 2)
+	assert(B[2][1] == 3)
+	assert(B[2][2] == 4)
+	assert(B[3][1] == 5)
+	assert(B[3][2] == 6)
+	for i, b in ipairs(B) do
+		assert(type(i) == "number")
+		assert(linear.type(b) == "vector")
+		assert(#b == 2)
 	end
 end
 
@@ -61,10 +76,7 @@ end
 
 -- Tests the tvector function
 local function testTvector ()
-	local A = linear.matrix(2, 3)
-	local A1, A2 = A[1], A[2]
-	A1[1], A1[2], A1[3] = 1, 2, 3
-	A2[1], A2[2], A2[3] = 4, 5, 6
+	local A = linear.tolinear({ { 1, 2, 3 }, { 4, 5, 6 } })
 	local y = linear.tvector(A, 1)
 	assert(#y == 2)
 	assert(y[1] == 1)
