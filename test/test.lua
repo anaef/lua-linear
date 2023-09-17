@@ -442,18 +442,6 @@ local function testStd ()
 	assert(math.abs(linear.std(x, 2) - math.sqrt(2)) < EPSILON)
 end
 
--- Tests the iamax function
-local function testIamax ()
-	local x = linear.tolinear({ 1, -2 })
-	assert(linear.iamax(x) == 2)
-end
-
--- Tests the iamin function
-local function testIamin ()
-	local x = linear.tolinear({ 1, -2 })
-	assert(linear.iamin(x) == 1)
-end
-
 -- Tests the swap function
 local function testSwap ()
 	-- vector
@@ -794,8 +782,6 @@ testSum()
 testMean()
 testVar()
 testStd()
-testIamax()
-testIamin()
 
 -- Binary vector function tests
 testSwap()

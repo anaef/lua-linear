@@ -98,10 +98,6 @@ static double _var(int size, const double *values, const int inc, const int ddof
 static int var(lua_State *L);
 static double _std(int size, const double *values, const int inc, const int ddof);
 static int std(lua_State *L);
-static double _iamax(int size, const double *values, const int inc, const int ddof);
-static int iamax(lua_State *L);
-static double _iamin(int size, const double *values, const int inc, const int ddof);
-static int iamin(lua_State *L);
 
 static int binary(lua_State *L, binary_function s, int hasalpha, int hasbeta);
 static void _swap(const int size, const double alpha, double *x, int incx, const double beta,
@@ -1097,24 +1093,6 @@ static int std (lua_State *L) {
 	return unary(L, _std, 1);
 }
 
-static double _iamax (int size, const double *x, const int incx, const int ddof) {
-	(void)ddof;
-	return (double)cblas_idamax(size, x, incx) + 1.0;
-}
-
-static int iamax (lua_State *L) {
-	return unary(L, _iamax, 0);
-}
-
-static double _iamin (int size, const double *x, const int incx, const int ddof) {
-	(void)ddof;
-	return cblas_idamin(size, x, incx) + 1.0;
-}
-
-static int iamin (lua_State *L) {
-	return unary(L, _iamin, 0);
-}
-
 
 /*
  * binary vector functions
@@ -1679,8 +1657,6 @@ int luaopen_linear (lua_State *L) {
 		{ "mean", mean },
 		{ "var", var },
 		{ "std", std },
-		{ "iamax", iamax },
-		{ "iamin", iamin },
 
 		/* binary vector functions */
 		{ "swap", swap },
