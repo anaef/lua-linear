@@ -1171,20 +1171,20 @@ static int binary (lua_State *L, binary_function f, int hasalpha, int hasbeta) {
 			alpha = hasalpha ? luaL_optnumber(L, 4, 1.0) : 0.0;
 			beta = hasbeta ? luaL_optnumber(L, 5, 0.0) : 0.0;
 			if (checkorder(L, 3) == CblasRowMajor) {
-				luaL_argcheck(L, 1, x->length == Y->cols, "dimension mismatch");
+				luaL_argcheck(L, x->length == Y->cols, 1, "dimension mismatch");
 				if (Y->order == CblasRowMajor) {
 					for (i = 0; i < Y->rows; i++) {
 						f(x->length, alpha, x->values, x->inc, beta,
 								&Y->values[i * Y->ld], 1);
 					}
 				} else {
-					for (i = 0;i < Y->rows; i++) {
+					for (i = 0; i < Y->rows; i++) {
 						f(x->length, alpha, x->values, x->inc, beta,
 								&Y->values[i], Y->ld);
 					}
 				}
 			} else {
-				luaL_argcheck(L, 1, x->length == Y->cols, "dimension mismatch");
+				luaL_argcheck(L, x->length == Y->rows, 1, "dimension mismatch");
 				if (Y->order == CblasColMajor) {
 					for (i = 0; i < Y->cols; i++) {
 						f(x->length, alpha, x->values, x->inc, beta,
