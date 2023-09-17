@@ -1382,13 +1382,18 @@ static int gesv (lua_State *L) {
 	if (ipiv == NULL) {
 		return luaL_error(L, "cannot allocate indexes");
 	}
-	result = LAPACKE_dgesv(A->order, A->rows, B->cols, A->values, A->ld, ipiv, B->values, B->ld);
+	result = LAPACKE_dgesv(A->order, A->rows, B->cols, A->values, A->ld, ipiv, B->values,
+		B->ld);
 	free(ipiv);
-	lua_pushinteger(L, result);
+	if (result < 0) {
+		return luaL_error(L, "internal error");
+	}
+	lua_pushboolean(L, result == 0);
 	return 1;
 }
 
 static int gels (lua_State *L) {
+	int             result;
 	char            ta;
 	struct matrix  *A, *B;
 
@@ -1398,8 +1403,12 @@ static int gels (lua_State *L) {
 	ta = lapacktranspose(checktranspose(L, 3));
 	luaL_argcheck(L, B->rows == (A->rows >= A->cols ? A->rows : A->cols), 2,
 			"dimension mismatch");
-	lua_pushinteger(L, LAPACKE_dgels(A->order, ta, A->rows, A->cols, B->cols, A->values, A->ld,
-			B->values, B->ld));
+	result = LAPACKE_dgels(A->order, ta, A->rows, A->cols, B->cols, A->values, A->ld,
+			B->values, B->ld);
+	if (result < 0) {
+		return luaL_error(L, "internal error");
+	}
+	lua_pushboolean(L, result == 0);
 	return 1;
 }
 
@@ -1416,12 +1425,18 @@ static int inv (lua_State *L) {
 	result = LAPACKE_dgetrf(A->order, A->rows, A->cols, A->values, A->ld, ipiv);
 	if (result != 0) {
 		free(ipiv);
-		lua_pushinteger(L, result);
+		if (result < 0) {
+			return luaL_error(L, "internal error");
+		}
+		lua_pushboolean(L, 0);  /* matrix is singular at machine precision */
 		return 1;
 	}
 	result = LAPACKE_dgetri(A->order, A->rows, A->values, A->ld, ipiv);
 	free(ipiv);
-	lua_pushinteger(L, result);
+	if (result < 0) {
+		return luaL_error(L, "internal error");
+	}
+	lua_pushboolean(L, result == 0);
 	return 1;
 }
 
@@ -1459,7 +1474,10 @@ static int det (lua_State *L) {
 	if (result != 0) {
 		free(copy);
 		free(ipiv);
-		lua_pushnumber(L, 0.0);
+		if (result < 0) {
+			return luaL_error(L, "internal error");
+		}
+		lua_pushnumber(L, 0.0);  /* matrix is singular at machine precision */
 		return 1;
 	}
 
@@ -1496,17 +1514,7 @@ static int cov (lua_State *L) {
 	if (means == NULL) {
 		return luaL_error(L, "cannot allocate values");
 	}
-	if (A->order == CblasRowMajor) {
-		for (i = 0; i < A->cols; i++) {
-			sum = 0.0;
-			v = &A->values[i];
-			for (j = 0; j < A->rows; j++) {
-				sum += *v;
-				v += A->ld;
-			}
-			means[i] = sum / A->rows;
-		}
-	} else {
+	if (A->order == CblasColMajor) {
 		for (i = 0; i < A->cols; i++) {
 			sum = 0.0;
 			v = &A->values[i * A->ld];
@@ -1516,25 +1524,20 @@ static int cov (lua_State *L) {
 			}
 			means[i] = sum / A->rows;
 		}
+	} else {
+		for (i = 0; i < A->cols; i++) {
+			sum = 0.0;
+			v = &A->values[i];
+			for (j = 0; j < A->rows; j++) {
+				sum += *v;
+				v += A->ld;
+			}
+			means[i] = sum / A->rows;
+		}
 	}
 
 	/* calculate covariances */
-	if (A->order == CblasRowMajor) {
-		for (i = 0; i < A->cols; i++) {
-			for (j = i; j < A->cols; j++) {
-				sum = 0.0;
-				vi = &A->values[i];
-				vj = &A->values[j];
-				for (k = 0; k < A->rows; k++) {
-					sum += (*vi - means[i]) * (*vj - means[j]);
-					vi += A->ld;
-					vj += A->ld;
-				}
-				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
-						/ (A->rows - ddof);
-			}
-		}
-	} else {
+	if (A->order == CblasColMajor) {
 		for (i = 0; i < A->cols; i++) {
 			for (j = i; j < A->cols; j++) {
 				sum = 0.0;
@@ -1544,6 +1547,21 @@ static int cov (lua_State *L) {
 					sum += (*vi - means[i]) * (*vj - means[j]);
 					vi++;
 					vj++;
+				}
+				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
+						/ (A->rows - ddof);
+			}
+		}
+	} else {
+		for (i = 0; i < A->cols; i++) {
+			for (j = i; j < A->cols; j++) {
+				sum = 0.0;
+				vi = &A->values[i];
+				vj = &A->values[j];
+				for (k = 0; k < A->rows; k++) {
+					sum += (*vi - means[i]) * (*vj - means[j]);
+					vi += A->ld;
+					vj += A->ld;
 				}
 				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
 						/ (A->rows - ddof);
@@ -1575,59 +1593,44 @@ static int corr (lua_State *L) {
 		free(means);
 		return luaL_error(L, "cannot allocate values");
 	}
-	if (A->order == CblasRowMajor) {
+	if (A->order == CblasColMajor) {
 		for (i = 0; i < A->cols; i++) {
 			sum = 0.0;
-			v = &A->values[i];
+			v = &A->values[i * A->ld];
 			for (j = 0; j < A->rows; j++) {
 				sum += *v;
-				v += A->ld;
+				v++;
 			}
 			means[i] = sum / A->rows;
 			sum = 0.0;
-			v = &A->values[i];
+			v = &A->values[i * A->ld];
 			for (j = 0; j < A->rows; j++) {
 				sum += (*v - means[i]) * (*v - means[i]);
-				v += A->ld;
+				v++;
 			}
 			stds[i] = sqrt(sum);
 		}
 	} else {
 		for (i = 0; i < A->cols; i++) {
 			sum = 0.0;
-			v = &A->values[i * A->ld];
+			v = &A->values[i];
 			for (j = 0; j < A->rows; j++) {
 				sum += *v;
-				v++;
+				v += A->ld;
 			}
 			means[i] = sum / A->rows;
 			sum = 0.0;
-			v = &A->values[i * A->ld];
+			v = &A->values[i];
 			for (j = 0; j < A->rows; j++) {
 				sum += (*v - means[i]) * (*v - means[i]);
-				v++;
+				v += A->ld;
 			}
 			stds[i] = sqrt(sum);
 		}
 	}
 
-	/* calculate Pearson correlations */
-	if (A->order == CblasRowMajor) {
-		for (i = 0; i < A->cols; i++) {
-			for (j = i; j < A->cols; j++) {
-				sum = 0.0;
-				vi = &A->values[i];
-				vj = &A->values[j];
-				for (k = 0; k < A->rows; k++) {
-					sum += (*vi - means[i]) * (*vj - means[j]);
-					vi += A->ld;
-					vj += A->ld;
-				}
-				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
-						/ (stds[i] * stds[j]);
-			}
-		}
-	} else {
+	/* calculate Pearson product-moment correlation coefficients */
+	if (A->order == CblasColMajor) {
 		for (i = 0; i < A->cols; i++) {
 			for (j = i; j < A->cols; j++) {
 				sum = 0.0;
@@ -1637,6 +1640,21 @@ static int corr (lua_State *L) {
 					sum += (*vi - means[i]) * (*vj - means[j]);
 					vi++;
 					vj++;
+				}
+				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
+						/ (stds[i] * stds[j]);
+			}
+		}
+	} else {
+		for (i = 0; i < A->cols; i++) {
+			for (j = i; j < A->cols; j++) {
+				sum = 0.0;
+				vi = &A->values[i];
+				vj = &A->values[j];
+				for (k = 0; k < A->rows; k++) {
+					sum += (*vi - means[i]) * (*vj - means[j]);
+					vi += A->ld;
+					vj += A->ld;
 				}
 				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
 						/ (stds[i] * stds[j]);
