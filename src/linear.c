@@ -517,7 +517,8 @@ static int sub (lua_State *L) {
 
 static int unwind (lua_State *L) {
 	int             index;
-	size_t          base, i, j, k;
+	double         *s, *d, *last;
+	size_t          i, j;
 	struct vector  *x;
 	struct matrix  *X;
 
@@ -525,25 +526,26 @@ static int unwind (lua_State *L) {
 		return luaL_error(L, "wrong number of arguments");
 	}
 	x = luaL_checkudata(L, lua_gettop(L), LUALINEAR_VECTOR_METATABLE);
+	d = x->values;
+	last = d + x->length;
 	index = 1;
-	i = 0;
-	while (i < x->length) {
+	while (d < last) {
 		X = luaL_checkudata(L, index, LUALINEAR_MATRIX_METATABLE);
-		luaL_argcheck(L, X->rows * X->cols <= x->length - i, index, "matrix too large");
+		luaL_argcheck(L, d + X->rows * X->cols * x->inc <= last, index, "matrix too large");
 		if (X->order == CblasRowMajor) {
-			for (j = 0; j < X->rows; j++) {
-				base = j * X->ld;
-				for (k = 0; k < X->cols; k++) {
-					x->values[i * x->inc] = X->values[base + k];
-					i++;
+			for (i = 0; i < X->rows; i++) {
+				s = &X->values[i * X->ld];
+				for (j = 0; j < X->cols; j++) {
+					*d = *s++;
+					d += x->inc;
 				}
 			}
 		} else {
-			for (j = 0; j < X->cols; j++) {
-				base = j * X->ld;
-				for (k = 0; k < X->rows; k++) {
-					x->values[i * x->inc] = X->values[base + k];
-					i++;
+			for (i = 0; i < X->cols; i++) {
+				s = &X->values[i * X->ld];
+				for (j = 0; j < X->rows; j++) {
+					*d = *s++;
+					d += x->inc;
 				}
 			}
 		}
@@ -554,30 +556,32 @@ static int unwind (lua_State *L) {
 
 static int reshape (lua_State *L) {
 	int             index;
-	size_t          base, i, j, k;
+	double         *d, *s, *last;
+	size_t          i, j;
 	struct vector  *x;
 	struct matrix  *X;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
+	s = x->values;
+	last = x->values + x->length;
 	index = 2;
-	i = 0;
-	while (i < x->length) {
+	while (s < last) {
 		X = luaL_checkudata(L, index, LUALINEAR_MATRIX_METATABLE);
-		luaL_argcheck(L, X->rows * X->cols <= x->length - i, index, "matrix too large");
+		luaL_argcheck(L, s + X->rows * X->cols * x->inc <= last, index,	"matrix too large");
 		if (X->order == CblasRowMajor) {
-			for (j = 0; j < X->rows; j++) {
-				base = j * X->ld;
-				for (k = 0; k < X->cols; k++) {
-					X->values[base + k] = x->values[i * x->inc];
-					i++;
+			for (i = 0; i < X->rows; i++) {
+				d = &X->values[i * X->ld];
+				for (j = 0; j < X->cols; j++) {
+					*d++ = *s;
+					s += x->inc;
 				}
 			}
 		} else {
-			for (j = 0; j < X->cols; j++) {
-				base = j * X->ld;
-				for (k = 0; k < X->rows; k++) {
-					X->values[base + k] = x->values[i * x->inc];
-					i++;
+			for (i = 0; i < X->cols; i++) {
+				d = &X->values[i * X->ld];
+				for (j = 0; j < X->rows; j++) {
+					*d++ = *s;
+					s += x->inc;
 				}
 			}
 		}
