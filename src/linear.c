@@ -247,7 +247,7 @@ static int vector_next (lua_State *L) {
 	index = luaL_checkinteger(L, 2);
 	if (index < x->length) {
 		lua_pushinteger(L, index + 1);
-		lua_pushnumber(L, x->values[index]);
+		lua_pushnumber(L, x->values[index * x->inc]);
 		return 2;
 	}
 	lua_pushnil(L);

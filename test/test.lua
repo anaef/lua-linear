@@ -73,7 +73,6 @@ local function testSize ()
 	assert(order == "row")
 end
 
-
 -- Tests the tvector function
 local function testTvector ()
 	local A = linear.tolinear({ { 1, 2, 3 }, { 4, 5, 6 } })
@@ -81,6 +80,12 @@ local function testTvector ()
 	assert(#y == 2)
 	assert(y[1] == 1)
 	assert(y[2] == 4)
+	local copy = { }
+	for i, value in ipairs(y) do
+		copy[i] = value
+	end
+	assert(copy[1] == 1)
+	assert(copy[2] == 4)
 end
 
 -- Tests the sub function
