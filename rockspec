@@ -1,3 +1,4 @@
+rockspec_format = "3.0"
 package = "lua-linear"
 version = "1.0.0-1"
 description = {
