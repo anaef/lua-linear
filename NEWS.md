@@ -6,8 +6,8 @@
 - Fix potential infinity values returned from the normal function.
 
 - Deprecate axpy, superseded by axpby.
- 
 
-## Release 1.0.0 (2023-Sep-17)
+
+## Release 1.0.0 (2023-09-17)
 
 - Initial release.
