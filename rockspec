@@ -37,6 +37,7 @@ build = {
 			defines = {
 				"_REENTRANT",
 				"_GNU_SOURCE",
+				"LUA_LINEAR_USE_AXPBY=1"
 			},
 			libraries = {
 				"blas",
@@ -48,17 +49,4 @@ build = {
 			},
 		},
 	},
-	platforms = {
-		linux = {
-			modules = {
-				linear = {
-					defines = {
-						"_REENTRANT",
-						"_GNU_SOURCE",
-						"LUA_LINEAR_HAVE_AXPBY"
-					}
-				}
-			}
-		}
-	}
 }
