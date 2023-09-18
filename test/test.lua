@@ -1,7 +1,13 @@
 local linear = require("linear")
 
+
 -- Epsilon
 local EPSILON = 6E-5
+
+
+--
+-- Structural functions
+--
 
 -- Tests the vector function
 local function testVector ()
@@ -51,6 +57,68 @@ local function testMatrix ()
 		assert(linear.type(b) == "vector")
 		assert(#b == 2)
 	end
+end
+
+-- Tests the totable function
+local function testTotable ()
+	-- vector
+	local x = linear.vector(2)
+	x[1] = 2
+	x[2] = 3
+	local t = linear.totable(x)
+	assert(type(t) == "table")
+	assert(#t == 2)
+	assert(t[1] == 2)
+	assert(t[2] == 3)
+
+	-- matrix
+	local X = linear.matrix(3, 2)
+	X[1][1] = 2
+	X[3][2] = 4
+	local t = linear.totable(X)
+	assert(type(t) == "table")
+	assert(#t == 3)
+	assert(type(t[1]) == "table")
+	assert(#t[1] == 2)
+	assert(t[1][1] == 2)
+	assert(t[3][2] == 4)
+end
+
+-- Tests the tolinear function
+local function testTolinear ()
+	-- vector
+	local x = linear.tolinear({ 1, 2, 3 })
+	assert(linear.type(x) == "vector")
+	assert(#x == 3)
+	assert(x[1] == 1)
+	assert(x[2] == 2)
+	assert(x[3] == 3)
+
+	-- matrix, row major
+	local X = linear.tolinear({ { 1, 2, 3 }, { 3, 2, 1 } })
+	assert(linear.type(X) == "matrix")
+	assert(select(3, linear.size(X)) == "row")
+	assert(#X == 2)
+	assert(#X[1] == 3)
+	assert(X[1][1] == 1)
+	assert(X[1][2] == 2)
+	assert(X[1][3] == 3)
+	assert(X[2][1] == 3)
+	assert(X[2][2] == 2)
+	assert(X[2][3] == 1)
+
+	-- matrix, column major
+	local X = linear.tolinear({ { 1, 2, 3 }, { 3, 2, 1 } }, "col")
+	assert(linear.type(X) == "matrix")
+	assert(select(3, linear.size(X)) == "col")
+	assert(#X == 2)
+	assert(#X[1] == 3)
+	assert(X[1][1] == 1)
+	assert(X[1][2] == 2)
+	assert(X[1][3] == 3)
+	assert(X[2][1] == 3)
+	assert(X[2][2] == 2)
+	assert(X[2][3] == 1)
 end
 
 -- Tests the type function
@@ -144,68 +212,12 @@ local function testReshape ()
 	assert(Y[2][3] == 10)
 end
 
--- Tests the totable function
-local function testTotable ()
-	-- vector
-	local x = linear.vector(2)
-	x[1] = 2
-	x[2] = 3
-	local t = linear.totable(x)
-	assert(type(t) == "table")
-	assert(#t == 2)
-	assert(t[1] == 2)
-	assert(t[2] == 3)
 
-	-- matrix
-	local X = linear.matrix(3, 2)
-	X[1][1] = 2
-	X[3][2] = 4
-	local t = linear.totable(X)
-	assert(type(t) == "table")
-	assert(#t == 3)
-	assert(type(t[1]) == "table")
-	assert(#t[1] == 2)
-	assert(t[1][1] == 2)
-	assert(t[3][2] == 4)
-end
+--
+-- Elementary functions
+--
 
--- Tests the tolinear function
-local function testTolinear ()
-	-- vector
-	local x = linear.tolinear({ 1, 2, 3 })
-	assert(linear.type(x) == "vector")
-	assert(#x == 3)
-	assert(x[1] == 1)
-	assert(x[2] == 2)
-	assert(x[3] == 3)
-
-	-- matrix, row major
-	local X = linear.tolinear({ { 1, 2, 3 }, { 3, 2, 1 } })
-	assert(linear.type(X) == "matrix")
-	assert(select(3, linear.size(X)) == "row")
-	assert(#X == 2)
-	assert(#X[1] == 3)
-	assert(X[1][1] == 1)
-	assert(X[1][2] == 2)
-	assert(X[1][3] == 3)
-	assert(X[2][1] == 3)
-	assert(X[2][2] == 2)
-	assert(X[2][3] == 1)
-
-	-- matrix, column major
-	local X = linear.tolinear({ { 1, 2, 3 }, { 3, 2, 1 } }, "col")
-	assert(linear.type(X) == "matrix")
-	assert(select(3, linear.size(X)) == "col")
-	assert(#X == 2)
-	assert(#X[1] == 3)
-	assert(X[1][1] == 1)
-	assert(X[1][2] == 2)
-	assert(X[1][3] == 3)
-	assert(X[2][1] == 3)
-	assert(X[2][2] == 2)
-	assert(X[2][3] == 1)
-end
-
+-- Tests an elementary function
 local function testElementaryFunction (inputs, outputs, f)
 	local X = linear.matrix(2, #inputs)
 	local x1, x2 = X[1], X[2]
@@ -225,6 +237,62 @@ local function testElementaryFunction (inputs, outputs, f)
 	end
 end
 
+-- Tests the inc function
+local function testInc ()
+	local x = linear.vector(3)
+	linear.inc(x, 1)
+	for i = 1, #x do
+		assert(x[i] == 1)
+	end
+	local A = linear.matrix(3, 3)
+	linear.inc(A, 2)
+	for i = 1, #A do
+		local a = A[i]
+		for j = 1, #a do
+			assert(a[j] == 2)
+		end
+	end
+end
+
+-- Tests the scal function
+local function testScal ()
+	-- vector
+	local x = linear.tolinear({ 1, 2 })
+	linear.scal(x, 2)
+	assert(x[1] == 2)
+	assert(x[2] == 4)
+
+	-- matrix
+	local X = linear.tolinear({ { 0, 0 }, { 0, 1 } })
+	linear.scal(X, 2)
+	assert(X[2][2] == 2)
+end
+
+-- Tests the pow function
+local function testPow ()
+	-- vector
+	local x = linear.tolinear({ 1, 2 })
+	linear.pow(x, 0.5)
+	assert(x[1] == 1)
+	assert(math.abs(x[2] - math.sqrt(2)) < EPSILON)
+
+	-- matrix
+	local X = linear.tolinear({ { 0, 0, 0 }, { 0, 0, 2 }})
+	linear.pow(X, 3)
+	assert(X[1][1] == 0)
+	assert(X[2][3] == 8)
+end
+
+-- Tests the exp function
+local function testExp ()
+	testElementaryFunction({ 0, math.log(2) }, { 1, 2 }, linear.exp)
+end
+
+-- Tests the log function
+local function testLog ()
+	testElementaryFunction({ 1, math.exp(1) }, { 0, 1 }, linear.log)
+end
+
 -- Tests the sign function
 local function testSgn ()
 	assert(linear.sgn(2) == 1)
@@ -239,16 +307,6 @@ local function testAbs ()
 	testElementaryFunction({ 0, -1, 1, 1.5 }, { 0, 1, 1, 1.5 }, linear.abs)
 end
 
--- Tests the exp function
-local function testExp ()
-	testElementaryFunction({ 0, math.log(2) }, { 1, 2 }, linear.exp)
-end
-
--- Tests the log function
-local function testLog ()
-	testElementaryFunction({ 1, math.exp(1) }, { 0, 1 }, linear.log)
-end
-
 -- Tests the logistic function
 local function testLogistic ()
 	testElementaryFunction({ 0, -100, 100 }, { 0.5, 0, 1 }, linear.logistic)
@@ -257,6 +315,17 @@ end
 -- Tests the tanh function
 local function testTanh ()
 	testElementaryFunction({ 0, 1 }, { 0, 0.76159 }, linear.tanh)
+end
+
+-- Tests the apply function
+local function testApply ()
+	local function inc (x)
+		return x + 1
+	end
+	local A = linear.matrix(2, 3)
+	linear.set(A, 1)
+	linear.apply(A, inc)
+	assert(A[2][2] == 2)
 end
 
 -- Tests the set function
@@ -318,74 +387,10 @@ local function testNormal ()
 	assert(math.abs(linear.var(x) - 1.0) < 0.01)
 end
 
--- Tests the inc function
-local function testInc ()
-	local x = linear.vector(3)
-	linear.inc(x, 1)
-	for i = 1, #x do
-		assert(x[i] == 1)
-	end
-	local A = linear.matrix(3, 3)
-	linear.inc(A, 2)
-	for i = 1, #A do
-		local a = A[i]
-		for j = 1, #a do
-			assert(a[j] == 2)
-		end
-	end
-end
 
--- Tests the scal function
-local function testScal ()
-	-- vector
-	local x = linear.tolinear({ 1, 2 })
-	linear.scal(x, 2)
-	assert(x[1] == 2)
-	assert(x[2] == 4)
-
-	-- matrix
-	local X = linear.tolinear({ { 0, 0 }, { 0, 1 } })
-	linear.scal(X, 2)
-	assert(X[2][2] == 2)
-end
-
--- Tests the pow function
-local function testPow ()
-	-- vector
-	local x = linear.tolinear({ 1, 2 })
-	linear.pow(x, 0.5)
-	assert(x[1] == 1)
-	assert(math.abs(x[2] - math.sqrt(2)) < EPSILON)
-
-	-- matrix
-	local X = linear.tolinear({ { 0, 0, 0 }, { 0, 0, 2 }})
-	linear.pow(X, 3)
-	assert(X[1][1] == 0)
-	assert(X[2][3] == 8)
-end
-
--- Tests the apply function
-local function testApply ()
-	local function inc (x)
-		return x + 1
-	end
-	local A = linear.matrix(2, 3)
-	linear.set(A, 1)
-	linear.apply(A, inc)
-	assert(A[2][2] == 2)
-end
-
--- Tests the nrm2 function
-local function testNrm2 ()
-	local x = linear.tolinear({ 1, 2 })
-	assert(math.abs(linear.nrm2(x) - math.sqrt(5)) <= EPSILON)
-end
-
--- Tests the asum function
-local function testAsum ()
-	local x = linear.tolinear({ 1, -2 })
-	assert(linear.asum(x) == 3)
-end
+--
+-- Unary vector functions
+--
 
 -- Tests the sum function
 local function testSum ()
@@ -442,41 +447,22 @@ local function testStd ()
 	assert(math.abs(linear.std(x, 2) - math.sqrt(2)) < EPSILON)
 end
 
--- Tests the swap function
-local function testSwap ()
-	-- vector
-	local x, y = linear.tolinear({ 1, 0 }), linear.tolinear({ 0, 2 })
-	linear.swap(x, y)
-	assert(x[1] == 0)
-	assert(x[2] == 2)
-	assert(y[1] == 1)
-	assert(y[2] == 0)
-
-	-- matrix
-	local X = linear.matrix(2, 3)
-	local Y = linear.matrix(2, 3)
-	X[2][3], Y[2][3] = 1, 2
-	linear.swap(X, Y)
-	assert(X[2][3] == 2)
-	assert(Y[2][3] == 1)
-end
-
--- Tests the copy function
-local function testCopy ()
-	-- vector
+-- Tests the nrm2 function
+local function testNrm2 ()
 	local x = linear.tolinear({ 1, 2 })
-	local y = linear.vector(2)
-	linear.copy(x, y)
-	assert(y[1] == 1)
-	assert(y[2] == 2)
-
-	-- matrix
-	local X = linear.matrix(2, 3)
-	local Y = linear.matrix(2, 3)
-	X[2][3] = 1
-	linear.copy(X, Y)
-	assert(Y[2][3] == 1)
+	assert(math.abs(linear.nrm2(x) - math.sqrt(5)) <= EPSILON)
 end
+
+-- Tests the asum function
+local function testAsum ()
+	local x = linear.tolinear({ 1, -2 })
+	assert(linear.asum(x) == 3)
+end
+
+
+--
+-- Binary vector functions
+--
 
 -- Tests the axpy function
 local function testAxpy ()
@@ -612,6 +598,47 @@ local function testMul ()
 	assert(X[2][1] == 4)
 	assert(math.abs(X[2][2] - 8 * math.sqrt(2)) < EPSILON)
 end
+
+-- Tests the swap function
+local function testSwap ()
+	-- vector
+	local x, y = linear.tolinear({ 1, 0 }), linear.tolinear({ 0, 2 })
+	linear.swap(x, y)
+	assert(x[1] == 0)
+	assert(x[2] == 2)
+	assert(y[1] == 1)
+	assert(y[2] == 0)
+
+	-- matrix
+	local X = linear.matrix(2, 3)
+	local Y = linear.matrix(2, 3)
+	X[2][3], Y[2][3] = 1, 2
+	linear.swap(X, Y)
+	assert(X[2][3] == 2)
+	assert(Y[2][3] == 1)
+end
+
+-- Tests the copy function
+local function testCopy ()
+	-- vector
+	local x = linear.tolinear({ 1, 2 })
+	local y = linear.vector(2)
+	linear.copy(x, y)
+	assert(y[1] == 1)
+	assert(y[2] == 2)
+
+	-- matrix
+	local X = linear.matrix(2, 3)
+	local Y = linear.matrix(2, 3)
+	X[2][3] = 1
+	linear.copy(X, Y)
+	assert(Y[2][3] == 1)
+end
+
+
+--
+-- Program functions
+--
 
 -- Tests the dot function
 local function testDot ()
@@ -751,44 +778,44 @@ end
 -- Structural function tests
 testVector()
 testMatrix()
+testTotable()
+testTolinear()
 testType()
 testSize()
 testTvector()
 testSub()
 testUnwind()
 testReshape()
-testTotable()
-testTolinear()
 
 -- Elementary function tests
-testSgn()
-testAbs()
-testExp()
-testLog()
-testLogistic()
-testTanh()
-testSet()
-testUniform()
-testNormal()
 testInc()
 testScal()
 testPow()
+testExp()
+testLog()
+testSgn()
+testAbs()
+testLogistic()
+testTanh()
 testApply()
+testSet()
+testUniform()
+testNormal()
 
 -- Unary vector function tests
-testNrm2()
-testAsum()
 testSum()
 testMean()
 testVar()
 testStd()
+testNrm2()
+testAsum()
 
 -- Binary vector function tests
-testSwap()
-testCopy()
 testAxpy()
 testAxpby()
 testMul()
+testSwap()
+testCopy()
 
 -- Program function tests
 testDot()

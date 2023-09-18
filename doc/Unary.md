@@ -20,18 +20,6 @@ The following function descriptions assume a call with a matrix `X` and vector `
 order.
 
 
-## `linear.nrm2 (x|X [, y [, order]])`
-
-Applies the Euclidean norm function (also known as L2 norm), formally
-$y_i \leftarrow \lVert X^i \rVert_2$.
-
-
-## `linear.asum (x|X [, y [, order]])`
-
-Applies the absolute-value norm function (also known as L1 norm), formally
-$y_i \leftarrow \lVert X^i \rVert_1$.
-
-
 ## `linear.sum (x|X [, y [, order]])`
 
 Applies the sum function, formally $y_i \leftarrow \sum\nolimits_{j=1}^{N} X_{ij}$ where $N$ is the
@@ -58,3 +46,15 @@ Applies the standard deviation function with the specified delta degrees of free
 formally $y_i \leftarrow \sqrt{\frac{\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2}
 {N - \textrm{ddof}}}$ where $\bar{X^i}$ is the mean value of vector $X^i$, and $N$ is its length.
 The non-negative argument `ddof` defaults to `0` and must be less than $N$.
+
+
+## `linear.nrm2 (x|X [, y [, order]])`
+
+Applies the Euclidean norm function (also known as L2 norm), formally
+$y_i \leftarrow \lVert X^i \rVert_2$.
+
+
+## `linear.asum (x|X [, y [, order]])`
+
+Applies the absolute-value norm function (also known as L1 norm), formally
+$y_i \leftarrow \lVert X^i \rVert_1$.

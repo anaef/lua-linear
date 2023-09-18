@@ -23,16 +23,6 @@ match.
 The following function descriptions assume a call with two vectors `x` and `y`.
 
 
-## `linear.swap (x|X, y|Y [, order])`
-
-Swaps the components of vectors `x` and `y`, formally $x \leftrightarrow y$.
-
-
-## `linear.copy (x|X, y|Y [, order])`
-
-Copies the components of vector `x` to vector `y`, formally $y \leftarrow x$.
-
-
 ## `linear.axpy (x|X, y|Y [, order] [, alpha])`
 
 Scales and adds vector `x` to vector `y`, formally $y \leftarrow \alpha x + y$. The argument
@@ -49,3 +39,13 @@ arguments `alpha` and `beta` default to `1.0` and `0.0`, respectively.
 
 Multiplies the components of vector `y` with the components of vector `x` risen to power `alpha`,
 formally $y \leftarrow x^\alpha y$. The argument `alpha` defaults to `1.0`.
+
+
+## `linear.swap (x|X, y|Y [, order])`
+
+Swaps the components of vectors `x` and `y`, formally $x \leftrightarrow y$.
+
+
+## `linear.copy (x|X, y|Y [, order])`
+
+Copies the components of vector `x` to vector `y`, formally $y \leftarrow x$.

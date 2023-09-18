@@ -14,16 +14,22 @@ matrix.
 The following function descriptions assume a call with a vector `x`.
 
 
-## `linear.sgn (n|x|X)`
+## `linear.inc (n|x|X [, alpha])`
 
-Applies the sign function, formally $x_i \leftarrow \mathop{\mathrm{sgn}} \  x_i$. The result of
-the sign function is $1$ if $x_i$ is larger than zero, $-1$ if $x_i$ is less than zero, and $x_i$
-otherwise.
+Applies the increment function, formally $x_i \leftarrow x_i + \alpha$. The argument `alpha`
+defaults to `1.0`.
 
 
-## `linear.abs (n|x|X)`
+## `linear.scal (n|x|X [, alpha])`
 
-Applies the absolute value function, formally $x_i \leftarrow \| x_i \|$.
+Applies the scalar multiplication function, formally $x_i \leftarrow \alpha x_i$. The argument
+`alpha` defaults to `1.0`.
+
+
+## `linear.pow (n|x|X, [, alpha])`
+
+Applies the power function, formally $x_i \leftarrow {x_i}^\alpha$. The argument `alpha` defaults
+to `1.0`.
 
 
 ## `linear.exp (n|x|X)`
@@ -34,6 +40,18 @@ Applies the exponential function, formally $x_i \leftarrow e^{x_i}$.
 ## `linear.log (n|x|X)`
 
 Applies the natural logarithm function, formally $x_i \leftarrow \log x_i$.
+
+
+## `linear.sgn (n|x|X)`
+
+Applies the sign function, formally $x_i \leftarrow \mathop{\mathrm{sgn}} \  x_i$. The result of
+the sign function is $1$ if $x_i$ is larger than zero, $-1$ if $x_i$ is less than zero, and $x_i$
+otherwise.
+
+
+## `linear.abs (n|x|X)`
+
+Applies the absolute value function, formally $x_i \leftarrow \| x_i \|$.
 
 
 ## `linear.logistic (n|x|X)`
@@ -68,21 +86,3 @@ interval $[0, 1)$.
 Applies the normal random function, formally $x_i \leftarrow n \in \mathcal{N}(0, 1)$. The
 function returns statistically random, normally distributed values with a mean of $0$ and a
 standard deviation of $1$.
-
-
-## `linear.inc (n|x|X [, alpha])`
-
-Applies the increment function, formally $x_i \leftarrow x_i + \alpha$. The argument `alpha`
-defaults to `1.0`.
-
-
-## `linear.scal (n|x|X [, alpha])`
-
-Applies the scalar multiplication function, formally $x_i \leftarrow \alpha x_i$. The argument
-`alpha` defaults to `1.0`.
-
-
-## `linear.pow (n|x|X, [, alpha])`
-
-Applies the power function, formally $x_i \leftarrow {x_i}^\alpha$. The argument `alpha` defaults
-to `1.0`.
