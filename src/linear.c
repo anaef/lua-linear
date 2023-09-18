@@ -469,7 +469,6 @@ static int totable (lua_State *L) {
 }
 
 static int tolinear (lua_State *L) {
-	int             isnum;
 	double         *value;
 	size_t          size, rows, cols, major, minor, i, j;
 	CBLAS_ORDER     order;
@@ -486,11 +485,10 @@ static int tolinear (lua_State *L) {
 		x = create_vector(L, size);
 		value = x->values;
 		for (i = 0; i < size; i++) {
-			lua_rawgeti(L, 1, i + 1);
-			*value++ = lua_tonumberx(L, -1, &isnum);
-			if (!isnum) {
+			if (lua_rawgeti(L, 1, i + 1) != LUA_TNUMBER) {
 				return luaL_error(L, "bad value at index %d", i + 1);
 			}
+			*value++ = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 		}
 		return 1;
@@ -516,16 +514,16 @@ static int tolinear (lua_State *L) {
 		X = create_matrix(L, rows, cols, order);
 		for (i = 0; i < major; i++) {
 			value = &X->values[i * X->ld];
-			if (lua_rawgeti(L, 1, i + 1) != LUA_TTABLE) {
+			if (lua_rawgeti(L, 1, i + 1) != LUA_TTABLE
+					 || lua_rawlen(L, -1) != minor) {
 				return luaL_error(L, "bad value at index %d", i + 1);
 			}
 			for (j = 0; j < minor; j++) {
-				lua_rawgeti(L, -1, j + 1);
-				*value++ = lua_tonumberx(L, -1, &isnum);
-				if (!isnum) {
+				if (lua_rawgeti(L, -1, j + 1) != LUA_TNUMBER) {
 					return luaL_error(L, "bad value at index (%d,%d)", i + 1,
 							j + 1);
 				}
+				*value++ = lua_tonumber(L, -1);
 				lua_pop(L, 1);
 			}
 			lua_pop(L, 1);

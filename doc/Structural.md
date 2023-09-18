@@ -32,7 +32,8 @@ If `t` is a list of numbers, the function returns a vector with the numbers as i
 
 If `t` is a list of lists of numbers, the function returns a matrix. The nested lists of
 numbers correspond to the major order vectors of the matrix. The parameter `order` can be one of
-`row` (the default) or `col`, and controls whether a row major or a column major matrix is returned.
+`row` (the default) or `col`, and controls whether a row major or a column major matrix is
+returned. All nested lists of numbers must have the same length.
 
 
 ## `linear.type (x|X)`
