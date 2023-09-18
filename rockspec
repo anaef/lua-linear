@@ -13,7 +13,7 @@ description = {
 	labels = { "math" },
 }
 dependencies = {
-	"lua >= 5.2"
+	"lua >= 5.1"
 }
 external_dependencies = {
 	LIBBLAS = {
@@ -34,7 +34,7 @@ build = {
 			sources = {
 				"src/linear.c",
 			},
-			defines ={
+			defines = {
 				"_REENTRANT",
 				"_GNU_SOURCE",
 			},
@@ -47,5 +47,18 @@ build = {
 				"$(LIBLAPACKE_INCDIR)"
 			},
 		},
+	},
+	platforms = {
+		linux = {
+			modules = {
+				linear = {
+					defines = {
+						"_REENTRANT",
+						"_GNU_SOURCE",
+						"LUA_LINEAR_HAVE_AXPBY"
+					}
+				}
+			}
+		}
 	}
 }

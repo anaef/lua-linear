@@ -23,12 +23,6 @@ match.
 The following function descriptions assume a call with two vectors `x` and `y`.
 
 
-## `linear.axpy (x|X, y|Y [, order] [, alpha])`
-
-Scales and adds vector `x` to vector `y`, formally $y \leftarrow \alpha x + y$. The argument
-`alpha` defaults to `1.0`.
-
-
 ## `linear.axpby (x|X, y|Y [, order] [, alpha [, beta]])`
 
 Scales and adds vector `x` to scaled vector `y`, formally $y \leftarrow \alpha x + \beta y$. The

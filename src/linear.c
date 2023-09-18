@@ -103,6 +103,8 @@ static int binary(lua_State *L, binary_function s, int hasalpha, int hasbeta);
 static void _axpy(const int size, const double alpha, double *x, int incx, const double beta,
 		double *y, int incy);
 static int axpy(lua_State *L);
+static void _axpby(const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy);
 static int axpby(lua_State *L);
 static void _mul(const int size, const double alpha, double *x, int incx, const double beta,
 		 double *y, int incy);
@@ -1180,13 +1182,26 @@ static void _axpy (const int size, const double alpha, double *x, int incx, cons
 	(void)beta;
 	cblas_daxpy(size, alpha, x, incx, y, incy);
 }
-	
+
+/* deprecated */
 static int axpy (lua_State *L) {
 	return binary(L, _axpy, 1, 0);
 }
 
+static void _axpby (const int size, const double alpha, double *x, int incx, const double beta,
+		double *y, int incy) {
+#ifdef LUA_LINEAR_HAVE_AXPBY
+	cblas_daxpby(size, alpha, x, incx, beta, y, incy);
+#else
+	if (beta != 1.0) {
+		cblas_dscal(size, beta, y, incy);
+	}
+	cblas_daxpy(size, alpha, x, incx, y, incy);
+#endif
+}
+
 static int axpby (lua_State *L) {
-	return binary(L, (binary_function)cblas_daxpby, 1, 1);
+	return binary(L, _axpby, 1, 1);
 }
 
 static void _mul (const int size, const double alpha, double *x, int incx, const double beta,
@@ -1659,7 +1674,7 @@ int luaopen_linear (lua_State *L) {
 		{ "asum", asum },
 
 		/* binary vector functions */
-		{ "axpy", axpy },
+		{ "axpy", axpy },    /* deprecated */
 		{ "axpby", axpby },
 		{ "mul", mul },
 		{ "swap", swap },
@@ -1681,11 +1696,11 @@ int luaopen_linear (lua_State *L) {
 	};
 
 	/* register functions */
-	#if LUA_VERSION_NUM >= 502
+#if LUA_VERSION_NUM >= 502
 	luaL_newlib(L, FUNCTIONS);
-	#else
+#else
 	luaL_register(L, luaL_checkstring(L, 1), FUNCTIONS);
-	#endif
+#endif
 
 	/* vector metatable */
 	luaL_newmetatable(L, LUALINEAR_VECTOR_METATABLE);
