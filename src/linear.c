@@ -864,8 +864,8 @@ static void _normal (const int size, double alpha, double *x, const int incx) {
 
 	/* Box-Muller transform */
 	for (i = 0; i < (size_t)size - 1; i += 2) {
-		u1 = random() / (double)RAND_MAX;
-		u2 = random() / (double)RAND_MAX;
+		u1 = (random() + 1.0) / (RAND_MAX + 1.0);
+		u2 = (random() + 1.0) / (RAND_MAX + 1.0);
 		r = sqrt(-2.0 * log(u1));
 		sincos(2 * M_PI * u2, &s, &c);
 		*x = r * c;
@@ -874,8 +874,8 @@ static void _normal (const int size, double alpha, double *x, const int incx) {
 		x += incx;
 	}
 	if (i < (size_t)size) {
-		u1 = random() / (double)RAND_MAX;
-		u2 = random() / (double)RAND_MAX;
+		u1 = (random() + 1.0) / (RAND_MAX + 1.0);
+		u2 = (random() + 1.0) / (RAND_MAX + 1.0);
 		*x = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
 	}
 }
