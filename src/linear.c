@@ -751,7 +751,7 @@ static int reshape (lua_State *L) {
 }
 
 #if LUA_VERSION_NUM < 502
-static int ipairs(lua_State *L) {
+static int ipairs (lua_State *L) {
 	if (luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE)) {
 		return vector_ipairs(L);
 	}
