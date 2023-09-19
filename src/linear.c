@@ -37,8 +37,10 @@ static void push_vector(lua_State *L, size_t length, size_t inc, struct data *da
 static int vector_len(lua_State *L);
 static int vector_index(lua_State *L);
 static int vector_newindex(lua_State *L);
+#if LUA_VERSION_NUM < 504
 static int vector_next(lua_State *L);
 static int vector_ipairs(lua_State *L);
+#endif
 static int vector_tostring(lua_State *L);
 static int vector_gc(lua_State *L);
 
@@ -47,8 +49,10 @@ static void push_matrix(lua_State *L, size_t rows, size_t cols, size_t ld, CBLAS
 		struct data *data, double *values);
 static int matrix_len(lua_State *L);
 static int matrix_index(lua_State *L);
+#if LUA_VERSION_NUM < 504
 static int matrix_next(lua_State *L);
 static int matrix_ipairs(lua_State *L);
+#endif
 static int matrix_tostring(lua_State *L);
 static int matrix_gc(lua_State *L);
 
@@ -242,8 +246,11 @@ static int vector_index (lua_State *L) {
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR_METATABLE);
 	index = luaL_checkinteger(L, 2);
-	luaL_argcheck(L, index >= 1 && index <= x->length, 2, "bad index");
-	lua_pushnumber(L, x->values[(index - 1) * x->inc]);
+	if (index >= 1 && index <= x->length) {
+		lua_pushnumber(L, x->values[(index - 1) * x->inc]);
+	} else {
+		lua_pushnil(L);
+	}
 	return 1;
 }
 
@@ -260,6 +267,7 @@ static int vector_newindex (lua_State *L) {
 	return 0;
 }
 
+#if LUA_VERSION_NUM < 504
 static int vector_next (lua_State *L) {
 	size_t          index;
 	struct vector  *x;
@@ -282,6 +290,7 @@ static int vector_ipairs (lua_State *L) {
 	lua_pushinteger(L, 0);
 	return 3;
 }
+#endif
 
 static int vector_tostring (lua_State *L) {
 	struct vector  *x;
@@ -361,22 +370,28 @@ static int matrix_len (lua_State *L) {
 }
 
 static int matrix_index (lua_State *L) {
-	size_t          index, length;
+	size_t          index;
 	struct matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX_METATABLE);
 	index = luaL_checkinteger(L, 2);
 	if (X->order == CblasRowMajor) {
-		luaL_argcheck(L, index >= 1 && index <= X->rows, 2, "bad index");
-		length = X->cols;
+		if (index >= 1 && index <= X->rows) {
+			push_vector(L, X->cols, 1, X->data, &X->values[(index - 1) * X->ld]);
+		} else {
+			lua_pushnil(L);
+		}
 	} else {
-		luaL_argcheck(L, index >= 1 && index <= X->cols, 2, "bad index");
-		length = X->rows;
+		if (index >= 1 && index <= X->cols) {
+			push_vector(L, X->rows, 1, X->data, &X->values[(index - 1) * X->ld]);
+		} else {
+			lua_pushnil(L);
+		}
 	}
-	push_vector(L, length, 1, X->data, &X->values[(index - 1) * X->ld]);
 	return 1;
 }
 
+#if LUA_VERSION_NUM < 504
 static int matrix_next (lua_State *L) {
 	size_t          index, majorsize, minorsize;
 	struct matrix  *X;
@@ -406,6 +421,7 @@ static int matrix_ipairs (lua_State *L) {
 	lua_pushinteger(L, 0);
 	return 3;
 }
+#endif
 
 static int matrix_tostring (lua_State *L) {
 	struct matrix  *X;
@@ -1762,8 +1778,10 @@ int luaopen_linear (lua_State *L) {
 	lua_setfield(L, -2, "__index");
 	lua_pushcfunction(L, vector_newindex);
 	lua_setfield(L, -2, "__newindex");
+#if LUA_VERSION_NUM >= 502 && LUA_VERSION_NUM < 504
 	lua_pushcfunction(L, vector_ipairs);
 	lua_setfield(L, -2, "__ipairs");
+#endif
 	lua_pushcfunction(L, vector_tostring);
 	lua_setfield(L, -2, "__tostring");
 	lua_pushcfunction(L, vector_gc);
@@ -1776,8 +1794,10 @@ int luaopen_linear (lua_State *L) {
 	lua_setfield(L, -2, "__len");
 	lua_pushcfunction(L, matrix_index);
 	lua_setfield(L, -2, "__index");
+#if LUA_VERSION_NUM >= 502 && LUA_VERSION_NUM < 504
 	lua_pushcfunction(L, matrix_ipairs);
 	lua_setfield(L, -2, "__ipairs");
+#endif
 	lua_pushcfunction(L, matrix_tostring);
 	lua_setfield(L, -2, "__tostring");
 	lua_pushcfunction(L, matrix_gc);
