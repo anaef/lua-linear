@@ -79,3 +79,12 @@ the matrices into the vector.
 Reshapes a vector `x` into one or more matrices `X1`, ..., `Xn`. The length of the vector must
 match the number of elements of the matrices. The function deserializes the major order vectors of
 the matrices from the vector.
+
+
+## `linear.ipairs (x|X)`
+
+Enables ipairs-like iteration over vector `x` or matrix `X`.
+
+> [!NOTE]
+> This function is only provided for Lua 5.1. As of Lua 5.2, you can use the regular `ipairs`
+> function to iterate over vectors and matrices.

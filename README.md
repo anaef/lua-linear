@@ -28,6 +28,11 @@ make install
 ```
 
 
+## Release Notes
+
+Please see the [release notes](NEWS.md) document.
+
+
 ## Documentation
 
 Please browse the [documentation](doc/) folder for the extensive documentation.
@@ -35,7 +40,7 @@ Please browse the [documentation](doc/) folder for the extensive documentation.
 
 ## Limitations
 
-Lua Linear supports Lua 5.2, and Lua 5.3.
+Lua Linear supports Lua 5.1, Lua 5.2, Lua 5.3, and Lua 5.4.
 
 Lua Linear has been built and tested on Ubuntu Linux (64-bit).
 

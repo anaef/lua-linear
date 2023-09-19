@@ -26,6 +26,11 @@ static inline CBLAS_ORDER checkorder(lua_State *L, int index);
 static inline CBLAS_TRANSPOSE checktranspose(lua_State *L, int index);
 static inline char lapacktranspose(CBLAS_TRANSPOSE transpose);
 static int argerror(lua_State *L, int index);
+static inline int rawgeti(lua_State *L, int index, int n);
+#if LUA_VERSION_NUM < 502
+#define lua_rawlen  lua_objlen
+void *luaL_testudata(lua_State *L, int index, const char *name);
+#endif
 
 static struct vector *create_vector(lua_State *L, size_t length);
 static void push_vector(lua_State *L, size_t length, size_t inc, struct data *data, double *values);
@@ -57,6 +62,9 @@ static int tvector(lua_State *L);
 static int sub(lua_State *L);
 static int unwind(lua_State *L);
 static int reshape(lua_State *L);
+#if LUA_VERSION_NUM < 502
+static int ipairs(lua_State *L);
+#endif
 
 static int elementary(lua_State *L, elementary_function f, int hasalpha);
 static void _inc(const int size, double alpha, double *x, const int incx);
@@ -153,6 +161,32 @@ static int argerror (lua_State *L, int index) {
 	return luaL_argerror(L, index, lua_pushfstring(L, "vector, or matrix expected, got %s",
 			luaL_typename(L, index)));
 }
+
+static inline int rawgeti (lua_State *L, int index, int n) {
+#if LUA_VERSION_NUM >= 503
+	return lua_rawgeti(L, index, n);
+#else
+	lua_rawgeti(L, index, n);
+	return lua_type(L, -1);
+#endif
+}
+
+#if LUA_VERSION_NUM < 502
+void *luaL_testudata (lua_State *L, int index, const char *name) {
+	void  *userdata;
+
+	userdata = lua_touserdata(L, index);
+	if (!userdata || !lua_getmetatable(L, index)) {
+		return NULL;
+	}
+	luaL_getmetatable(L, name);
+	if (!lua_rawequal(L, -1, -2)) {
+		userdata = NULL;
+	}
+	lua_pop(L, 2);
+	return userdata;
+}
+#endif
 
 
 /*
@@ -476,7 +510,7 @@ static int tolinear (lua_State *L) {
 	struct matrix  *X;
 
 	luaL_checktype(L, 1, LUA_TTABLE);
-	switch (lua_rawgeti(L, 1, 1)) {
+	switch (rawgeti(L, 1, 1)) {
 	case LUA_TNUMBER:
 		size = lua_rawlen(L, 1);
 		if (size < 1 || size > INT_MAX) {
@@ -485,7 +519,7 @@ static int tolinear (lua_State *L) {
 		x = create_vector(L, size);
 		value = x->values;
 		for (i = 0; i < size; i++) {
-			if (lua_rawgeti(L, 1, i + 1) != LUA_TNUMBER) {
+			if (rawgeti(L, 1, i + 1) != LUA_TNUMBER) {
 				return luaL_error(L, "bad value at index %d", i + 1);
 			}
 			*value++ = lua_tonumber(L, -1);
@@ -514,12 +548,12 @@ static int tolinear (lua_State *L) {
 		X = create_matrix(L, rows, cols, order);
 		for (i = 0; i < major; i++) {
 			value = &X->values[i * X->ld];
-			if (lua_rawgeti(L, 1, i + 1) != LUA_TTABLE
+			if (rawgeti(L, 1, i + 1) != LUA_TTABLE
 					 || lua_rawlen(L, -1) != minor) {
 				return luaL_error(L, "bad value at index %d", i + 1);
 			}
 			for (j = 0; j < minor; j++) {
-				if (lua_rawgeti(L, -1, j + 1) != LUA_TNUMBER) {
+				if (rawgeti(L, -1, j + 1) != LUA_TNUMBER) {
 					return luaL_error(L, "bad value at index (%d,%d)", i + 1,
 							j + 1);
 				}
@@ -700,6 +734,18 @@ static int reshape (lua_State *L) {
 	return 0;
 }
 
+#if LUA_VERSION_NUM < 502
+static int ipairs(lua_State *L) {
+	if (luaL_testudata(L, 1, LUALINEAR_VECTOR_METATABLE)) {
+		return vector_ipairs(L);
+	}
+	if (luaL_testudata(L, 1, LUALINEAR_MATRIX_METATABLE)) {
+		return matrix_ipairs(L);
+	}
+	return argerror(L, 1);
+}
+#endif
+
 
 /*
  * elementary functions
@@ -713,7 +759,12 @@ static int elementary (lua_State *L, elementary_function f, int hasalpha) {
 	struct matrix  *X;
 
 	alpha = hasalpha ? luaL_optnumber(L, 2, 1.0) : 0.0;
+#if LUA_VERSION_NUM >= 502
 	n = lua_tonumberx(L, 1, &isnum);
+#else
+	isnum = lua_isnumber(L, 1);
+	n = lua_tonumber(L, 1);
+#endif
 	if (isnum) {
 		f(1, alpha, &n, 1);
 		lua_pushnumber(L, n);
@@ -1647,6 +1698,9 @@ int luaopen_linear (lua_State *L) {
 		{ "sub", sub },
 		{ "unwind", unwind },
 		{ "reshape", reshape },
+#if LUA_VERSION_NUM < 502
+		{ "ipairs", ipairs },
+#endif
 
 		/* elementary functions */
 		{ "inc", inc },
