@@ -16,8 +16,8 @@
 #include <cblas.h>
 
 
-#define LUALINEAR_VECTOR_METATABLE  "linear.vector"
-#define LUALINEAR_MATRIX_METATABLE  "linear.matrix"
+#define LUALINEAR_VECTOR  "linear.vector"  /* vector metatable*/
+#define LUALINEAR_MATRIX  "linear.matrix"  /* matrix metatable */
 
 
 struct data {
