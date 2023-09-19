@@ -2,7 +2,7 @@ rockspec_format = "3.0"
 package = "lua-linear"
 version = "1.0.0-1"
 description = {
-	summary = "Linear algebra support for Lua",
+	summary = "Linear algebra for Lua",
 	detailed = [[
 		Lua Linear provides comprehensive linear algebra support for the Lua programming
 		language. Where applicable, the BLAS and LAPACK implementations on the system are
