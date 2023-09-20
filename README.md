@@ -10,13 +10,22 @@ applicable, the BLAS and LAPACK implementations on the system are used.
 
 ### Dependencies
 
-You may need to install the following packages to compile Lua Linear:
+You may need to install the following packages to build Lua Linear:
 
 * libopenblas-dev
 * liblapacke-dev
 
 
-### Building with Make
+### Building and Installing with LuaRocks
+
+To build and install with LuaRocks, run:
+
+```
+luarocks install lua-linear
+```
+
+
+### Building, Testing and Installing with Make
 
 Lua Linear comes with a simple Makefile. Please adapt the Makefile to your environment, and then
 run:
