@@ -86,5 +86,5 @@ the matrices from the vector.
 Enables ipairs-like iteration over vector `x` or matrix `X`.
 
 > [!NOTE]
-> This function is only provided for Lua 5.1. As of Lua 5.2, you can use the regular `ipairs`
+> The function is only provided for Lua 5.1. As of Lua 5.2, you can use the regular `ipairs`
 > function to iterate over vectors and matrices.

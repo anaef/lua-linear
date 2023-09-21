@@ -39,7 +39,7 @@ solutions $X$ are stored in matrix `B`.
 
 The function replaces the elements of matrix `A` with a factorization. It returns `true` if the
 solutions have been computed, and `false` if the solutions could not be computed due to a zero
-value in a factor.
+value in a factor, implying that matrix `A` does not have full rank.
 
 
 ## `linear.gels (A, B [, transpose])`

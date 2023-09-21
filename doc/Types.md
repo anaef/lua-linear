@@ -1,6 +1,6 @@
 # Types
 
-This section descibes the types of Lua Linear.
+This section describes the types of Lua Linear.
 
 
 ## `linear.vector`

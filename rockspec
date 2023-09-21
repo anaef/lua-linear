@@ -25,7 +25,7 @@ external_dependencies = {
 }
 source = {
 	url = "git+https://github.com/anaef/lua-linear.git",
-	tag = "1.0.0",
+	tag = "v1.0.0",
 }
 build = {
 	type = "builtin",
