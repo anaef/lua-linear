@@ -20,7 +20,7 @@ local x = linear.vector(100)
 linear.normal(x)   -- N(0,1)
 linear.scal(x, 5)  -- N(0,5)
 linear.inc(x, 10)  -- N(10,5)
-print("N(10, 5)", x[1], x[2], x[3], "...")
+print("N(10,5)", x[1], x[2], x[3], "...")
 print("mean, std", linear.mean(x), linear.std(x, 1))  -- should approximate 10, 5
 
 -- Solve a system of linear equations: x + 2y = 7, 2x - y = 9
@@ -31,7 +31,7 @@ b[1], b[2] = 7, 9
 linear.gesv(A, B)
 print("solutions", b[1], b[2])  -- should be 5, 1
 
--- Calculate pair-wise Pearson correlation coefficients of 10k uniform random numbers
+-- Calculate pairwise Pearson correlation coefficients of 10k uniform random numbers
 local A = linear.matrix(10000, 3)
 linear.uniform(A)
 local C = linear.matrix(3, 3)
