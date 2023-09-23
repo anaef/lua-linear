@@ -4,7 +4,7 @@ LIBDIR=/usr/local/lib/lua/5.3
 CFLAGS=-Wall -Wextra -Wpointer-arith -Werror -fPIC -O3 -D_REENTRANT -D_GNU_SOURCE
 LDFLAGS=-shared -fPIC
 USE_AXPBY=1
-FEATURES=-DLUALINEAR_USE_AXPBY=$(USE_AXPBY) \
+FEATURES=-DLINEAR_USE_AXPBY=$(USE_AXPBY) \
 
 export LUA_CPATH=$(PWD)/?.so
 
@@ -12,11 +12,11 @@ default: all
 
 all: linear.so
 
-linear.so: linear.o
-	gcc $(LDFLAGS) -o linear.so linear.o -lm -lblas -llapacke
+linear.so: linear_core.o
+	gcc $(LDFLAGS) -o linear.so linear_core.o -lm -lblas -llapacke
 
-linear.o: src/linear.h src/linear.c
-	gcc -c -o linear.o $(CFLAGS) $(FEATURES) -I$(LUA_INCDIR)  src/linear.c
+linear_core.o: src/linear_core.h src/linear_core.c
+	gcc -c -o linear_core.o $(CFLAGS) $(FEATURES) -I$(LUA_INCDIR) src/linear_core.c
 
 .PHONY: test
 test:
@@ -26,4 +26,4 @@ install:
 	cp linear.so $(LIBDIR)
 
 clean:
-	-rm -f linear.o linear.so
+	-rm -f linear_core.o linear.so

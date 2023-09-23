@@ -32,12 +32,12 @@ build = {
 	modules = {
 		linear = {
 			sources = {
-				"src/linear.c",
+				"src/linear_core.c",
 			},
 			defines = {
 				"_REENTRANT",
 				"_GNU_SOURCE",
-				"LUALINEAR_USE_AXPBY=1"
+				"LINEAR_USE_AXPBY=1"
 			},
 			libraries = {
 				"m",

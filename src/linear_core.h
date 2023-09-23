@@ -5,8 +5,8 @@
  */
 
 
-#ifndef _LINEAR_LINEAR_INCLUDED
-#define _LINEAR_LINEAR_INCLUDED
+#ifndef _LINEAR_CORE_INCLUDED
+#define _LINEAR_CORE_INCLUDED
 
 
 #include <assert.h>
@@ -69,4 +69,4 @@ int linear_binary(lua_State *L, linear_binary_function s, struct linear_param *p
 int luaopen_linear(lua_State *L);
 
 
-#endif /* _LINEAR_LINEAR_INCLUDED */
+#endif /* _LINEAR_CORE_INCLUDED */
