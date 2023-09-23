@@ -794,12 +794,20 @@ static int elementary (lua_State *L, elementary_function f, int hasalpha) {
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX);
 	if (X != NULL) {
 		if (X->order == CblasRowMajor) {
-			for (i = 0; i < X->rows; i++) {
-				f(X->cols, alpha, &X->values[i * X->ld], 1);
+			if (X->cols == X->ld && X->rows * X->cols <= INT_MAX) {
+				f(X->rows * X->cols, alpha, X->values, 1);
+			} else {
+				for (i = 0; i < X->rows; i++) {
+					f(X->cols, alpha, &X->values[i * X->ld], 1);
+				}
 			}
 		} else {
-			for (i = 0; i < X->cols; i++) {
-				f(X->rows, alpha, &X->values[i * X->ld], 1);
+			if (X->rows == X->ld && X->cols * X->rows <= INT_MAX) {
+				f(X->cols * X->rows, alpha, X->values, 1);
+			} else {
+				for (i = 0; i < X->cols; i++) {
+					f(X->rows, alpha, &X->values[i * X->ld], 1);
+				}
 			}
 		}
 		return 0;
@@ -810,9 +818,15 @@ static int elementary (lua_State *L, elementary_function f, int hasalpha) {
 static void _inc (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
-	for (i = 0; i < (size_t)size; i++) {
-		*x += alpha;
-		x += incx;
+	if (incx == 1) {
+		for (i = 0; i < (size_t)size; i++) {
+			x[i] += alpha;
+		}
+	} else {
+		for (i = 0; i < (size_t)size; i++) {
+			*x += alpha;
+			x += incx;
+		}
 	}
 }
 
@@ -828,13 +842,30 @@ static void _pow (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
 	if (alpha == -1.0) {
-		for (i = 0; i < (size_t)size; i++) {
-			*x = 1 / *x;
-			x += incx;
+		if (incx == 1) {
+			for (i = 0; i < (size_t)size; i++) {
+				x[i] = 1 / x[i];
+			}
+		} else {
+			for (i = 0; i < (size_t)size; i++) {
+				*x = 1 / *x;
+				x += incx;
+			}
 		}
 	} else if (alpha == 0.0) {
+		if (incx == 1) {
+			for (i = 0; i < (size_t)size; i++) {
+				x[i] = 1.0;
+			}
+		} else {
+			for (i = 0; i < (size_t)size; i++) {
+				*x = 1.0;
+				x += incx;
+			}
+		}
+	} else if (alpha == 0.5) {
 		for (i = 0; i < (size_t)size; i++) {
-			*x = 1.0;
+			*x = sqrt(*x);
 			x += incx;
 		}
 	} else if (alpha != 1.0) {
@@ -853,9 +884,15 @@ static void _exp (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
 	(void)alpha;
-	for (i = 0; i < (size_t)size; i++) {
-		*x = exp(*x);
-		x += incx;
+	if (incx == 1) {
+		for (i = 0; i < (size_t)size; i++) {
+			x[i] = exp(x[i]);
+		}
+	} else {
+		for (i = 0; i < (size_t)size; i++) {
+			*x = exp(*x);
+			x += incx;
+		}
 	}
 }
 
@@ -867,9 +904,15 @@ static void _log (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
 	(void)alpha;
-	for (i = 0; i < (size_t)size; i++) {
-		*x = log(*x);
-		x += incx;
+	if (incx == 2) {
+		for (i = 0; i < (size_t)size; i++) {
+			x[i] = log(x[i]);
+		}
+	} else {
+		for (i = 0; i < (size_t)size; i++) {
+			*x = log(*x);
+			x += incx;
+		}
 	}
 }
 
@@ -961,11 +1004,16 @@ static int apply (lua_State *L) {
 static void _set (const int size, double alpha, double *x, const int incx) {
 	size_t  i;
 
-	for (i = 0; i < (size_t)size; i++) {
-		*x = alpha;
-		x += incx;
+	if (incx == 1) {
+		for (i = 0; i < (size_t)size; i++) {
+			x[i] = alpha;
+		}
+	} else {
+		for (i = 0; i < (size_t)size; i++) {
+			*x = alpha;
+			x += incx;
+		}
 	}
-
 }
 
 static int set (lua_State *L) {
@@ -1085,9 +1133,15 @@ static double _sum (int size, const double *x, const int incx, const int ddof) {
 
 	(void)ddof;
 	sum = 0.0;
-	for (i = 0; i < (size_t)size; i++) {
-		sum += *x;
-		x += incx;
+	if (incx == 1) {
+		for (i = 0; i < (size_t)size; i++) {
+			sum += x[i];
+		}
+	} else {
+		for (i = 0; i < (size_t)size; i++) {
+			sum += *x;
+			x += incx;
+		}
 	}
 	return sum;
 }
@@ -1102,9 +1156,15 @@ static double _mean (int size, const double *x, const int incx, const int ddof) 
 
 	(void)ddof;
 	sum = 0.0;
-	for (i = 0; i < (size_t)size; i++) {
-		sum += *x;
-		x += incx;
+	if (incx == 1) {
+		for (i = 0; i < (size_t)size; i++) {
+			sum += x[i];
+		}
+	} else {
+		for (i = 0; i < (size_t)size; i++) {
+			sum += *x;
+			x += incx;
+		}
 	}
 	return sum / size;
 }
@@ -1118,14 +1178,25 @@ static double _var (int size, const double *x, const int incx, const int ddof) {
 	double  sum, mean;
 
 	sum = 0.0;
-	for (i = 0; i < (size_t)size; i++) {
-		sum += x[i * incx];
-	}
-	mean = sum / size;
-	sum = 0.0;
-	for (i = 0; i < (size_t)size; i++) {
-		sum += (*x - mean) * (*x - mean);
-		x += incx;
+	if (incx == 1) {
+		for (i = 0; i < (size_t)size; i++) {
+			sum += x[i];
+		}
+		mean = sum / size;
+		sum = 0.0;
+		for (i = 0; i < (size_t)size; i++) {
+			sum += (x[i] - mean) * (x[i] - mean);
+		}
+	} else {
+		for (i = 0; i < (size_t)size; i++) {
+			sum += x[i * incx];
+		}
+		mean = sum / size;
+		sum = 0.0;
+		for (i = 0; i < (size_t)size; i++) {
+			sum += (*x - mean) * (*x - mean);
+			x += incx;
+		}
 	}
 	return sum / (size - ddof);
 }
@@ -1227,14 +1298,22 @@ static int binary (lua_State *L, binary_function f, int hasalpha, int hasbeta) {
 		alpha = hasalpha ? luaL_optnumber(L, 3, 1.0) : 0.0;
 		beta = hasbeta ? luaL_optnumber(L, 4, 0.0) : 0.0;
 		if (X->order == CblasRowMajor) {
-			for (i = 0; i < X->rows; i++) {
-				f(X->cols, alpha, &X->values[i * X->ld], 1, beta,
-						&Y->values[i * Y->ld], 1);
+			if (X->ld == X->cols && Y->ld == Y->cols && X->rows * X->cols <= INT_MAX) {
+				f(X->rows * X->cols, alpha, X->values, 1, beta, Y->values, 1);
+			} else {
+				for (i = 0; i < X->rows; i++) {
+					f(X->cols, alpha, &X->values[i * X->ld], 1, beta,
+							&Y->values[i * Y->ld], 1);
+				}
 			}
 		} else {
-			for (i = 0; i < X->cols; i++) {
-				f(X->rows, alpha, &X->values[i * X->ld], 1, beta,
-						&Y->values[i * Y->ld], 1);
+			if (X->ld == X->rows && Y->ld == Y->rows && X->cols * X->rows <= INT_MAX) {
+				f(X->cols * X->rows, alpha, X->values, 1, beta, Y->values, 1);
+			} else {
+				for (i = 0; i < X->cols; i++) {
+					f(X->rows, alpha, &X->values[i * X->ld], 1, beta,
+							&Y->values[i * Y->ld], 1);
+				}
 			}
 		}
 		return 0;
@@ -1275,14 +1354,32 @@ static void _mul (const int size, const double alpha, double *x, int incx, const
 
 	(void)beta;
 	if (alpha == 1.0) {
-		for (i = 0; i < size; i++) {
-			*y *= *x;
-			x += incx;
-			y += incy;
+		if (incx == 1 && incy == 1) {
+			for (i = 0; i < size; i++) {
+				y[i] *= x[i];
+			}
+		} else {
+			for (i = 0; i < size; i++) {
+				*y *= *x;
+				x += incx;
+				y += incy;
+			}
 		}
 	} else if (alpha == -1.0) {
+		if (incx == 1 && incy == 1) {
+			for (i = 0; i < size; i++) {
+				y[i] /= x[i];
+			}
+		} else {
+			for (i = 0; i < size; i++) {
+				*y /= *x;
+				x += incx;
+				y += incy;
+			}
+		}
+	} else if (alpha == 0.5) {
 		for (i = 0; i < size; i++) {
-			*y /= *x;
+			*y *= sqrt(*x);
 			x += incx;
 			y += incy;
 		}
@@ -1549,8 +1646,7 @@ static int cov (lua_State *L) {
 			sum = 0.0;
 			v = &A->values[i * A->ld];
 			for (j = 0; j < A->rows; j++) {
-				sum += *v;
-				v++;
+				sum += v[j];
 			}
 			means[i] = sum / A->rows;
 		}
@@ -1574,9 +1670,7 @@ static int cov (lua_State *L) {
 				vi = &A->values[i * A->ld];
 				vj = &A->values[j * A->ld];
 				for (k = 0; k < A->rows; k++) {
-					sum += (*vi - means[i]) * (*vj - means[j]);
-					vi++;
-					vj++;
+					sum += (vi[k] - means[i]) * (vj[k] - means[j]);
 				}
 				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
 						/ (A->rows - ddof);
@@ -1628,15 +1722,13 @@ static int corr (lua_State *L) {
 			sum = 0.0;
 			v = &A->values[i * A->ld];
 			for (j = 0; j < A->rows; j++) {
-				sum += *v;
-				v++;
+				sum += v[j];
 			}
 			means[i] = sum / A->rows;
 			sum = 0.0;
 			v = &A->values[i * A->ld];
 			for (j = 0; j < A->rows; j++) {
-				sum += (*v - means[i]) * (*v - means[i]);
-				v++;
+				sum += (v[j] - means[i]) * (v[j] - means[i]);
 			}
 			stds[i] = sqrt(sum);
 		}
@@ -1667,9 +1759,7 @@ static int corr (lua_State *L) {
 				vi = &A->values[i * A->ld];
 				vj = &A->values[j * A->ld];
 				for (k = 0; k < A->rows; k++) {
-					sum += (*vi - means[i]) * (*vj - means[j]);
-					vi++;
-					vj++;
+					sum += (vi[k] - means[i]) * (vj[k] - means[j]);
 				}
 				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
 						/ (stds[i] * stds[j]);
