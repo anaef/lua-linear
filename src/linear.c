@@ -816,14 +816,14 @@ static int elementary (lua_State *L, elementary_function f, int hasalpha) {
 }
 
 static void _inc (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	if (incx == 1) {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			x[i] += alpha;
 		}
 	} else {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			*x += alpha;
 			x += incx;
 		}
@@ -839,37 +839,37 @@ static int scal (lua_State *L) {
 }
 
 static void _pow (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	if (alpha == -1.0) {
 		if (incx == 1) {
-			for (i = 0; i < (size_t)size; i++) {
+			for (i = 0; i < size; i++) {
 				x[i] = 1 / x[i];
 			}
 		} else {
-			for (i = 0; i < (size_t)size; i++) {
+			for (i = 0; i < size; i++) {
 				*x = 1 / *x;
 				x += incx;
 			}
 		}
 	} else if (alpha == 0.0) {
 		if (incx == 1) {
-			for (i = 0; i < (size_t)size; i++) {
+			for (i = 0; i < size; i++) {
 				x[i] = 1.0;
 			}
 		} else {
-			for (i = 0; i < (size_t)size; i++) {
+			for (i = 0; i < size; i++) {
 				*x = 1.0;
 				x += incx;
 			}
 		}
 	} else if (alpha == 0.5) {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			*x = sqrt(*x);
 			x += incx;
 		}
 	} else if (alpha != 1.0) {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			*x = pow(*x, alpha);
 			x += incx;
 		}
@@ -881,15 +881,15 @@ static int powx (lua_State *L) {
 }
 
 static void _exp (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	(void)alpha;
 	if (incx == 1) {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			x[i] = exp(x[i]);
 		}
 	} else {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			*x = exp(*x);
 			x += incx;
 		}
@@ -901,15 +901,15 @@ static int expx (lua_State *L) {
 }
 
 static void _log (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	(void)alpha;
 	if (incx == 2) {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			x[i] = log(x[i]);
 		}
 	} else {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			*x = log(*x);
 			x += incx;
 		}
@@ -921,10 +921,10 @@ static int logx (lua_State *L) {
 }
 
 static void _sgn (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	(void)alpha;
-	for (i = 0; i < (size_t)size; i++) {
+	for (i = 0; i < size; i++) {
 		if (*x > 0) {
 			*x = 1;
 		} else if (*x < 0) {
@@ -939,10 +939,10 @@ static int sgn (lua_State *L) {
 }
 
 static void _abs (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	(void)alpha;
-	for (i = 0; i < (size_t)size; i++) {
+	for (i = 0; i < size; i++) {
 		*x = fabs(*x);
 		x += incx;
 	}
@@ -953,10 +953,10 @@ static int absx (lua_State *L) {
 }
 
 static void _logistic (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	(void)alpha;
-	for (i = 0; i < (size_t)size; i++) {
+	for (i = 0; i < size; i++) {
 		*x = 1.0 / (1.0 + exp(-*x));
 		x += incx;
 	}
@@ -967,10 +967,10 @@ static int logistic (lua_State *L) {
 }
 
 static void _tanh (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	(void)alpha;
-	for (i = 0; i < (size_t)size; i++) {
+	for (i = 0; i < size; i++) {
 		*x = tanh(*x);
 		x += incx;
 	}
@@ -981,10 +981,10 @@ static int tanhx (lua_State *L) {
 }
 
 static void _apply (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	(void)alpha;
-	for (i = 0; i < (size_t)size; i++) {
+	for (i = 0; i < size; i++) {
 		lua_pushvalue(TL, -1);
 		lua_pushnumber(TL, *x);
 		lua_call(TL, 1, 1);
@@ -1002,14 +1002,14 @@ static int apply (lua_State *L) {
 }
 
 static void _set (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	if (incx == 1) {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			x[i] = alpha;
 		}
 	} else {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			*x = alpha;
 			x += incx;
 		}
@@ -1021,10 +1021,10 @@ static int set (lua_State *L) {
 }
 
 static void _uniform (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int  i;
 
 	(void)alpha;
-	for (i = 0; i < (size_t)size; i++) {
+	for (i = 0; i < size; i++) {
 		*x = random() / (RAND_MAX + 1.0);
 		x += incx;
 	}
@@ -1035,13 +1035,13 @@ static int uniform (lua_State *L) {
 }
 
 static void _normal (const int size, double alpha, double *x, const int incx) {
-	size_t  i;
+	int     i;
 	double  u1, u2, r, s, c;
 
 	(void)alpha;
 
 	/* Box-Muller transform */
-	for (i = 0; i < (size_t)size - 1; i += 2) {
+	for (i = 0; i < size - 1; i += 2) {
 		u1 = (random() + 1.0) / (RAND_MAX + 1.0);
 		u2 = (random() + 1.0) / (RAND_MAX + 1.0);
 		r = sqrt(-2.0 * log(u1));
@@ -1051,7 +1051,7 @@ static void _normal (const int size, double alpha, double *x, const int incx) {
 		*x = r * s;
 		x += incx;
 	}
-	if (i < (size_t)size) {
+	if (i < size) {
 		u1 = (random() + 1.0) / (RAND_MAX + 1.0);
 		u2 = (random() + 1.0) / (RAND_MAX + 1.0);
 		*x = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
@@ -1128,17 +1128,17 @@ static int unary (lua_State *L, unary_function f, int hasddof) {
 }
 
 static double _sum (int size, const double *x, const int incx, const int ddof) {
-	size_t  i;
+	int     i;
 	double  sum;
 
 	(void)ddof;
 	sum = 0.0;
 	if (incx == 1) {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			sum += x[i];
 		}
 	} else {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			sum += *x;
 			x += incx;
 		}
@@ -1151,17 +1151,17 @@ static int sum (lua_State *L) {
 }
 
 static double _mean (int size, const double *x, const int incx, const int ddof) {
-	size_t  i;
+	int     i;
 	double  sum;
 
 	(void)ddof;
 	sum = 0.0;
 	if (incx == 1) {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			sum += x[i];
 		}
 	} else {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			sum += *x;
 			x += incx;
 		}
@@ -1174,26 +1174,28 @@ static int mean (lua_State *L) {
 }
 
 static double _var (int size, const double *x, const int incx, const int ddof) {
-	size_t  i;
+	int     i;
 	double  sum, mean;
 
 	sum = 0.0;
 	if (incx == 1) {
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			sum += x[i];
 		}
 		mean = sum / size;
 		sum = 0.0;
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			sum += (x[i] - mean) * (x[i] - mean);
 		}
 	} else {
-		for (i = 0; i < (size_t)size; i++) {
-			sum += x[i * incx];
+		for (i = 0; i < size; i++) {
+			sum += *x;
+			x += incx;
 		}
 		mean = sum / size;
+		x -= (size_t)size * (size_t)incx;
 		sum = 0.0;
-		for (i = 0; i < (size_t)size; i++) {
+		for (i = 0; i < size; i++) {
 			sum += (*x - mean) * (*x - mean);
 			x += incx;
 		}
