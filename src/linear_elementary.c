@@ -47,6 +47,10 @@ static struct linear_param LINEAR_PARAMS_ALPHA[] = {
 	{"alpha", 'n', {1.0}},
 	{NULL, '\0', {0.0}}
 };
+static struct linear_param LINEAR_PARAMS_RANDOM[] = {
+	{"random", 'r', {0.0}},
+	{NULL, '\0', {0.0}}
+};
 
 static __thread lua_State  *linear_TL;
 
@@ -316,30 +320,32 @@ static int linear_set (lua_State *L) {
 }
 
 static void linear_uniform_handler (int size, double *x, int incx, union linear_arg *args) {
-	int  i;
+	int        i;
+	uint64_t  *r;
 
-	(void)args;
+	r = args[0].r;
 	for (i = 0; i < size; i++) {
-		*x = random() / (RAND_MAX + 1.0);
+		*x = linear_random(r);
 		x += incx;
 	}
 }
 
 static int linear_uniform (lua_State *L) {
-	return linear_elementary(L, linear_uniform_handler, LINEAR_PARAMS_NONE);
+	return linear_elementary(L, linear_uniform_handler, LINEAR_PARAMS_RANDOM);
 }
 
 static void linear_normal_handler (int size, double *x, int incx, union linear_arg *args) {
-	int     i;
-	double  u1, u2, r, s, c;
+	int        i;
+	double     u1, u2, r, s, c;
+	uint64_t  *rs;
 
-	(void)args;
+	rs = args[0].r;
 
 	/* Box-Muller transform */
 	for (i = 0; i < size - 1; i += 2) {
-		u1 = (random() + 1.0) / (RAND_MAX + 1.0);
-		u2 = (random() + 1.0) / (RAND_MAX + 1.0);
-		r = sqrt(-2.0 * log(u1));
+		u1 = linear_random(rs);
+		u2 = linear_random(rs);
+		r = sqrt(-2.0 * log(1 - u1));
 		sincos(2 * M_PI * u2, &s, &c);
 		*x = r * c;
 		x += incx;
@@ -347,14 +353,14 @@ static void linear_normal_handler (int size, double *x, int incx, union linear_a
 		x += incx;
 	}
 	if (i < size) {
-		u1 = (random() + 1.0) / (RAND_MAX + 1.0);
-		u2 = (random() + 1.0) / (RAND_MAX + 1.0);
-		*x = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
+		u1 = linear_random(rs);
+		u2 = linear_random(rs);
+		*x = sqrt(-2.0 * log(1 - u1)) * cos(2 * M_PI * u2);
 	}
 }
 
 static int linear_normal (lua_State *L) {
-	return linear_elementary(L, linear_normal_handler, LINEAR_PARAMS_NONE);
+	return linear_elementary(L, linear_normal_handler, LINEAR_PARAMS_RANDOM);
 }
 
 int linear_open_elementary (lua_State *L) {

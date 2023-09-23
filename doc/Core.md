@@ -81,6 +81,12 @@ match the number of elements of the matrices. The function deserializes the majo
 the matrices from the vector.
 
 
+## `linear.randomseed (seed1 [, seed2])`
+
+Re-seeds the random state. Both seed arguments must be integers, and the second argument is
+optional.
+
+
 ## `linear.ipairs (x|X)`
 
 Enables ipairs-like iteration over vector `x` or matrix `X`.

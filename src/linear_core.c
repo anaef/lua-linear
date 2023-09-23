@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include <lauxlib.h>
 #include "linear_core.h"
 #include "linear_elementary.h"
@@ -49,6 +50,9 @@ static int linear_matrix_ipairs(lua_State *L);
 static int linear_matrix_tostring(lua_State *L);
 static int linear_matrix_gc(lua_State *L);
 
+/* random */
+static void linear_seedrandomstate(uint64_t *s, uint64_t seed1, uint64_t seed2);
+
 /* core functions */
 static int linear_vector(lua_State *L);
 static int linear_matrix(lua_State *L);
@@ -60,6 +64,7 @@ static int linear_tvector(lua_State *L);
 static int linear_sub(lua_State *L);
 static int linear_unwind(lua_State *L);
 static int linear_reshape(lua_State *L);
+static int linear_randomseed(lua_State *L);
 #if LUA_VERSION_NUM < 502
 static int linear_ipairs(lua_State *L);
 #endif
@@ -83,18 +88,23 @@ int linear_checkargs (lua_State *L, struct linear_param *params, size_t size, in
 		switch (params->type) {
 		case 'n':
 			args->n = luaL_optnumber(L, index, params->defn);
+			index++;
 			break;
 
 		case 'd':
 			args->d = luaL_optinteger(L, index, params->defd);
 			luaL_argcheck(L, args->d < size, index, "bad ddof");
+			index++;
+			break;
+
+		case 'r':
+			args->r = linear_randomstate(L);
 			break;
 
 		default:
 			return luaL_error(L, "bad param type");
 		}
 		params++;
-		index++;
 		args++;
 	}
 	return 0;
@@ -390,6 +400,47 @@ static int linear_matrix_gc (lua_State *L) {
 		}
 	}
 	return 0;
+}
+
+
+/*
+ * random
+ */
+
+static void linear_seedrandomstate (uint64_t *r, uint64_t seed1, uint64_t seed2) {
+	int  i;
+
+	r[0] = seed1;
+	r[1] = 0xff;
+	r[2] = seed2;
+	r[3] = 0;
+	for (i = 0; i < 16; i++) {
+		(void)linear_random(r);
+	}
+}
+
+uint64_t *linear_randomstate (lua_State *L) {
+	uint64_t  *r;
+
+	lua_getfield(L, LUA_REGISTRYINDEX, LINEAR_RANDOM);
+	r = (void *)lua_topointer(L, -1);
+	lua_pop(L, 1);
+	return r;
+}
+
+double linear_random (uint64_t *r) {
+	uint64_t  result, t;
+
+	/* source: xoshiro256+; https://prng.di.unimi.it/ */
+	result = r[0] + r[3];
+	t = r[1] << 17;
+	r[2] ^= r[0];
+	r[3] ^= r[1];
+	r[1] ^= r[2];
+	r[0] ^= r[3];
+	r[2] ^= t;
+	r[3] = (r[3] << 45) | (r[3] >> (64 - 45));
+	return result * (0.5 / ((uint64_t)1 << 63));
 }
 
 
@@ -699,6 +750,15 @@ static int linear_reshape (lua_State *L) {
 	return 0;
 }
 
+static int linear_randomseed (lua_State *L) {
+	uint64_t  seed1, seed2;
+
+	seed1 = luaL_checkinteger(L, 1);
+	seed2 = luaL_optinteger(L, 2, 0);
+	linear_seedrandomstate(linear_randomstate(L), seed1, seed2);
+	return 0;
+}
+
 #if LUA_VERSION_NUM < 502
 static int linear_ipairs (lua_State *L) {
 	if (luaL_testudata(L, 1, LINEAR_VECTOR)) {
@@ -710,12 +770,6 @@ static int linear_ipairs (lua_State *L) {
 	return linear_argerror(L, 1, 0);
 }
 #endif
-
-
-/*
- * drivers
- */
-
 
 
 /*
@@ -734,11 +788,13 @@ int luaopen_linear (lua_State *L) {
 		{ "sub", linear_sub },
 		{ "unwind", linear_unwind },
 		{ "reshape", linear_reshape },
+		{ "randomseed", linear_randomseed },
 #if LUA_VERSION_NUM < 502
 		{ "ipairs", linear_ipairs },
 #endif
 		{ NULL, NULL }
 	};
+	uint64_t  *r;
 
 	/* register functions */
 #if LUA_VERSION_NUM >= 502
@@ -784,6 +840,11 @@ int luaopen_linear (lua_State *L) {
 	lua_pushcfunction(L, linear_matrix_gc);
 	lua_setfield(L, -2, "__gc");
 	lua_pop(L, 1);
+
+	/* random state */
+	r = lua_newuserdata(L, 4 * sizeof(uint64_t));
+	linear_seedrandomstate(r, (uint64_t)time(NULL), (uintptr_t)L);
+	lua_setfield(L, LUA_REGISTRYINDEX, LINEAR_RANDOM);
 
 	return 1;
 }

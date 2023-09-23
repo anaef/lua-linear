@@ -7,6 +7,9 @@
 
 - The vectorization of many functions has been optimized.
 
+- The random state is now managed per Lua state, and the `linear.randomseed` function has been
+added.
+
 - Fixed the unwind and reshape functions when operating on a vector with an increment different
 from one.
 

@@ -9,13 +9,15 @@
 #define _LINEAR_CORE_INCLUDED
 
 
+#include <stdint.h>
 #include <lua.h>
 #include <cblas.h>
 
 
-#define LINEAR_VECTOR      "linear.vector"  /* vector metatable*/
-#define LINEAR_MATRIX      "linear.matrix"  /* matrix metatable */
-#define LINEAR_PARAMS_MAX  5                /* maximum number of extra parameters */
+#define LINEAR_VECTOR      "linear.vector"   /* vector metatable*/
+#define LINEAR_MATRIX      "linear.matrix"   /* matrix metatable */
+#define LINEAR_RANDOM      "linear.random"   /* random state */
+#define LINEAR_PARAMS_MAX  5                 /* maximum number of extra parameters */
 
 
 struct linear_data {
@@ -40,16 +42,17 @@ struct linear_matrix {
 
 struct linear_param {
 	const char  *name;      /* name */
-	char         type;      /* 'n' number, 'd' delta degrees of freedom */
+	char         type;      /* 'n' number, 'd' ddof, 'r' random state */
 	union {
 		double  defn;   /* default number */
-		size_t  defd;   /* default delta degrees of freedom */
+		size_t  defd;   /* default ddof */
 	};
 };
 
 union linear_arg {
-	double  n;  /* number */
-	size_t  d;  /* delta degrees of freedom */
+	double     n;  /* number */
+	size_t     d;  /* ddof */
+	uint64_t  *r;  /* random state */
 };
 
 
@@ -57,6 +60,8 @@ CBLAS_ORDER linear_checkorder(lua_State *L, int index);
 int linear_checkargs(lua_State *L, struct linear_param *params, size_t size, int index,
 		union linear_arg *args);
 int linear_argerror(lua_State *L, int index, int numok);
+uint64_t *linear_randomstate(lua_State *L);
+double linear_random(uint64_t *r);
 struct linear_vector *linear_create_vector(lua_State *L, size_t length);
 struct linear_matrix *linear_create_matrix(lua_State *L, size_t rows, size_t cols,
 		CBLAS_ORDER order);

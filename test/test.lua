@@ -212,6 +212,24 @@ local function testReshape ()
 	assert(Y[2][3] == 10)
 end
 
+-- Tests the randomseed function
+local function testRandomseed ()
+	local r = linear.vector(3)
+	local function test (seed1, seed2)
+		linear.randomseed(seed1, seed2)
+		linear.uniform(r)
+		for _, v in ipairs(r) do
+			assert(v >= 0 and v < 1)
+		end
+	end
+	test(0)
+	test(1)
+	test(0, 0)
+	test(0, 1)
+	test(1, 1)
+	test(os.time())
+end
+
 
 --
 -- Elementary functions
@@ -357,7 +375,7 @@ local function testUniform ()
 	for i = 1, #A do
 		local a = A[i]
 		for j = 1, #a do
-			assert(a[i] >= 0 and a[i] < 1)
+			assert(a[j] >= 0 and a[j] < 1)
 		end
 	end
 	local x = linear.vector(100000)
@@ -786,6 +804,7 @@ testTvector()
 testSub()
 testUnwind()
 testReshape()
+testRandomseed()
 
 -- Elementary function tests
 testInc()
