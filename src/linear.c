@@ -16,148 +16,148 @@
 #include <lapacke.h>
 
 
-typedef void (*elementary_function)(const int size, double alpha, double *x, const int incx);
-typedef double (*unary_function)(const int size, const double *x, const int incx, const int ddof);
-typedef void (*binary_function)(const int size, const double alpha, double *x,
+typedef void (*ll_elementary_function)(const int size, double alpha, double *x, const int incx);
+typedef double (*ll_unary_function)(const int size, const double *x, const int incx,
+		const int ddof);
+typedef void (*ll_binary_function)(const int size, const double alpha, double *x,
 		const int incx, const double beta, double *y, const int incy);
 
 
-static inline CBLAS_ORDER checkorder(lua_State *L, int index);
-static inline CBLAS_TRANSPOSE checktranspose(lua_State *L, int index);
-static inline char lapacktranspose(CBLAS_TRANSPOSE transpose);
+static inline CBLAS_ORDER ll_checkorder(lua_State *L, int index);
+static inline CBLAS_TRANSPOSE ll_checktranspose(lua_State *L, int index);
+static inline char ll_lapacktranspose(CBLAS_TRANSPOSE transpose);
 static int argerror(lua_State *L, int index);
-static inline int rawgeti(lua_State *L, int index, int n);
+static inline int ll_rawgeti(lua_State *L, int index, int n);
 #if LUA_VERSION_NUM < 502
 #define lua_rawlen  lua_objlen
 void *luaL_testudata(lua_State *L, int index, const char *name);
 #endif
 
-static struct vector *create_vector(lua_State *L, size_t length);
-static void push_vector(lua_State *L, size_t length, size_t inc, struct data *data, double *values);
-static int vector_len(lua_State *L);
-static int vector_index(lua_State *L);
-static int vector_newindex(lua_State *L);
+static void ll_push_vector(lua_State *L, size_t length, size_t inc, struct ll_data *data, double *values);
+static int ll_vector_len(lua_State *L);
+static int ll_vector_index(lua_State *L);
+static int ll_vector_newindex(lua_State *L);
 #if LUA_VERSION_NUM < 504
-static int vector_next(lua_State *L);
-static int vector_ipairs(lua_State *L);
+static int ll_vector_next(lua_State *L);
+static int ll_vector_ipairs(lua_State *L);
 #endif
-static int vector_tostring(lua_State *L);
-static int vector_gc(lua_State *L);
+static int ll_vector_tostring(lua_State *L);
+static int ll_vector_gc(lua_State *L);
 
-static struct matrix *create_matrix(lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order);
-static void push_matrix(lua_State *L, size_t rows, size_t cols, size_t ld, CBLAS_ORDER order,
-		struct data *data, double *values);
-static int matrix_len(lua_State *L);
-static int matrix_index(lua_State *L);
+static void ll_push_matrix(lua_State *L, size_t rows, size_t cols, size_t ld, CBLAS_ORDER order,
+		struct ll_data *data, double *values);
+static int ll_matrix_len(lua_State *L);
+static int ll_matrix_index(lua_State *L);
 #if LUA_VERSION_NUM < 504
-static int matrix_next(lua_State *L);
-static int matrix_ipairs(lua_State *L);
+static int ll_matrix_next(lua_State *L);
+static int ll_matrix_ipairs(lua_State *L);
 #endif
-static int matrix_tostring(lua_State *L);
-static int matrix_gc(lua_State *L);
+static int ll_matrix_tostring(lua_State *L);
+static int ll_matrix_gc(lua_State *L);
 
-static int vector(lua_State *L);
-static int matrix(lua_State *L);
-static int totable(lua_State *L);
-static int tolinear(lua_State *L);
-static int type(lua_State *L);
-static int size(lua_State *L);
-static int tvector(lua_State *L);
-static int sub(lua_State *L);
-static int unwind(lua_State *L);
-static int reshape(lua_State *L);
+static int ll_vector(lua_State *L);
+static int ll_matrix(lua_State *L);
+static int ll_totable(lua_State *L);
+static int ll_tolinear(lua_State *L);
+static int ll_type(lua_State *L);
+static int ll_size(lua_State *L);
+static int ll_tvector(lua_State *L);
+static int ll_sub(lua_State *L);
+static int ll_unwind(lua_State *L);
+static int ll_reshape(lua_State *L);
 #if LUA_VERSION_NUM < 502
-static int ipairs(lua_State *L);
+static int ll_ipairs(lua_State *L);
 #endif
 
-static int elementary(lua_State *L, elementary_function f, int hasalpha);
-static void _inc(const int size, double alpha, double *x, const int incx);
-static int inc(lua_State *L);
-static int scal(lua_State *L);
-static void _pow(const int size, double alpha, double *x, const int incx);
-static int powx(lua_State *L);
-static void _exp(const int size, double alpha, double *x, const int incx);
-static int expx(lua_State *L);
-static void _log(const int size, double alpha, double *x, const int incx);
-static int logx(lua_State *L);
-static void _sgn(const int size, double alpha, double *x, const int incx);
-static int sgn(lua_State *L);
-static void _abs(const int size, double alpha, double *x, const int incx);
-static int absx(lua_State *L);
-static void _logistic(const int size, double alpha, double *x, const int incx);
-static int logistic(lua_State *L);
-static void _tanh(const int size, double alpha, double *x, const int incx);
-static int tanhx(lua_State *L);
-static void _apply(const int size, double alpha, double *x, const int incx);
-static int apply(lua_State *L);
-static void _set(const int size, double alpha, double *x, const int incx);
-static int set(lua_State *L);
-static void _uniform(const int size, double alpha, double *x, const int incx);
-static int uniform(lua_State *L);
-static void _normal(const int size, double alpha, double *x, const int incx);
-static int normal(lua_State *L);
+static int ll_elementary(lua_State *L, ll_elementary_function f, int hasalpha);
+static void ll_inc_handler(const int size, double alpha, double *x, const int incx);
+static int ll_inc(lua_State *L);
+static int ll_scal(lua_State *L);
+static void ll_pow_handler(const int size, double alpha, double *x, const int incx);
+static int ll_pow(lua_State *L);
+static void ll_exp_handler(const int size, double alpha, double *x, const int incx);
+static int ll_exp(lua_State *L);
+static void ll_log_handler(const int size, double alpha, double *x, const int incx);
+static int ll_log(lua_State *L);
+static void ll_sgn_handler(const int size, double alpha, double *x, const int incx);
+static int ll_sgn(lua_State *L);
+static void ll_abs_handler(const int size, double alpha, double *x, const int incx);
+static int ll_abs(lua_State *L);
+static void ll_logistic_handler(const int size, double alpha, double *x, const int incx);
+static int ll_logistic(lua_State *L);
+static void ll_tanh_handler(const int size, double alpha, double *x, const int incx);
+static int ll_tanh(lua_State *L);
+static void ll_apply_handler(const int size, double alpha, double *x, const int incx);
+static int ll_apply(lua_State *L);
+static void ll_set_handler(const int size, double alpha, double *x, const int incx);
+static int ll_set(lua_State *L);
+static void ll_uniform_handler(const int size, double alpha, double *x, const int incx);
+static int ll_uniform(lua_State *L);
+static void ll_normal_handler(const int size, double alpha, double *x, const int incx);
+static int ll_normal(lua_State *L);
 
-static int unary(lua_State *L, unary_function f, int hasddof);
-static double _sum(int size, const double *values, const int inc, const int ddof);
-static int sum(lua_State *L);
-static double _mean(int size, const double *values, const int inc, const int ddof);
-static int mean(lua_State *L);
-static double _var(int size, const double *values, const int inc, const int ddof);
-static int var(lua_State *L);
-static double _std(int size, const double *values, const int inc, const int ddof);
-static int std(lua_State *L);
-static double _nrm2(int size, const double *values, const int inc, const int ddof);
-static int nrm2(lua_State *L);
-static double _asum(int size, const double *values, const int inc, const int ddof);
-static int asum(lua_State *L);
+static int ll_unary(lua_State *L, ll_unary_function f, int hasddof);
+static double ll_sum_handler(int size, const double *values, const int inc, const int ddof);
+static int ll_sum(lua_State *L);
+static double ll_mean_handler(int size, const double *values, const int inc, const int ddof);
+static int ll_mean(lua_State *L);
+static double ll_var_handler(int size, const double *values, const int inc, const int ddof);
+static int ll_var(lua_State *L);
+static double ll_std_handler(int size, const double *values, const int inc, const int ddof);
+static int ll_std(lua_State *L);
+static double ll_nrm2_handler(int size, const double *values, const int inc, const int ddof);
+static int ll_nrm2(lua_State *L);
+static double ll_asum_handler(int size, const double *values, const int inc, const int ddof);
+static int ll_asum(lua_State *L);
 
-static int binary(lua_State *L, binary_function s, int hasalpha, int hasbeta);
-static void _axpy(const int size, const double alpha, double *x, int incx, const double beta,
+static int ll_binary(lua_State *L, ll_binary_function s, int hasalpha, int hasbeta);
+static void ll_axpy_handler(const int size, const double alpha, double *x, int incx, const double beta,
 		double *y, int incy);
-static int axpy(lua_State *L);
-static void _axpby(const int size, const double alpha, double *x, int incx, const double beta,
+static int ll_axpy(lua_State *L);
+static void ll_axpby_handler(const int size, const double alpha, double *x, int incx, const double beta,
 		double *y, int incy);
-static int axpby(lua_State *L);
-static void _mul(const int size, const double alpha, double *x, int incx, const double beta,
+static int ll_axpby(lua_State *L);
+static void ll_mul_handler(const int size, const double alpha, double *x, int incx, const double beta,
 		 double *y, int incy);
-static int mul(lua_State *L);
-static void _swap(const int size, const double alpha, double *x, int incx, const double beta,
+static int ll_mul(lua_State *L);
+static void ll_swap_handler(const int size, const double alpha, double *x, int incx, const double beta,
 		double *y, int incy);
-static int swap(lua_State *L);
-static void _copy(const int size, const double alpha, double *x, int incx, const double beta,
+static int ll_swap(lua_State *L);
+static void ll_copy_handler(const int size, const double alpha, double *x, int incx, const double beta,
 		double *y, int incy);
-static int copy(lua_State *L);
+static int ll_copy(lua_State *L);
 
-static int dot(lua_State *L);
-static int ger(lua_State *L);
-static int gemv(lua_State *L);
-static int gemm(lua_State *L);
-static int gesv(lua_State *L);
-static int gels(lua_State *L);
-static int inv(lua_State *L);
-static int det(lua_State *L);
-static int cov(lua_State *L);
-static int corr(lua_State *L);
+static int ll_dot(lua_State *L);
+static int ll_ger(lua_State *L);
+static int ll_gemv(lua_State *L);
+static int ll_gemm(lua_State *L);
+static int ll_gesv(lua_State *L);
+static int ll_gels(lua_State *L);
+static int ll_inv(lua_State *L);
+static int ll_det(lua_State *L);
+static int ll_cov(lua_State *L);
+static int ll_corr(lua_State *L);
 
 
-static const char *const ORDERS[] = {"row", "col", NULL};
-static const char *const TRANSPOSES[] = {"notrans", "trans", NULL};
-static __thread lua_State  *TL;
+static const char *const LL_ORDERS[] = {"row", "col", NULL};
+static const char *const LL_TRANSPOSES[] = {"notrans", "trans", NULL};
+static __thread lua_State  *LL_TL;
 
 
 /*
  * arguments
  */
 
-static inline CBLAS_ORDER checkorder (lua_State *L, int index) {
-	return luaL_checkoption(L, index, "row", ORDERS) == 0 ? CblasRowMajor : CblasColMajor;
+static inline CBLAS_ORDER ll_checkorder (lua_State *L, int index) {
+	return luaL_checkoption(L, index, "row", LL_ORDERS) == 0 ? CblasRowMajor : CblasColMajor;
 }
 
-static inline CBLAS_TRANSPOSE checktranspose (lua_State *L, int index) {
-	return luaL_checkoption(L, index, "notrans", TRANSPOSES) == 0 ? CblasNoTrans : CblasTrans;
+static inline CBLAS_TRANSPOSE ll_checktranspose (lua_State *L, int index) {
+	return luaL_checkoption(L, index, "notrans", LL_TRANSPOSES) == 0 ? CblasNoTrans
+			: CblasTrans;
 }
 
-static inline char lapacktranspose (CBLAS_TRANSPOSE transpose) {
+static inline char ll_lapacktranspose (CBLAS_TRANSPOSE transpose) {
 	return transpose == CblasNoTrans ? 'N' : 'T';
 }
 
@@ -166,7 +166,7 @@ static int argerror (lua_State *L, int index) {
 			luaL_typename(L, index)));
 }
 
-static inline int rawgeti (lua_State *L, int index, int n) {
+static inline int ll_rawgeti (lua_State *L, int index, int n) {
 #if LUA_VERSION_NUM >= 503
 	return lua_rawgeti(L, index, n);
 #else
@@ -197,31 +197,31 @@ void *luaL_testudata (lua_State *L, int index, const char *name) {
  * vector
  */
 
-static struct vector *create_vector (lua_State *L, size_t length) {
-	struct vector  *vector;
+struct ll_vector *ll_create_vector (lua_State *L, size_t length) {
+	struct ll_vector  *vector;
 
 	assert(length >= 1 && length <= INT_MAX);
-	vector = lua_newuserdata(L, sizeof(struct vector));
+	vector = lua_newuserdata(L, sizeof(struct ll_vector));
 	vector->length = length;
 	vector->inc = 1;
 	vector->data = NULL;
 	luaL_getmetatable(L, LUALINEAR_VECTOR);
 	lua_setmetatable(L, -2);
-	vector->data = calloc(1, sizeof(struct data) + length * sizeof(double));
+	vector->data = calloc(1, sizeof(struct ll_data) + length * sizeof(double));
 	if (vector->data == NULL) {
 		luaL_error(L, "cannot allocate data");
 	}
 	vector->data->refs = 1;
-	vector->values = (double *)((char *)vector->data + sizeof(struct data));
+	vector->values = (double *)((char *)vector->data + sizeof(struct ll_data));
 	return vector;
 }
 
-static void push_vector (lua_State *L, size_t length, size_t inc, struct data *data,
+static void ll_push_vector (lua_State *L, size_t length, size_t inc, struct ll_data *data,
 		double *values) {
-	struct vector  *vector;
+	struct ll_vector  *vector;
 
 	assert(length >= 1 && length <= INT_MAX);
-	vector = lua_newuserdata(L, sizeof(struct vector));
+	vector = lua_newuserdata(L, sizeof(struct ll_vector));
 	vector->length = length;
 	vector->inc = inc;
 	vector->data = NULL;
@@ -232,17 +232,17 @@ static void push_vector (lua_State *L, size_t length, size_t inc, struct data *d
 	vector->values = values;
 }
 
-static int vector_len (lua_State *L) {
-	struct vector  *x;
+static int ll_vector_len (lua_State *L) {
+	struct ll_vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR);
 	lua_pushinteger(L, x->length);
 	return 1;
 }
 
-static int vector_index (lua_State *L) {
-	size_t          index;
-	struct vector  *x;
+static int ll_vector_index (lua_State *L) {
+	size_t             index;
+	struct ll_vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR);
 	index = luaL_checkinteger(L, 2);
@@ -254,10 +254,10 @@ static int vector_index (lua_State *L) {
 	return 1;
 }
 
-static int vector_newindex (lua_State *L) {
-	size_t          index;
-	double          value;
-	struct vector  *x;
+static int ll_vector_newindex (lua_State *L) {
+	size_t             index;
+	double             value;
+	struct ll_vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR);
 	index = luaL_checkinteger(L, 2);
@@ -268,9 +268,9 @@ static int vector_newindex (lua_State *L) {
 }
 
 #if LUA_VERSION_NUM < 504
-static int vector_next (lua_State *L) {
-	size_t          index;
-	struct vector  *x;
+static int ll_vector_next (lua_State *L) {
+	size_t             index;
+	struct ll_vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR);
 	index = luaL_checkinteger(L, 2);
@@ -283,25 +283,25 @@ static int vector_next (lua_State *L) {
 	return 1;
 }
 
-static int vector_ipairs (lua_State *L) {
+static int ll_vector_ipairs (lua_State *L) {
 	luaL_checkudata(L, 1, LUALINEAR_VECTOR);
-	lua_pushcfunction(L, vector_next);
+	lua_pushcfunction(L, ll_vector_next);
 	lua_pushvalue(L, 1);
 	lua_pushinteger(L, 0);
 	return 3;
 }
 #endif
 
-static int vector_tostring (lua_State *L) {
-	struct vector  *x;
+static int ll_vector_tostring (lua_State *L) {
+	struct ll_vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR);
 	lua_pushfstring(L, LUALINEAR_VECTOR ": %p", x);
 	return 1;
 }
 
-static int vector_gc (lua_State *L) {
-	struct vector  *x;
+static int ll_vector_gc (lua_State *L) {
+	struct ll_vector  *x;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR);
 	if (x->data) {
@@ -318,11 +318,11 @@ static int vector_gc (lua_State *L) {
  * matrix
  */
 
-static struct matrix *create_matrix (lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order) {
-	struct matrix  *matrix;
+struct ll_matrix *ll_create_matrix (lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order) {
+	struct ll_matrix  *matrix;
 
 	assert(rows >= 1 && rows <= INT_MAX && cols >= 1 && cols <= INT_MAX);
-	matrix = lua_newuserdata(L, sizeof(struct matrix));
+	matrix = lua_newuserdata(L, sizeof(struct ll_matrix));
 	matrix->rows = rows;
 	matrix->cols = cols;
 	matrix->ld = order == CblasRowMajor ? cols : rows;
@@ -330,21 +330,21 @@ static struct matrix *create_matrix (lua_State *L, size_t rows, size_t cols, CBL
 	matrix->data = NULL;
 	luaL_getmetatable(L, LUALINEAR_MATRIX);
 	lua_setmetatable(L, -2);
-	matrix->data = calloc(1, sizeof(struct data) + rows * cols * sizeof(double));
+	matrix->data = calloc(1, sizeof(struct ll_data) + rows * cols * sizeof(double));
 	if (matrix->data == NULL) {
 		luaL_error(L, "cannot allocate data");
 	}
 	matrix->data->refs = 1;
-	matrix->values = (double *)((char *)matrix->data + sizeof(struct data));
+	matrix->values = (double *)((char *)matrix->data + sizeof(struct ll_data));
 	return matrix;
 }
 
-static void push_matrix (lua_State *L, size_t rows, size_t cols, size_t ld, CBLAS_ORDER order,
-		struct data *data, double *values) {
-	struct matrix  *matrix;
+static void ll_push_matrix (lua_State *L, size_t rows, size_t cols, size_t ld, CBLAS_ORDER order,
+		struct ll_data *data, double *values) {
+	struct ll_matrix  *matrix;
 
 	assert(rows >= 1 && rows <= INT_MAX && cols >= 1 && cols <= INT_MAX);
-	matrix = (struct matrix *)lua_newuserdata(L, sizeof(struct matrix));
+	matrix = (struct ll_matrix *)lua_newuserdata(L, sizeof(struct ll_matrix));
 	matrix->rows = rows;
 	matrix->cols = cols;
 	matrix->ld = ld;
@@ -357,8 +357,8 @@ static void push_matrix (lua_State *L, size_t rows, size_t cols, size_t ld, CBLA
 	matrix->values = values;
 }
 
-static int matrix_len (lua_State *L) {
-	struct matrix  *X;
+static int ll_matrix_len (lua_State *L) {
+	struct ll_matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	if (X->order == CblasRowMajor) {
@@ -369,21 +369,21 @@ static int matrix_len (lua_State *L) {
 	return 1;
 }
 
-static int matrix_index (lua_State *L) {
-	size_t          index;
-	struct matrix  *X;
+static int ll_matrix_index (lua_State *L) {
+	size_t             index;
+	struct ll_matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	index = luaL_checkinteger(L, 2);
 	if (X->order == CblasRowMajor) {
 		if (index >= 1 && index <= X->rows) {
-			push_vector(L, X->cols, 1, X->data, &X->values[(index - 1) * X->ld]);
+			ll_push_vector(L, X->cols, 1, X->data, &X->values[(index - 1) * X->ld]);
 		} else {
 			lua_pushnil(L);
 		}
 	} else {
 		if (index >= 1 && index <= X->cols) {
-			push_vector(L, X->rows, 1, X->data, &X->values[(index - 1) * X->ld]);
+			ll_push_vector(L, X->rows, 1, X->data, &X->values[(index - 1) * X->ld]);
 		} else {
 			lua_pushnil(L);
 		}
@@ -392,9 +392,9 @@ static int matrix_index (lua_State *L) {
 }
 
 #if LUA_VERSION_NUM < 504
-static int matrix_next (lua_State *L) {
-	size_t          index, majorsize, minorsize;
-	struct matrix  *X;
+static int ll_matrix_next (lua_State *L) {
+	size_t             index, majorsize, minorsize;
+	struct ll_matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	index = luaL_checkinteger(L, 2);
@@ -407,32 +407,32 @@ static int matrix_next (lua_State *L) {
 	}
 	if (index < majorsize) {
 		lua_pushinteger(L, index + 1);
-		push_vector(L, minorsize, 1, X->data, &X->values[index * X->ld]);
+		ll_push_vector(L, minorsize, 1, X->data, &X->values[index * X->ld]);
 		return 2;
 	}
 	lua_pushnil(L);
 	return 1;
 }
 
-static int matrix_ipairs (lua_State *L) {
+static int ll_matrix_ipairs (lua_State *L) {
 	luaL_checkudata(L, 1, LUALINEAR_MATRIX);
-	lua_pushcfunction(L, matrix_next);
+	lua_pushcfunction(L, ll_matrix_next);
 	lua_pushvalue(L, 1);
 	lua_pushinteger(L, 0);
 	return 3;
 }
 #endif
 
-static int matrix_tostring (lua_State *L) {
-	struct matrix  *X;
+static int ll_matrix_tostring (lua_State *L) {
+	struct ll_matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	lua_pushfstring(L, LUALINEAR_MATRIX ": %p", X);
 	return 1;
 }
 
-static int matrix_gc (lua_State *L) {
-	struct matrix  *X;
+static int ll_matrix_gc (lua_State *L) {
+	struct ll_matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	if (X->data) {
@@ -449,16 +449,16 @@ static int matrix_gc (lua_State *L) {
  * structural functions
  */
 
-static int vector (lua_State *L) {
+static int ll_vector (lua_State *L) {
 	size_t  size;
 
 	size = luaL_checkinteger(L, 1);
 	luaL_argcheck(L, size >= 1 && size <= INT_MAX, 1, "bad dimension");
-	create_vector(L, size);
+	ll_create_vector(L, size);
 	return 1;
 }
 
-static int matrix (lua_State *L) {
+static int ll_matrix (lua_State *L) {
 	size_t       rows, cols;
 	CBLAS_ORDER  order;
 
@@ -466,16 +466,16 @@ static int matrix (lua_State *L) {
 	luaL_argcheck(L, rows >= 1 && rows <= INT_MAX, 1, "bad dimension");
 	cols = luaL_checkinteger(L, 2);
 	luaL_argcheck(L, cols >= 1 && cols <= INT_MAX, 2, "bad dimension");
-	order = checkorder(L, 3);
-	create_matrix(L, rows, cols, order);
+	order = ll_checkorder(L, 3);
+	ll_create_matrix(L, rows, cols, order);
 	return 1;
 }
 
-static int totable (lua_State *L) {
-	size_t          i, j;
-	const double   *value;
-	struct vector  *x;
-	struct matrix  *X;
+static int ll_totable (lua_State *L) {
+	size_t             i, j;
+	const double      *value;
+	struct ll_vector  *x;
+	struct ll_matrix  *X;
 
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR);
 	if (x != NULL) {
@@ -518,24 +518,24 @@ static int totable (lua_State *L) {
 	return argerror(L, 1);
 }
 
-static int tolinear (lua_State *L) {
-	double         *value;
-	size_t          size, rows, cols, major, minor, i, j;
-	CBLAS_ORDER     order;
-	struct vector  *x;
-	struct matrix  *X;
+static int ll_tolinear (lua_State *L) {
+	double            *value;
+	size_t             size, rows, cols, major, minor, i, j;
+	CBLAS_ORDER        order;
+	struct ll_vector  *x;
+	struct ll_matrix  *X;
 
 	luaL_checktype(L, 1, LUA_TTABLE);
-	switch (rawgeti(L, 1, 1)) {
+	switch (ll_rawgeti(L, 1, 1)) {
 	case LUA_TNUMBER:
 		size = lua_rawlen(L, 1);
 		if (size < 1 || size > INT_MAX) {
 			return luaL_error(L, "bad size");
 		}
-		x = create_vector(L, size);
+		x = ll_create_vector(L, size);
 		value = x->values;
 		for (i = 0; i < size; i++) {
-			if (rawgeti(L, 1, i + 1) != LUA_TNUMBER) {
+			if (ll_rawgeti(L, 1, i + 1) != LUA_TNUMBER) {
 				return luaL_error(L, "bad value at index %d", i + 1);
 			}
 			*value++ = lua_tonumber(L, -1);
@@ -553,7 +553,7 @@ static int tolinear (lua_State *L) {
 			return luaL_error(L, "bad columns");
 		}
 		lua_pop(L, 1);
-		order = checkorder(L, 2);
+		order = ll_checkorder(L, 2);
 		if (order == CblasRowMajor) {
 			rows = major;
 			cols = minor;
@@ -561,15 +561,15 @@ static int tolinear (lua_State *L) {
 			rows = minor;
 			cols = major;
 		}
-		X = create_matrix(L, rows, cols, order);
+		X = ll_create_matrix(L, rows, cols, order);
 		for (i = 0; i < major; i++) {
 			value = &X->values[i * X->ld];
-			if (rawgeti(L, 1, i + 1) != LUA_TTABLE
+			if (ll_rawgeti(L, 1, i + 1) != LUA_TTABLE
 					 || lua_rawlen(L, -1) != minor) {
 				return luaL_error(L, "bad value at index %d", i + 1);
 			}
 			for (j = 0; j < minor; j++) {
-				if (rawgeti(L, -1, j + 1) != LUA_TNUMBER) {
+				if (ll_rawgeti(L, -1, j + 1) != LUA_TNUMBER) {
 					return luaL_error(L, "bad value at index (%d,%d)", i + 1,
 							j + 1);
 				}
@@ -585,7 +585,7 @@ static int tolinear (lua_State *L) {
 	}
 }
 
-static int type (lua_State *L) {
+static int ll_type (lua_State *L) {
 	if (luaL_testudata(L, 1, LUALINEAR_VECTOR) != NULL) {
 		lua_pushliteral(L, "vector");
 		return 1;
@@ -598,9 +598,9 @@ static int type (lua_State *L) {
 	return 1;
 }
 
-static int size (lua_State *L) {
-	struct vector  *x;
-	struct matrix  *X;
+static int ll_size (lua_State *L) {
+	struct ll_vector  *x;
+	struct ll_matrix  *X;
 
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR);
 	if (x != NULL) {
@@ -611,15 +611,15 @@ static int size (lua_State *L) {
 	if (X != NULL) {
 		lua_pushinteger(L, X->rows);
 		lua_pushinteger(L, X->cols);
-		lua_pushstring(L, ORDERS[X->order == CblasRowMajor ? 0 : 1]);
+		lua_pushstring(L, LL_ORDERS[X->order == CblasRowMajor ? 0 : 1]);
 		return 3;
 	}
 	return argerror(L, 1);
 }
 
-static int tvector (lua_State *L) {
-	size_t          index, length;
-	struct matrix  *X;
+static int ll_tvector (lua_State *L) {
+	size_t             index, length;
+	struct ll_matrix  *X;
 
 	X = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	index = luaL_checkinteger(L, 2);
@@ -630,13 +630,13 @@ static int tvector (lua_State *L) {
 		luaL_argcheck(L, index >= 1 && index <= X->rows, 2, "bad index");
 		length = X->cols;
 	}
-	push_vector(L, length, X->ld, X->data, &X->values[index - 1]);
+	ll_push_vector(L, length, X->ld, X->data, &X->values[index - 1]);
 	return 1;
 }
 
-static int sub (lua_State *L) {
-	struct vector  *x;
-	struct matrix  *X;
+static int ll_sub (lua_State *L) {
+	struct ll_vector  *x;
+	struct ll_matrix  *X;
 
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR);
 	if (x != NULL) {
@@ -646,7 +646,8 @@ static int sub (lua_State *L) {
 		luaL_argcheck(L, start >= 1 && start <= x->length, 2, "bad index");
 		end = luaL_optinteger(L, 3, x->length);
 		luaL_argcheck(L, end >= start && end <= x->length, 3, "bad index");
-		push_vector(L, end - start + 1, x->inc, x->data, &x->values[(start - 1) * x->inc]);
+		ll_push_vector(L, end - start + 1, x->inc, x->data,
+				&x->values[(start - 1) * x->inc]);
 		return 1;
 	}
 	X = luaL_testudata(L, 1, LUALINEAR_MATRIX);
@@ -662,11 +663,11 @@ static int sub (lua_State *L) {
 		colend = luaL_optinteger(L, 5, X->cols);
 		luaL_argcheck(L, colend >= colstart && colend <= X->cols, 5, "bad index");
 		if (X->order == CblasRowMajor) {
-			push_matrix(L, rowend - rowstart + 1, colend - colstart + 1, X->ld,
+			ll_push_matrix(L, rowend - rowstart + 1, colend - colstart + 1, X->ld,
 					X->order, X->data, &X->values[(rowstart - 1) * X->ld
 					+ (colstart - 1)]);
 		} else {
-			push_matrix(L, rowend - rowstart + 1, colend - colstart + 1, X->ld,
+			ll_push_matrix(L, rowend - rowstart + 1, colend - colstart + 1, X->ld,
 					X->order, X->data, &X->values[(colstart - 1) * X->ld
 					+ (rowstart - 1)]);
 		}
@@ -675,12 +676,12 @@ static int sub (lua_State *L) {
 	return argerror(L, 1);
 }
 
-static int unwind (lua_State *L) {
-	int             index;
-	double         *s, *d, *last;
-	size_t          i, j;
-	struct vector  *x;
-	struct matrix  *X;
+static int ll_unwind (lua_State *L) {
+	int                index;
+	double            *s, *d, *last;
+	size_t             i, j;
+	struct ll_vector  *x;
+	struct ll_matrix  *X;
 
 	if (lua_gettop(L) == 0) {
 		return luaL_error(L, "wrong number of arguments");
@@ -714,12 +715,12 @@ static int unwind (lua_State *L) {
 	return 0;
 }
 
-static int reshape (lua_State *L) {
-	int             index;
-	double         *d, *s, *last;
-	size_t          i, j;
-	struct vector  *x;
-	struct matrix  *X;
+static int ll_reshape (lua_State *L) {
+	int                index;
+	double            *d, *s, *last;
+	size_t             i, j;
+	struct ll_vector  *x;
+	struct ll_matrix  *X;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR);
 	s = x->values;
@@ -751,12 +752,12 @@ static int reshape (lua_State *L) {
 }
 
 #if LUA_VERSION_NUM < 502
-static int ipairs (lua_State *L) {
+static int ll_ipairs (lua_State *L) {
 	if (luaL_testudata(L, 1, LUALINEAR_VECTOR)) {
-		return vector_ipairs(L);
+		return ll_vector_ipairs(L);
 	}
 	if (luaL_testudata(L, 1, LUALINEAR_MATRIX)) {
-		return matrix_ipairs(L);
+		return ll_matrix_ipairs(L);
 	}
 	return argerror(L, 1);
 }
@@ -767,12 +768,12 @@ static int ipairs (lua_State *L) {
  * elementary functions
  */
 
-static int elementary (lua_State *L, elementary_function f, int hasalpha) {
-	int             isnum;
-	size_t          i;
-	double          alpha, n;
-	struct vector  *x;
-	struct matrix  *X;
+static int ll_elementary (lua_State *L, ll_elementary_function f, int hasalpha) {
+	int                isnum;
+	size_t             i;
+	double             alpha, n;
+	struct ll_vector  *x;
+	struct ll_matrix  *X;
 
 	alpha = hasalpha ? luaL_optnumber(L, 2, 1.0) : 0.0;
 #if LUA_VERSION_NUM >= 502
@@ -815,7 +816,7 @@ static int elementary (lua_State *L, elementary_function f, int hasalpha) {
 	return argerror(L, 1);
 }
 
-static void _inc (const int size, double alpha, double *x, const int incx) {
+static void ll_inc_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	if (incx == 1) {
@@ -830,15 +831,15 @@ static void _inc (const int size, double alpha, double *x, const int incx) {
 	}
 }
 
-static int inc (lua_State *L) {
-	return elementary(L, _inc, 1);
+static int ll_inc (lua_State *L) {
+	return ll_elementary(L, ll_inc_handler, 1);
 }
 
-static int scal (lua_State *L) {
-	return elementary(L, cblas_dscal, 1);
+static int ll_scal (lua_State *L) {
+	return ll_elementary(L, cblas_dscal, 1);
 }
 
-static void _pow (const int size, double alpha, double *x, const int incx) {
+static void ll_pow_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	if (alpha == -1.0) {
@@ -876,11 +877,11 @@ static void _pow (const int size, double alpha, double *x, const int incx) {
 	}
 }
 
-static int powx (lua_State *L) {
-	return elementary(L, _pow, 1);
+static int ll_pow (lua_State *L) {
+	return ll_elementary(L, ll_pow_handler, 1);
 }
 
-static void _exp (const int size, double alpha, double *x, const int incx) {
+static void ll_exp_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	(void)alpha;
@@ -896,11 +897,11 @@ static void _exp (const int size, double alpha, double *x, const int incx) {
 	}
 }
 
-static int expx (lua_State *L) {
-	return elementary(L, _exp, 0);
+static int ll_exp (lua_State *L) {
+	return ll_elementary(L, ll_exp_handler, 0);
 }
 
-static void _log (const int size, double alpha, double *x, const int incx) {
+static void ll_log_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	(void)alpha;
@@ -916,11 +917,11 @@ static void _log (const int size, double alpha, double *x, const int incx) {
 	}
 }
 
-static int logx (lua_State *L) {
-	return elementary(L, _log, 0);
+static int ll_log (lua_State *L) {
+	return ll_elementary(L, ll_log_handler, 0);
 }
 
-static void _sgn (const int size, double alpha, double *x, const int incx) {
+static void ll_sgn_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	(void)alpha;
@@ -934,11 +935,11 @@ static void _sgn (const int size, double alpha, double *x, const int incx) {
 	}
 }
 
-static int sgn (lua_State *L) {
-	return elementary(L, _sgn, 0);
+static int ll_sgn (lua_State *L) {
+	return ll_elementary(L, ll_sgn_handler, 0);
 }
 
-static void _abs (const int size, double alpha, double *x, const int incx) {
+static void ll_abs_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	(void)alpha;
@@ -948,11 +949,11 @@ static void _abs (const int size, double alpha, double *x, const int incx) {
 	}
 }
 
-static int absx (lua_State *L) {
-	return elementary(L, _abs, 0);
+static int ll_abs (lua_State *L) {
+	return ll_elementary(L, ll_abs_handler, 0);
 }
 
-static void _logistic (const int size, double alpha, double *x, const int incx) {
+static void ll_logistic_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	(void)alpha;
@@ -962,11 +963,11 @@ static void _logistic (const int size, double alpha, double *x, const int incx) 
 	}
 }
 
-static int logistic (lua_State *L) {
-	return elementary(L, _logistic, 0);
+static int ll_logistic (lua_State *L) {
+	return ll_elementary(L, ll_logistic_handler, 0);
 }
 
-static void _tanh (const int size, double alpha, double *x, const int incx) {
+static void ll_tanh_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	(void)alpha;
@@ -976,32 +977,32 @@ static void _tanh (const int size, double alpha, double *x, const int incx) {
 	}
 }
 
-static int tanhx (lua_State *L) {
-	return elementary(L, _tanh, 0);
+static int ll_tanh (lua_State *L) {
+	return ll_elementary(L, ll_tanh_handler, 0);
 }
 
-static void _apply (const int size, double alpha, double *x, const int incx) {
+static void ll_apply_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	(void)alpha;
 	for (i = 0; i < size; i++) {
-		lua_pushvalue(TL, -1);
-		lua_pushnumber(TL, *x);
-		lua_call(TL, 1, 1);
-		*x = lua_tonumber(TL, -1);
+		lua_pushvalue(LL_TL, -1);
+		lua_pushnumber(LL_TL, *x);
+		lua_call(LL_TL, 1, 1);
+		*x = lua_tonumber(LL_TL, -1);
 		x += incx;
-		lua_pop(TL, 1);
+		lua_pop(LL_TL, 1);
 	}
 }
 
-static int apply (lua_State *L) {
+static int ll_apply (lua_State *L) {
 	luaL_checktype(L, 2, LUA_TFUNCTION);
 	lua_settop(L, 2);
-	TL = L;
-	return elementary(L, _apply, 0);
+	LL_TL = L;
+	return ll_elementary(L, ll_apply_handler, 0);
 }
 
-static void _set (const int size, double alpha, double *x, const int incx) {
+static void ll_set_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	if (incx == 1) {
@@ -1016,11 +1017,11 @@ static void _set (const int size, double alpha, double *x, const int incx) {
 	}
 }
 
-static int set (lua_State *L) {
-	return elementary(L, _set, 1);
+static int ll_set (lua_State *L) {
+	return ll_elementary(L, ll_set_handler, 1);
 }
 
-static void _uniform (const int size, double alpha, double *x, const int incx) {
+static void ll_uniform_handler (const int size, double alpha, double *x, const int incx) {
 	int  i;
 
 	(void)alpha;
@@ -1030,11 +1031,11 @@ static void _uniform (const int size, double alpha, double *x, const int incx) {
 	}
 }
 
-static int uniform (lua_State *L) {
-	return elementary(L, _uniform, 0);
+static int ll_uniform (lua_State *L) {
+	return ll_elementary(L, ll_uniform_handler, 0);
 }
 
-static void _normal (const int size, double alpha, double *x, const int incx) {
+static void ll_normal_handler (const int size, double alpha, double *x, const int incx) {
 	int     i;
 	double  u1, u2, r, s, c;
 
@@ -1058,8 +1059,8 @@ static void _normal (const int size, double alpha, double *x, const int incx) {
 	}
 }
 
-static int normal (lua_State *L) {
-	return elementary(L, _normal, 0);
+static int ll_normal (lua_State *L) {
+	return ll_elementary(L, ll_normal_handler, 0);
 }
 
 
@@ -1067,10 +1068,10 @@ static int normal (lua_State *L) {
  * unary vector functions
  */
 
-static int unary (lua_State *L, unary_function f, int hasddof) {
-	size_t          i, ddof;
-	struct vector  *x, *y;
-	struct matrix  *X;
+static int ll_unary (lua_State *L, ll_unary_function f, int hasddof) {
+	size_t             i, ddof;
+	struct ll_vector  *x, *y;
+	struct ll_matrix  *X;
 
 	ddof = 0;
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR);
@@ -1087,7 +1088,7 @@ static int unary (lua_State *L, unary_function f, int hasddof) {
 	if (X != NULL) {
 		/* matrix-vector */
 		y = luaL_checkudata(L, 2, LUALINEAR_VECTOR);
-		if (checkorder(L, 3) == CblasRowMajor) {
+		if (ll_checkorder(L, 3) == CblasRowMajor) {
 			luaL_argcheck(L, y->length == X->rows, 2, "dimension mismatch");
 			if (hasddof) {
 				ddof = luaL_optinteger(L, 4, 0);
@@ -1127,7 +1128,7 @@ static int unary (lua_State *L, unary_function f, int hasddof) {
 	return argerror(L, 1);
 }
 
-static double _sum (int size, const double *x, const int incx, const int ddof) {
+static double ll_sum_handler (int size, const double *x, const int incx, const int ddof) {
 	int     i;
 	double  sum;
 
@@ -1146,11 +1147,11 @@ static double _sum (int size, const double *x, const int incx, const int ddof) {
 	return sum;
 }
 
-static int sum (lua_State *L) {
-	return unary(L, _sum, 0);
+static int ll_sum (lua_State *L) {
+	return ll_unary(L, ll_sum_handler, 0);
 }
 
-static double _mean (int size, const double *x, const int incx, const int ddof) {
+static double ll_mean_handler (int size, const double *x, const int incx, const int ddof) {
 	int     i;
 	double  sum;
 
@@ -1169,11 +1170,11 @@ static double _mean (int size, const double *x, const int incx, const int ddof) 
 	return sum / size;
 }
 
-static int mean (lua_State *L) {
-	return unary(L, _mean, 0);
+static int ll_mean (lua_State *L) {
+	return ll_unary(L, ll_mean_handler, 0);
 }
 
-static double _var (int size, const double *x, const int incx, const int ddof) {
+static double ll_var_handler (int size, const double *x, const int incx, const int ddof) {
 	int     i;
 	double  sum, mean;
 
@@ -1203,34 +1204,34 @@ static double _var (int size, const double *x, const int incx, const int ddof) {
 	return sum / (size - ddof);
 }
 
-static int var (lua_State *L) {
-	return unary(L, _var, 1);
+static int ll_var (lua_State *L) {
+	return ll_unary(L, ll_var_handler, 1);
 }
 
-static double _std (int size, const double *x, const int incx, const int ddof) {
-	return sqrt(_var(size, x, incx, ddof));
+static double ll_std_handler (int size, const double *x, const int incx, const int ddof) {
+	return sqrt(ll_var_handler(size, x, incx, ddof));
 }
 
-static int std (lua_State *L) {
-	return unary(L, _std, 1);
+static int ll_std (lua_State *L) {
+	return ll_unary(L, ll_std_handler, 1);
 }
 
-static double _nrm2 (int size, const double *x, const int incx, const int ddof) {
+static double ll_nrm2_handler (int size, const double *x, const int incx, const int ddof) {
 	(void)ddof;
 	return cblas_dnrm2(size, x, incx);
 }
 
-static int nrm2 (lua_State *L) {
-	return unary(L, _nrm2, 0);
+static int ll_nrm2 (lua_State *L) {
+	return ll_unary(L, ll_nrm2_handler, 0);
 }
 
-static double _asum (int size, const double *x, const int incx, const int ddof) {
+static double ll_asum_handler (int size, const double *x, const int incx, const int ddof) {
 	(void)ddof;
 	return cblas_dasum(size, x, incx);
 }
 
-static int asum (lua_State *L) {
-	return unary(L, _asum, 0);
+static int ll_asum (lua_State *L) {
+	return ll_unary(L, ll_asum_handler, 0);
 }
 
 
@@ -1238,11 +1239,11 @@ static int asum (lua_State *L) {
  * binary vector functions
  */
 
-static int binary (lua_State *L, binary_function f, int hasalpha, int hasbeta) {
-	size_t          i;
-	double          alpha, beta;
-	struct vector  *x, *y;
-	struct matrix  *X, *Y;
+static int ll_binary (lua_State *L, ll_binary_function f, int hasalpha, int hasbeta) {
+	size_t             i;
+	double             alpha, beta;
+	struct ll_vector  *x, *y;
+	struct ll_matrix  *X, *Y;
 
 	x = luaL_testudata(L, 1, LUALINEAR_VECTOR);
 	if (x != NULL) {
@@ -1260,7 +1261,7 @@ static int binary (lua_State *L, binary_function f, int hasalpha, int hasbeta) {
 			/* vector-matrix */
 			alpha = hasalpha ? luaL_optnumber(L, 4, 1.0) : 0.0;
 			beta = hasbeta ? luaL_optnumber(L, 5, 0.0) : 0.0;
-			if (checkorder(L, 3) == CblasRowMajor) {
+			if (ll_checkorder(L, 3) == CblasRowMajor) {
 				luaL_argcheck(L, x->length == Y->cols, 1, "dimension mismatch");
 				if (Y->order == CblasRowMajor) {
 					for (i = 0; i < Y->rows; i++) {
@@ -1323,19 +1324,19 @@ static int binary (lua_State *L, binary_function f, int hasalpha, int hasbeta) {
 	return argerror(L, 1);
 }
 
-static void _axpy (const int size, const double alpha, double *x, int incx, const double beta,
-		double *y, int incy) {
+static void ll_axpy_handler (const int size, const double alpha, double *x, int incx,
+		const double beta, double *y, int incy) {
 	(void)beta;
 	cblas_daxpy(size, alpha, x, incx, y, incy);
 }
 
 /* deprecated */
-static int axpy (lua_State *L) {
-	return binary(L, _axpy, 1, 0);
+static int ll_axpy (lua_State *L) {
+	return ll_binary(L, ll_axpy_handler, 1, 0);
 }
 
-static void _axpby (const int size, const double alpha, double *x, int incx, const double beta,
-		double *y, int incy) {
+static void ll_axpby_handler (const int size, const double alpha, double *x, int incx,
+		const double beta, double *y, int incy) {
 #if LUALINEAR_USE_AXPBY
 	cblas_daxpby(size, alpha, x, incx, beta, y, incy);
 #else
@@ -1346,12 +1347,12 @@ static void _axpby (const int size, const double alpha, double *x, int incx, con
 #endif
 }
 
-static int axpby (lua_State *L) {
-	return binary(L, _axpby, 1, 1);
+static int ll_axpby (lua_State *L) {
+	return ll_binary(L, ll_axpby_handler, 1, 1);
 }
 
-static void _mul (const int size, const double alpha, double *x, int incx, const double beta,
-		double *y, int incy) {
+static void ll_mul_handler (const int size, const double alpha, double *x, int incx,
+		const double beta, double *y, int incy) {
 	int  i;
 
 	(void)beta;
@@ -1394,30 +1395,30 @@ static void _mul (const int size, const double alpha, double *x, int incx, const
 	}
 }
 
-static int mul (lua_State *L) {
-	return binary(L, _mul, 1, 0);
+static int ll_mul (lua_State *L) {
+	return ll_binary(L, ll_mul_handler, 1, 0);
 }
 
-static void _swap (const int size, const double alpha, double *x, int incx, const double beta,
-		double *y, int incy) {
+static void ll_swap_handler (const int size, const double alpha, double *x, int incx,
+		const double beta, double *y, int incy) {
 	(void)alpha;
 	(void)beta;
 	cblas_dswap(size, x, incx, y, incy);
 }
 
-static int swap (lua_State *L) {
-	return binary(L, _swap, 0, 0);
+static int ll_swap (lua_State *L) {
+	return ll_binary(L, ll_swap_handler, 0, 0);
 }
 
-static void _copy (const int size, const double alpha, double *x, int incx, const double beta,
-		double *y, int incy) {
+static void ll_copy_handler (const int size, const double alpha, double *x, int incx,
+		const double beta, double *y, int incy) {
 	(void)alpha;
 	(void)beta;
 	cblas_dcopy(size, x, incx, y, incy);
 }
 
-static int copy (lua_State *L) {
-	return binary(L, _copy, 0, 0);
+static int ll_copy (lua_State *L) {
+	return ll_binary(L, ll_copy_handler, 0, 0);
 }
 
 
@@ -1425,8 +1426,8 @@ static int copy (lua_State *L) {
  * program functions
  */
 
-static int dot (lua_State *L) {
-	struct vector  *x, *y;
+static int ll_dot (lua_State *L) {
+	struct ll_vector  *x, *y;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR);
 	y = luaL_checkudata(L, 2, LUALINEAR_VECTOR);
@@ -1435,10 +1436,10 @@ static int dot (lua_State *L) {
 	return 1;
 }
 
-static int ger (lua_State *L) {
-	double          alpha;
-	struct vector  *x, *y;
-	struct matrix  *A;
+static int ll_ger (lua_State *L) {
+	double             alpha;
+	struct ll_vector  *x, *y;
+	struct ll_matrix  *A;
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR);
 	y = luaL_checkudata(L, 2, LUALINEAR_VECTOR);
@@ -1451,17 +1452,17 @@ static int ger (lua_State *L) {
 	return 0;
 }
 
-static int gemv (lua_State *L) {
-	size_t           m, n;
-	double           alpha, beta;
-	struct matrix   *A;
-	struct vector   *x, *y;	
-	CBLAS_TRANSPOSE  ta;
+static int ll_gemv (lua_State *L) {
+	size_t              m, n;
+	double              alpha, beta;
+	CBLAS_TRANSPOSE     ta;
+	struct ll_matrix   *A;
+	struct ll_vector   *x, *y;
 
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	x = luaL_checkudata(L, 2, LUALINEAR_VECTOR);
 	y = luaL_checkudata(L, 3, LUALINEAR_VECTOR);
-	ta = checktranspose(L, 4);
+	ta = ll_checktranspose(L, 4);
 	m = ta == CblasNoTrans ? A->rows : A->cols;
 	n = ta == CblasNoTrans ? A->cols : A->rows;
 	luaL_argcheck(L, x->length == n, 2, "dimension mismatch");
@@ -1473,19 +1474,19 @@ static int gemv (lua_State *L) {
 	return 0;
 }
 
-static int gemm (lua_State *L) {
-	size_t            m, n, ka, kb;
-	double            alpha, beta;
-	struct matrix    *A, *B, *C;
-	CBLAS_TRANSPOSE   ta, tb;
+static int ll_gemm (lua_State *L) {
+	size_t               m, n, ka, kb;
+	double               alpha, beta;
+	CBLAS_TRANSPOSE      ta, tb;
+	struct ll_matrix    *A, *B, *C;
 
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	B = luaL_checkudata(L, 2, LUALINEAR_MATRIX);
 	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
 	C = luaL_checkudata(L, 3, LUALINEAR_MATRIX);
 	luaL_argcheck(L, C->order == A->order, 3, "order mismatch");
-	ta = checktranspose(L, 4);
-	tb = checktranspose(L, 5);
+	ta = ll_checktranspose(L, 4);
+	tb = ll_checktranspose(L, 5);
 	m = ta == CblasNoTrans ? A->rows : A->cols;
 	n = tb == CblasNoTrans ? B->cols : B->rows;
 	ka = ta == CblasNoTrans ? A->cols : A->rows;
@@ -1498,9 +1499,9 @@ static int gemm (lua_State *L) {
 	return 0;
 }
 
-static int gesv (lua_State *L) {
-	int            *ipiv, result;
-	struct matrix  *A, *B;
+static int ll_gesv (lua_State *L) {
+	int               *ipiv, result;
+	struct ll_matrix  *A, *B;
 
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	luaL_argcheck(L, A->rows == A->cols, 1, "not square");
@@ -1521,15 +1522,15 @@ static int gesv (lua_State *L) {
 	return 1;
 }
 
-static int gels (lua_State *L) {
-	int             result;
-	char            ta;
-	struct matrix  *A, *B;
+static int ll_gels (lua_State *L) {
+	int                result;
+	char               ta;
+	struct ll_matrix  *A, *B;
 
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	B = luaL_checkudata(L, 2, LUALINEAR_MATRIX);
 	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
-	ta = lapacktranspose(checktranspose(L, 3));
+	ta = ll_lapacktranspose(ll_checktranspose(L, 3));
 	luaL_argcheck(L, B->rows == (A->rows >= A->cols ? A->rows : A->cols), 2,
 			"dimension mismatch");
 	result = LAPACKE_dgels(A->order, ta, A->rows, A->cols, B->cols, A->values, A->ld,
@@ -1541,9 +1542,9 @@ static int gels (lua_State *L) {
 	return 1;
 }
 
-static int inv (lua_State *L) {
-	int            *ipiv, result;
-	struct matrix  *A;
+static int ll_inv (lua_State *L) {
+	int               *ipiv, result;
+	struct ll_matrix  *A;
 
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
 	luaL_argcheck(L, A->rows == A->cols, 1, "not square");
@@ -1569,11 +1570,11 @@ static int inv (lua_State *L) {
 	return 1;
 }
 
-static int det (lua_State *L) {
-	size_t          n, i;
-	int            *ipiv, result, neg;
-	struct matrix  *A;
-	double         *copy, *d, *s, det;
+static int ll_det (lua_State *L) {
+	int               *ipiv, result, neg;
+	size_t             n, i;
+	double            *copy, *d, *s, det;
+	struct ll_matrix  *A;
 
 	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
@@ -1625,10 +1626,10 @@ static int det (lua_State *L) {
 	return 1;
 }
 
-static int cov (lua_State *L) {
-	size_t          i, j, k, ddof;
-	double         *means, *v, *vi, *vj, sum;
-	struct matrix  *A, *B;
+static int ll_cov (lua_State *L) {
+	size_t             i, j, k, ddof;
+	double            *means, *v, *vi, *vj, sum;
+	struct ll_matrix  *A, *B;
 
 	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
@@ -1698,10 +1699,10 @@ static int cov (lua_State *L) {
 	return 0;
 }
 
-static int corr (lua_State *L) {
-	struct matrix  *A, *B;
-	size_t          i, j, k;
-	double         *means, *stds, *v, *vi, *vj, sum;
+static int ll_corr (lua_State *L) {
+	size_t             i, j, k;
+	double            *means, *stds, *v, *vi, *vj, sum;
+	struct ll_matrix  *A, *B;
 
 	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LUALINEAR_MATRIX);
@@ -1796,61 +1797,61 @@ static int corr (lua_State *L) {
 int luaopen_linear (lua_State *L) {
 	static const luaL_Reg FUNCTIONS[] = {
 		/* structural functions */
-		{ "vector", vector },
-		{ "matrix", matrix },
-		{ "totable", totable },
-		{ "tolinear", tolinear },
-		{ "type", type },
-		{ "size", size },
-		{ "tvector", tvector },
-		{ "sub", sub },
-		{ "unwind", unwind },
-		{ "reshape", reshape },
+		{ "vector", ll_vector },
+		{ "matrix", ll_matrix },
+		{ "totable", ll_totable },
+		{ "tolinear", ll_tolinear },
+		{ "type", ll_type },
+		{ "size", ll_size },
+		{ "tvector", ll_tvector },
+		{ "sub", ll_sub },
+		{ "unwind", ll_unwind },
+		{ "reshape", ll_reshape },
 #if LUA_VERSION_NUM < 502
 		{ "ipairs", ipairs },
 #endif
 
 		/* elementary functions */
-		{ "inc", inc },
-		{ "scal", scal },
-		{ "pow", powx },
-		{ "exp", expx },
-		{ "log", logx },
-		{ "sgn", sgn },
-		{ "abs", absx },
-		{ "logistic", logistic },
-		{ "tanh", tanhx },
-		{ "apply", apply },
-		{ "set", set },
-		{ "uniform", uniform },
-		{ "normal", normal },
+		{ "inc", ll_inc },
+		{ "scal", ll_scal },
+		{ "pow", ll_pow },
+		{ "exp", ll_exp },
+		{ "log", ll_log },
+		{ "sgn", ll_sgn },
+		{ "abs", ll_abs },
+		{ "logistic", ll_logistic },
+		{ "tanh", ll_tanh },
+		{ "apply", ll_apply },
+		{ "set", ll_set },
+		{ "uniform", ll_uniform },
+		{ "normal", ll_normal },
 
 		/* unary vector functions */
-		{ "sum", sum },
-		{ "mean", mean },
-		{ "var", var },
-		{ "std", std },
-		{ "nrm2", nrm2 },
-		{ "asum", asum },
+		{ "sum", ll_sum },
+		{ "mean", ll_mean },
+		{ "var", ll_var },
+		{ "std", ll_std },
+		{ "nrm2", ll_nrm2 },
+		{ "asum", ll_asum },
 
 		/* binary vector functions */
-		{ "axpy", axpy },    /* deprecated */
-		{ "axpby", axpby },
-		{ "mul", mul },
-		{ "swap", swap },
-		{ "copy", copy },
+		{ "axpy", ll_axpy },    /* deprecated */
+		{ "axpby", ll_axpby },
+		{ "mul", ll_mul },
+		{ "swap", ll_swap },
+		{ "copy", ll_copy },
 
 		/* program functions */
-		{ "dot", dot },
-		{ "ger", ger },
-		{ "gemv", gemv },
-		{ "gemm", gemm },
-		{ "gesv", gesv },
-		{ "gels", gels },
-		{ "inv", inv },
-		{ "det", det },
-		{ "cov", cov },
-		{ "corr", corr },
+		{ "dot", ll_dot },
+		{ "ger", ll_ger },
+		{ "gemv", ll_gemv },
+		{ "gemm", ll_gemm },
+		{ "gesv", ll_gesv },
+		{ "gels", ll_gels },
+		{ "inv", ll_inv },
+		{ "det", ll_det },
+		{ "cov", ll_cov },
+		{ "corr", ll_corr },
 
 		{ NULL, NULL }
 	};
@@ -1864,35 +1865,35 @@ int luaopen_linear (lua_State *L) {
 
 	/* vector metatable */
 	luaL_newmetatable(L, LUALINEAR_VECTOR);
-	lua_pushcfunction(L, vector_len);
+	lua_pushcfunction(L, ll_vector_len);
 	lua_setfield(L, -2, "__len");
-	lua_pushcfunction(L, vector_index);
+	lua_pushcfunction(L, ll_vector_index);
 	lua_setfield(L, -2, "__index");
-	lua_pushcfunction(L, vector_newindex);
+	lua_pushcfunction(L, ll_vector_newindex);
 	lua_setfield(L, -2, "__newindex");
 #if LUA_VERSION_NUM >= 502 && LUA_VERSION_NUM < 504
-	lua_pushcfunction(L, vector_ipairs);
+	lua_pushcfunction(L, ll_vector_ipairs);
 	lua_setfield(L, -2, "__ipairs");
 #endif
-	lua_pushcfunction(L, vector_tostring);
+	lua_pushcfunction(L, ll_vector_tostring);
 	lua_setfield(L, -2, "__tostring");
-	lua_pushcfunction(L, vector_gc);
+	lua_pushcfunction(L, ll_vector_gc);
 	lua_setfield(L, -2, "__gc");
 	lua_pop(L, 1);
 
 	/* matrix metatable */
 	luaL_newmetatable(L, LUALINEAR_MATRIX);
-	lua_pushcfunction(L, matrix_len);
+	lua_pushcfunction(L, ll_matrix_len);
 	lua_setfield(L, -2, "__len");
-	lua_pushcfunction(L, matrix_index);
+	lua_pushcfunction(L, ll_matrix_index);
 	lua_setfield(L, -2, "__index");
 #if LUA_VERSION_NUM >= 502 && LUA_VERSION_NUM < 504
-	lua_pushcfunction(L, matrix_ipairs);
+	lua_pushcfunction(L, ll_matrix_ipairs);
 	lua_setfield(L, -2, "__ipairs");
 #endif
-	lua_pushcfunction(L, matrix_tostring);
+	lua_pushcfunction(L, ll_matrix_tostring);
 	lua_setfield(L, -2, "__tostring");
-	lua_pushcfunction(L, matrix_gc);
+	lua_pushcfunction(L, ll_matrix_gc);
 	lua_setfield(L, -2, "__gc");
 	lua_pop(L, 1);
 

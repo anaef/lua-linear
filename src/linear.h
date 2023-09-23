@@ -20,26 +20,30 @@
 #define LUALINEAR_MATRIX  "linear.matrix"  /* matrix metatable */
 
 
-struct data {
+struct ll_data {
 	size_t   refs;    /* number of references */
 };
 
-struct vector {
-	size_t        length;  /* length*/
-	size_t        inc;     /* increment to next value */
-	struct data  *data;    /* shared data */
-	double       *values;  /* components */
+struct ll_vector {
+	size_t           length;  /* length*/
+	size_t           inc;     /* increment to next value */
+	struct ll_data  *data;    /* shared data */
+	double          *values;  /* components */
 };
 
-struct matrix {
-	size_t        rows;    /* number of rows */
-	size_t        cols;    /* number of columns*/
-	size_t        ld;      /* increment to next major vector */
-	CBLAS_ORDER   order;   /* order */
-	struct data  *data;    /* shared data */
-	double       *values;  /* elements */
+struct ll_matrix {
+	size_t           rows;    /* number of rows */
+	size_t           cols;    /* number of columns*/
+	size_t           ld;      /* increment to next major vector */
+	CBLAS_ORDER      order;   /* order */
+	struct ll_data  *data;    /* shared data */
+	double          *values;  /* elements */
 };
 
+
+struct ll_vector *ll_create_vector(lua_State *L, size_t length);
+
+struct ll_matrix *ll_create_matrix(lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order);
 
 int luaopen_linear(lua_State *L);
 
