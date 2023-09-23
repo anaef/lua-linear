@@ -363,7 +363,7 @@ local function testUniform ()
 	local x = linear.vector(100000)
 	linear.uniform(x)
 	assert(math.abs(linear.mean(x) - 0.5) < 0.01)
-	assert(math.abs(linear.var(x) - 1 / 12) < 0.01)
+	assert(math.abs(linear.var(x, 1) - 1 / 12) < 0.01)
 end
 
 -- Tests the normal function
@@ -384,7 +384,7 @@ local function testNormal ()
 	local x = linear.vector(100000)
 	linear.normal(x)
 	assert(math.abs(linear.mean(x) - 0.0) < 0.01)
-	assert(math.abs(linear.var(x) - 1.0) < 0.01)
+	assert(math.abs(linear.var(x, 1) - 1.0) < 0.01)
 end
 
 
