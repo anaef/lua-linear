@@ -1,6 +1,6 @@
-# Structural Functions
+# Core Functions
 
-This section describes the structural functions of Lua Linear.
+This section describes the core functions of Lua Linear.
 
 
 ## `linear.vector (length)`

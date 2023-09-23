@@ -1,28 +1,23 @@
 /*
- * Lua Linear
+ * Lua Linear core
  *
  * Copyright (C) 2017-2023 Andre Naef
  */
 
 
-#include "linear_core.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <float.h>
 #include <lauxlib.h>
-#include <cblas.h>
-#include <lapacke.h>
+#include "linear_core.h"
+#include "linear_elementary.h"
+#include "linear_unary.h"
+#include "linear_binary.h"
+#include "linear_program.h"
 
 
-/* arguments */
-static inline CBLAS_ORDER linear_checkorder(lua_State *L, int index);
-static inline CBLAS_TRANSPOSE linear_checktranspose(lua_State *L, int index);
-static inline char linear_lapacktranspose(CBLAS_TRANSPOSE transpose);
-static inline int linear_checkargs(lua_State *L, struct linear_param *params, size_t size,
-		int index, union linear_arg *args);
-static int linear_argerror(lua_State *L, int index, int numok);
+/* compatibility */
 static inline int linear_rawgeti(lua_State *L, int index, int n);
 #if LUA_VERSION_NUM < 502
 #define lua_rawlen  lua_objlen
@@ -54,7 +49,7 @@ static int linear_matrix_ipairs(lua_State *L);
 static int linear_matrix_tostring(lua_State *L);
 static int linear_matrix_gc(lua_State *L);
 
-/* structural functions */
+/* core functions */
 static int linear_vector(lua_State *L);
 static int linear_matrix(lua_State *L);
 static int linear_totable(lua_State *L);
@@ -69,120 +64,21 @@ static int linear_reshape(lua_State *L);
 static int linear_ipairs(lua_State *L);
 #endif
 
-/* elementary functions */
-static void linear_inc_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_inc(lua_State *L);
-static void linear_scal_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_scal(lua_State *L);
-static void linear_pow_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_pow(lua_State *L);
-static void linear_exp_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_exp(lua_State *L);
-static void linear_log_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_log(lua_State *L);
-static void linear_sgn_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_sgn(lua_State *L);
-static void linear_abs_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_abs(lua_State *L);
-static void linear_logistic_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_logistic(lua_State *L);
-static void linear_tanh_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_tanh(lua_State *L);
-static void linear_apply_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_apply(lua_State *L);
-static void linear_set_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_set(lua_State *L);
-static void linear_uniform_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_uniform(lua_State *L);
-static void linear_normal_handler(int size, double *x, int incx, union linear_arg *args);
-static int linear_normal(lua_State *L);
-
-/* unary vector functions */
-static double linear_sum_handler(int size, double *values, int inc, union linear_arg *args);
-static int linear_sum(lua_State *L);
-static double linear_mean_handler(int size, double *values, int inc, union linear_arg *args);
-static int linear_mean(lua_State *L);
-static double linear_var_handler(int size, double *values, int inc, union linear_arg *args);
-static int linear_var(lua_State *L);
-static double linear_std_handler(int size, double *values, int inc, union linear_arg *args);
-static int linear_std(lua_State *L);
-static double linear_nrm2_handler(int size, double *values, int inc, union linear_arg *args);
-static int linear_nrm2(lua_State *L);
-static double linear_asum_handler(int size, double *values, int inc, union linear_arg *args);
-static int linear_asum(lua_State *L);
-
-/* binary vector functions */
-static void linear_axpy_handler(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
-static int linear_axpy(lua_State *L);
-static void linear_axpby_handler(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
-static int linear_axpby(lua_State *L);
-static void linear_mul_handler(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
-static int linear_mul(lua_State *L);
-static void linear_swap_handler(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
-static int linear_swap(lua_State *L);
-static void linear_copy_handler(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
-static int linear_copy(lua_State *L);
-
-/* program functions */
-static int linear_dot(lua_State *L);
-static int linear_ger(lua_State *L);
-static int linear_gemv(lua_State *L);
-static int linear_gemm(lua_State *L);
-static int linear_gesv(lua_State *L);
-static int linear_gels(lua_State *L);
-static int linear_inv(lua_State *L);
-static int linear_det(lua_State *L);
-static int linear_cov(lua_State *L);
-static int linear_corr(lua_State *L);
-
 
 static const char *const LINEAR_ORDERS[] = {"row", "col", NULL};
-static const char *const LINEAR_TRANSPOSES[] = {"notrans", "trans", NULL};
-static struct linear_param LINEAR_PARAMS_NONE[] = {
-	{NULL, '\0', {0.0}}
-};
-static struct linear_param LINEAR_PARAMS_ALPHA[] = {
-	{"alpha", 'n', {1.0}},
-	{NULL, '\0', {0.0}}
-};
-static struct linear_param LINEAR_PARAMS_ALPHA_BETA[] = {
-	{"alpha", 'n', {1.0}},
-	{"beta", 'n', {0.0}},
-	{NULL, '\0', {0.0}}
-};
-static struct linear_param LINEAR_PARAMS_DDOF[] = {
-	{"ddof", 'd', {.defd = 0}},
-	{NULL, '\0', {0.0}}
-};
-
-static __thread lua_State  *LINEAR_TL;
 
 
 /*
  * arguments
  */
 
-static inline CBLAS_ORDER linear_checkorder (lua_State *L, int index) {
+CBLAS_ORDER linear_checkorder (lua_State *L, int index) {
 	return luaL_checkoption(L, index, "row", LINEAR_ORDERS) == 0 ? CblasRowMajor
 			: CblasColMajor;
 }
 
-static inline CBLAS_TRANSPOSE linear_checktranspose (lua_State *L, int index) {
-	return luaL_checkoption(L, index, "notrans", LINEAR_TRANSPOSES) == 0 ? CblasNoTrans
-			: CblasTrans;
-}
-
-static inline char linear_lapacktranspose (CBLAS_TRANSPOSE transpose) {
-	return transpose == CblasNoTrans ? 'N' : 'T';
-}
-
-static inline int linear_checkargs (lua_State *L, struct linear_param *params, size_t size,
-		int index, union linear_arg *args) {
+int linear_checkargs (lua_State *L, struct linear_param *params, size_t size, int index,
+		union linear_arg *args) {
 	while (params->name) {
 		switch (params->type) {
 		case 'n':
@@ -204,13 +100,18 @@ static inline int linear_checkargs (lua_State *L, struct linear_param *params, s
 	return 0;
 }
 
-static int linear_argerror (lua_State *L, int index, int numok) {
+int linear_argerror (lua_State *L, int index, int numok) {
 	const char  *fmt;
 
 	fmt = !numok ? "vector, or matrix expected, got %s"
 			: "number, vector, or matrix expected, got %s";
 	return luaL_argerror(L, index, lua_pushfstring(L, fmt, luaL_typename(L, index)));
 }
+
+
+/*
+ * compatibility
+ */
 
 static inline int linear_rawgeti (lua_State *L, int index, int n) {
 #if LUA_VERSION_NUM >= 503
@@ -493,7 +394,7 @@ static int linear_matrix_gc (lua_State *L) {
 
 
 /*
- * structural functions
+ * core functions
  */
 
 static int linear_vector (lua_State *L) {
@@ -577,7 +478,7 @@ static int linear_tolinear (lua_State *L) {
 	case LUA_TNUMBER:
 		size = lua_rawlen(L, 1);
 		if (size < 1 || size > INT_MAX) {
-			return luaL_error(L, "bad size");
+			return luaL_error(L, "bad dimension");
 		}
 		x = linear_create_vector(L, size);
 		value = x->values;
@@ -593,11 +494,11 @@ static int linear_tolinear (lua_State *L) {
 	case LUA_TTABLE:
 		major = lua_rawlen(L, 1);
 		if (major < 1 || major > INT_MAX) {
-			return luaL_error(L, "bad rows");
+			return luaL_error(L, "bad dimension");
 		}
 		minor = lua_rawlen(L, -1);
 		if (minor < 1 || minor > INT_MAX) {
-			return luaL_error(L, "bad columns");
+			return luaL_error(L, "bad dimension");
 		}
 		lua_pop(L, 1);
 		order = linear_checkorder(L, 2);
@@ -806,1032 +707,15 @@ static int linear_ipairs (lua_State *L) {
 	if (luaL_testudata(L, 1, LINEAR_MATRIX)) {
 		return linear_matrix_ipairs(L);
 	}
-	return argerror(L, 1);
-}
-#endif
-
-
-/*
- * elementary functions
- */
-
-int linear_elementary (lua_State *L, linear_elementary_function f, struct linear_param *params) {
-	int                    isnum;
-	size_t                 i;
-	double                 n;
-	union linear_arg       args[LINEAR_PARAM_MAX];
-	struct linear_vector  *x;
-	struct linear_matrix  *X;
-
-	linear_checkargs(L, params, 0, 2, args);
-#if LUA_VERSION_NUM >= 502
-	n = lua_tonumberx(L, 1, &isnum);
-#else
-	isnum = lua_isnumber(L, 1);
-	n = lua_tonumber(L, 1);
-#endif
-	if (isnum) {
-		f(1, &n, 1, args);
-		lua_pushnumber(L, n);
-		return 1;
-	}
-	x = luaL_testudata(L, 1, LINEAR_VECTOR);
-	if (x != NULL) {
-		f(x->length, x->values, x->inc, args);
-		return 0;
-	}
-	X = luaL_testudata(L, 1, LINEAR_MATRIX);
-	if (X != NULL) {
-		if (X->order == CblasRowMajor) {
-			if (X->cols == X->ld && X->rows * X->cols <= INT_MAX) {
-				f(X->rows * X->cols, X->values, 1, args);
-			} else {
-				for (i = 0; i < X->rows; i++) {
-					f(X->cols, &X->values[i * X->ld], 1, args);
-				}
-			}
-		} else {
-			if (X->rows == X->ld && X->cols * X->rows <= INT_MAX) {
-				f(X->cols * X->rows, X->values, 1, args);
-			} else {
-				for (i = 0; i < X->cols; i++) {
-					f(X->rows, &X->values[i * X->ld], 1, args);
-				}
-			}
-		}
-		return 0;
-	}
-	return linear_argerror(L, 0, 1);
-}
-
-static void linear_inc_handler (int size, double *x, int incx, union linear_arg *args) {
-	int     i;
-	double  alpha;
-
-	alpha = args[0].n;
-	if (incx == 1) {
-		for (i = 0; i < size; i++) {
-			x[i] += alpha;
-		}
-	} else {
-		for (i = 0; i < size; i++) {
-			*x += alpha;
-			x += incx;
-		}
-	}
-}
-
-static int linear_inc (lua_State *L) {
-	return linear_elementary(L, linear_inc_handler, LINEAR_PARAMS_ALPHA);
-}
-
-static void linear_scal_handler (int size, double *x, int incx, union linear_arg *args) {
-	cblas_dscal(size, args[0].n, x, incx);
-}
-
-static int linear_scal (lua_State *L) {
-	return linear_elementary(L, linear_scal_handler, LINEAR_PARAMS_ALPHA);
-}
-
-static void linear_pow_handler (int size, double *x, int incx, union linear_arg *args) {
-	int     i;
-	double  alpha;
-
-	alpha = args[0].n;
-	if (alpha == -1.0) {
-		if (incx == 1) {
-			for (i = 0; i < size; i++) {
-				x[i] = 1 / x[i];
-			}
-		} else {
-			for (i = 0; i < size; i++) {
-				*x = 1 / *x;
-				x += incx;
-			}
-		}
-	} else if (alpha == 0.0) {
-		if (incx == 1) {
-			for (i = 0; i < size; i++) {
-				x[i] = 1.0;
-			}
-		} else {
-			for (i = 0; i < size; i++) {
-				*x = 1.0;
-				x += incx;
-			}
-		}
-	} else if (alpha == 0.5) {
-		for (i = 0; i < size; i++) {
-			*x = sqrt(*x);
-			x += incx;
-		}
-	} else if (alpha != 1.0) {
-		for (i = 0; i < size; i++) {
-			*x = pow(*x, alpha);
-			x += incx;
-		}
-	}
-}
-
-static int linear_pow (lua_State *L) {
-	return linear_elementary(L, linear_pow_handler, LINEAR_PARAMS_ALPHA);
-}
-
-static void linear_exp_handler (int size, double *x, int incx, union linear_arg *args) {
-	int  i;
-
-	(void)args;
-	if (incx == 1) {
-		for (i = 0; i < size; i++) {
-			x[i] = exp(x[i]);
-		}
-	} else {
-		for (i = 0; i < size; i++) {
-			*x = exp(*x);
-			x += incx;
-		}
-	}
-}
-
-static int linear_exp (lua_State *L) {
-	return linear_elementary(L, linear_exp_handler, LINEAR_PARAMS_NONE);
-}
-
-static void linear_log_handler (int size, double *x, int incx, union linear_arg *args) {
-	int  i;
-
-	(void)args;
-	if (incx == 1) {
-		for (i = 0; i < size; i++) {
-			x[i] = log(x[i]);
-		}
-	} else {
-		for (i = 0; i < size; i++) {
-			*x = log(*x);
-			x += incx;
-		}
-	}
-}
-
-static int linear_log (lua_State *L) {
-	return linear_elementary(L, linear_log_handler, LINEAR_PARAMS_NONE);
-}
-
-static void linear_sgn_handler (int size, double *x, int incx, union linear_arg *args) {
-	int  i;
-
-	(void)args;
-	for (i = 0; i < size; i++) {
-		if (*x > 0) {
-			*x = 1;
-		} else if (*x < 0) {
-			*x = -1;
-		}
-		x += incx;
-	}
-}
-
-static int linear_sgn (lua_State *L) {
-	return linear_elementary(L, linear_sgn_handler, LINEAR_PARAMS_NONE);
-}
-
-static void linear_abs_handler (int size, double *x, int incx, union linear_arg *args) {
-	int  i;
-
-	(void)args;
-	for (i = 0; i < size; i++) {
-		*x = fabs(*x);
-		x += incx;
-	}
-}
-
-static int linear_abs (lua_State *L) {
-	return linear_elementary(L, linear_abs_handler, LINEAR_PARAMS_NONE);
-}
-
-static void linear_logistic_handler (int size, double *x, int incx, union linear_arg *args) {
-	int  i;
-
-	(void)args;
-	for (i = 0; i < size; i++) {
-		*x = 1.0 / (1.0 + exp(-*x));
-		x += incx;
-	}
-}
-
-static int linear_logistic (lua_State *L) {
-	return linear_elementary(L, linear_logistic_handler, LINEAR_PARAMS_NONE);
-}
-
-static void linear_tanh_handler (int size, double *x, int incx, union linear_arg *args) {
-	int  i;
-
-	(void)args;
-	for (i = 0; i < size; i++) {
-		*x = tanh(*x);
-		x += incx;
-	}
-}
-
-static int linear_tanh (lua_State *L) {
-	return linear_elementary(L, linear_tanh_handler, LINEAR_PARAMS_NONE);
-}
-
-static void linear_apply_handler (int size, double *x, int incx, union linear_arg *args) {
-	int  i;
-
-	(void)args;
-	for (i = 0; i < size; i++) {
-		lua_pushvalue(LINEAR_TL, -1);
-		lua_pushnumber(LINEAR_TL, *x);
-		lua_call(LINEAR_TL, 1, 1);
-		*x = lua_tonumber(LINEAR_TL, -1);
-		x += incx;
-		lua_pop(LINEAR_TL, 1);
-	}
-}
-
-static int linear_apply (lua_State *L) {
-	luaL_checktype(L, 2, LUA_TFUNCTION);
-	lua_settop(L, 2);
-	LINEAR_TL = L;
-	return linear_elementary(L, linear_apply_handler, LINEAR_PARAMS_NONE);
-}
-
-static void linear_set_handler (int size, double *x, int incx, union linear_arg *args) {
-	int     i;
-	double  alpha;
-
-	alpha = args[0].n;
-	if (incx == 1) {
-		for (i = 0; i < size; i++) {
-			x[i] = alpha;
-		}
-	} else {
-		for (i = 0; i < size; i++) {
-			*x = alpha;
-			x += incx;
-		}
-	}
-}
-
-static int linear_set (lua_State *L) {
-	return linear_elementary(L, linear_set_handler, LINEAR_PARAMS_ALPHA);
-}
-
-static void linear_uniform_handler (int size, double *x, int incx, union linear_arg *args) {
-	int  i;
-
-	(void)args;
-	for (i = 0; i < size; i++) {
-		*x = random() / (RAND_MAX + 1.0);
-		x += incx;
-	}
-}
-
-static int linear_uniform (lua_State *L) {
-	return linear_elementary(L, linear_uniform_handler, LINEAR_PARAMS_NONE);
-}
-
-static void linear_normal_handler (int size, double *x, int incx, union linear_arg *args) {
-	int     i;
-	double  u1, u2, r, s, c;
-
-	(void)args;
-
-	/* Box-Muller transform */
-	for (i = 0; i < size - 1; i += 2) {
-		u1 = (random() + 1.0) / (RAND_MAX + 1.0);
-		u2 = (random() + 1.0) / (RAND_MAX + 1.0);
-		r = sqrt(-2.0 * log(u1));
-		sincos(2 * M_PI * u2, &s, &c);
-		*x = r * c;
-		x += incx;
-		*x = r * s;
-		x += incx;
-	}
-	if (i < size) {
-		u1 = (random() + 1.0) / (RAND_MAX + 1.0);
-		u2 = (random() + 1.0) / (RAND_MAX + 1.0);
-		*x = sqrt(-2.0 * log(u1)) * cos(2 * M_PI * u2);
-	}
-}
-
-static int linear_normal (lua_State *L) {
-	return linear_elementary(L, linear_normal_handler, LINEAR_PARAMS_NONE);
-}
-
-
-/*
- * unary vector functions
- */
-
-int linear_unary (lua_State *L, linear_unary_function f, struct linear_param *params) {
-	size_t                 i;
-	union linear_arg       args[LINEAR_PARAM_MAX];
-	struct linear_vector  *x, *y;
-	struct linear_matrix  *X;
-
-	x = luaL_testudata(L, 1, LINEAR_VECTOR);
-	if (x != NULL) {
-		/* vector */
-		linear_checkargs(L, params, x->length, 2, args);
-		lua_pushnumber(L, f(x->length, x->values, x->inc, args));
-		return 1;
-	}
-	X = luaL_testudata(L, 1, LINEAR_MATRIX);
-	if (X != NULL) {
-		/* matrix-vector */
-		y = luaL_checkudata(L, 2, LINEAR_VECTOR);
-		if (linear_checkorder(L, 3) == CblasRowMajor) {
-			luaL_argcheck(L, y->length == X->rows, 2, "dimension mismatch");
-			linear_checkargs(L, params, X->cols, 4, args);
-			if (X->order == CblasRowMajor) {
-				for (i = 0; i < X->rows; i++) {
-					y->values[i * y->inc] = f(X->cols, &X->values[i * X->ld],
-							1, args);
-				}
-			} else {
-				for (i = 0; i < X->rows; i++) {
-					y->values[i * y->inc] = f(X->cols, &X->values[i], X->ld,
-							args);
-				}
-			}
-		} else {
-			luaL_argcheck(L, y->length == X->cols, 2, "dimension mismatch");
-			linear_checkargs(L, params, X->rows, 4, args);
-			if (X->order == CblasColMajor) {
-				for (i = 0; i < X->cols; i++) {
-					y->values[i * y->inc] = f(X->rows, &X->values[i * X->ld],
-							1, args);
-				}
-			} else {
-				for (i = 0; i < X->cols; i++) {
-					y->values[i * y->inc] = f(X->rows, &X->values[i], X->ld,
-							args);
-				}
-			}
-		}
-		return 0;
-	}
 	return linear_argerror(L, 1, 0);
 }
-
-static double linear_sum_handler (int size, double *x, int incx, union linear_arg *args) {
-	int     i;
-	double  sum;
-
-	(void)args;
-	sum = 0.0;
-	if (incx == 1) {
-		for (i = 0; i < size; i++) {
-			sum += x[i];
-		}
-	} else {
-		for (i = 0; i < size; i++) {
-			sum += *x;
-			x += incx;
-		}
-	}
-	return sum;
-}
-
-static int linear_sum (lua_State *L) {
-	return linear_unary(L, linear_sum_handler, LINEAR_PARAMS_NONE);
-}
-
-static double linear_mean_handler (int size, double *x, int incx, union linear_arg *args) {
-	int     i;
-	double  sum;
-
-	(void)args;
-	sum = 0.0;
-	if (incx == 1) {
-		for (i = 0; i < size; i++) {
-			sum += x[i];
-		}
-	} else {
-		for (i = 0; i < size; i++) {
-			sum += *x;
-			x += incx;
-		}
-	}
-	return sum / size;
-}
-
-static int linear_mean (lua_State *L) {
-	return linear_unary(L, linear_mean_handler, LINEAR_PARAMS_NONE);
-}
-
-static double linear_var_handler (int size, double *x, int incx, union linear_arg *args) {
-	int     i;
-	double  sum, mean;
-
-	sum = 0.0;
-	if (incx == 1) {
-		for (i = 0; i < size; i++) {
-			sum += x[i];
-		}
-		mean = sum / size;
-		sum = 0.0;
-		for (i = 0; i < size; i++) {
-			sum += (x[i] - mean) * (x[i] - mean);
-		}
-	} else {
-		for (i = 0; i < size; i++) {
-			sum += *x;
-			x += incx;
-		}
-		mean = sum / size;
-		x -= (size_t)size * (size_t)incx;
-		sum = 0.0;
-		for (i = 0; i < size; i++) {
-			sum += (*x - mean) * (*x - mean);
-			x += incx;
-		}
-	}
-	return sum / (size - args[0].d);
-}
-
-static int linear_var (lua_State *L) {
-	return linear_unary(L, linear_var_handler, LINEAR_PARAMS_DDOF);
-}
-
-static double linear_std_handler (int size, double *x, int incx, union linear_arg *args) {
-	return sqrt(linear_var_handler(size, x, incx, args));
-}
-
-static int linear_std (lua_State *L) {
-	return linear_unary(L, linear_std_handler, LINEAR_PARAMS_DDOF);
-}
-
-static double linear_nrm2_handler (int size, double *x, int incx, union linear_arg *args) {
-	(void)args;
-	return cblas_dnrm2(size, x, incx);
-}
-
-static int linear_nrm2 (lua_State *L) {
-	return linear_unary(L, linear_nrm2_handler, LINEAR_PARAMS_NONE);
-}
-
-static double linear_asum_handler (int size, double *x, int incx, union linear_arg *args) {
-	(void)args;
-	return cblas_dasum(size, x, incx);
-}
-
-static int linear_asum (lua_State *L) {
-	return linear_unary(L, linear_asum_handler, LINEAR_PARAMS_NONE);
-}
-
-
-/*
- * binary vector functions
- */
-
-int linear_binary (lua_State *L, linear_binary_function f, struct linear_param *params) {
-	size_t                 i;
-	union linear_arg       args[LINEAR_PARAM_MAX];
-	struct linear_vector  *x, *y;
-	struct linear_matrix  *X, *Y;
-
-	x = luaL_testudata(L, 1, LINEAR_VECTOR);
-	if (x != NULL) {
-		y = luaL_testudata(L, 2, LINEAR_VECTOR);
-		if (y != NULL) {
-			/* vector-vector */
-			luaL_argcheck(L, y->length == x->length, 2, "dimension mismatch");
-			linear_checkargs(L, params, 0, 3, args);
-			f(x->length, x->values, x->inc, y->values, y->inc, args);
-			return 0;
-		}
-		Y = luaL_testudata(L, 2, LINEAR_MATRIX);
-		if (Y != NULL) {
-			/* vector-matrix */
-			linear_checkargs(L, params, 0, 4, args);
-			if (linear_checkorder(L, 3) == CblasRowMajor) {
-				luaL_argcheck(L, x->length == Y->cols, 1, "dimension mismatch");
-				if (Y->order == CblasRowMajor) {
-					for (i = 0; i < Y->rows; i++) {
-						f(x->length, x->values, x->inc,
-								&Y->values[i * Y->ld], 1, args);
-					}
-				} else {
-					for (i = 0; i < Y->rows; i++) {
-						f(x->length, x->values, x->inc, 
-								&Y->values[i], Y->ld, args);
-					}
-				}
-			} else {
-				luaL_argcheck(L, x->length == Y->rows, 1, "dimension mismatch");
-				if (Y->order == CblasColMajor) {
-					for (i = 0; i < Y->cols; i++) {
-						f(x->length, x->values, x->inc,
-								&Y->values[i * Y->ld], 1, args);
-					}
-				} else {
-					for (i = 0; i < Y->cols; i++) {
-						f(x->length, x->values, x->inc,
-								&Y->values[i], Y->ld, args);
-					}
-				}
-			}
-			return 0;
-		}
-		return linear_argerror(L, 2, 0);
-	}
-	X = luaL_testudata(L, 1, LINEAR_MATRIX);
-	if (X != NULL) {
-		/* matrix-matrix */
-		Y = luaL_checkudata(L, 2, LINEAR_MATRIX);
-		luaL_argcheck(L, X->order == Y->order, 2, "order mismatch");
-		luaL_argcheck(L, X->rows == Y->rows && X->cols == Y->cols, 2, "dimension mismatch");
-		linear_checkargs(L, params, 0, 3, args);
-		if (X->order == CblasRowMajor) {
-			if (X->ld == X->cols && Y->ld == Y->cols && X->rows * X->cols <= INT_MAX) {
-				f(X->rows * X->cols, X->values, 1, Y->values, 1, args);
-			} else {
-				for (i = 0; i < X->rows; i++) {
-					f(X->cols, &X->values[i * X->ld], 1, &Y->values[i * Y->ld],
-							1, args);
-				}
-			}
-		} else {
-			if (X->ld == X->rows && Y->ld == Y->rows && X->cols * X->rows <= INT_MAX) {
-				f(X->cols * X->rows, X->values, 1, Y->values, 1, args);
-			} else {
-				for (i = 0; i < X->cols; i++) {
-					f(X->rows, &X->values[i * X->ld], 1, &Y->values[i * Y->ld],
-							1, args);
-				}
-			}
-		}
-		return 0;
-	}
-	return linear_argerror(L, 1, 0);
-}
-
-static void linear_axpy_handler (int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args) {
-	cblas_daxpy(size, args[0].n, x, incx, y, incy);
-}
-
-/* deprecated */
-static int linear_axpy (lua_State *L) {
-	return linear_binary(L, linear_axpy_handler, LINEAR_PARAMS_ALPHA);
-}
-
-static void linear_axpby_handler (int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args) {
-#if LINEAR_USE_AXPBY
-	cblas_daxpby(size, args[0].n, x, incx, args[1].n, y, incy);
-#else
-	if (args[1].n != 1.0) {
-		cblas_dscal(size, args[1].n, y, incy);
-	}
-	cblas_daxpy(size, args[0].n, x, incx, y, incy);
 #endif
-}
-
-static int linear_axpby (lua_State *L) {
-	return linear_binary(L, linear_axpby_handler, LINEAR_PARAMS_ALPHA_BETA);
-}
-
-static void linear_mul_handler (int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args) {
-	int     i;
-	double  alpha;
-
-	alpha = args[0].n;
-	if (alpha == 1.0) {
-		if (incx == 1 && incy == 1) {
-			for (i = 0; i < size; i++) {
-				y[i] *= x[i];
-			}
-		} else {
-			for (i = 0; i < size; i++) {
-				*y *= *x;
-				x += incx;
-				y += incy;
-			}
-		}
-	} else if (alpha == -1.0) {
-		if (incx == 1 && incy == 1) {
-			for (i = 0; i < size; i++) {
-				y[i] /= x[i];
-			}
-		} else {
-			for (i = 0; i < size; i++) {
-				*y /= *x;
-				x += incx;
-				y += incy;
-			}
-		}
-	} else if (alpha == 0.5) {
-		for (i = 0; i < size; i++) {
-			*y *= sqrt(*x);
-			x += incx;
-			y += incy;
-		}
-	} else if (alpha != 0.0) {
-		for (i = 0; i < size; i++) {
-			*y *= pow(*x, alpha);
-			x += incx;
-			y += incy;
-		}
-	}
-}
-
-static int linear_mul (lua_State *L) {
-	return linear_binary(L, linear_mul_handler, LINEAR_PARAMS_ALPHA);
-}
-
-static void linear_swap_handler (int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args) {
-	(void)args;
-	cblas_dswap(size, x, incx, y, incy);
-}
-
-static int linear_swap (lua_State *L) {
-	return linear_binary(L, linear_swap_handler, LINEAR_PARAMS_NONE);
-}
-
-static void linear_copy_handler (int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args) {
-	(void)args;
-	cblas_dcopy(size, x, incx, y, incy);
-}
-
-static int linear_copy (lua_State *L) {
-	return linear_binary(L, linear_copy_handler, LINEAR_PARAMS_NONE);
-}
 
 
 /*
- * program functions
+ * drivers
  */
 
-static int linear_dot (lua_State *L) {
-	struct linear_vector  *x, *y;
-
-	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
-	y = luaL_checkudata(L, 2, LINEAR_VECTOR);
-	luaL_argcheck(L, y->length == x->length, 2, "dimension mismatch");
-	lua_pushnumber(L, cblas_ddot(x->length, x->values, x->inc, y->values, y->inc));
-	return 1;
-}
-
-static int linear_ger (lua_State *L) {
-	double                 alpha;
-	struct linear_vector  *x, *y;
-	struct linear_matrix  *A;
-
-	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
-	y = luaL_checkudata(L, 2, LINEAR_VECTOR);
-	A = luaL_checkudata(L, 3, LINEAR_MATRIX);
-	luaL_argcheck(L, x->length == A->rows, 1, "dimension mismatch");
-	luaL_argcheck(L, y->length == A->cols, 2, "dimension mismatch");
-	alpha = luaL_optnumber(L, 4, 1.0);
-	cblas_dger(A->order, A->rows, A->cols, alpha, x->values, x->inc, y->values, y->inc,
-			A->values, A->ld);
-	return 0;
-}
-
-static int linear_gemv (lua_State *L) {
-	size_t                  m, n;
-	double                  alpha, beta;
-	CBLAS_TRANSPOSE         ta;
-	struct linear_matrix   *A;
-	struct linear_vector   *x, *y;
-
-	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
-	x = luaL_checkudata(L, 2, LINEAR_VECTOR);
-	y = luaL_checkudata(L, 3, LINEAR_VECTOR);
-	ta = linear_checktranspose(L, 4);
-	m = ta == CblasNoTrans ? A->rows : A->cols;
-	n = ta == CblasNoTrans ? A->cols : A->rows;
-	luaL_argcheck(L, x->length == n, 2, "dimension mismatch");
-	luaL_argcheck(L, y->length == m, 3, "dimension mismatch");
-	alpha = luaL_optnumber(L, 5, 1.0);
-	beta = luaL_optnumber(L, 6, 0.0);
-	cblas_dgemv(A->order, ta, A->rows, A->cols, alpha, A->values, A->ld, x->values, x->inc,
-			beta, y->values, y->inc);
-	return 0;
-}
-
-static int linear_gemm (lua_State *L) {
-	size_t                   m, n, ka, kb;
-	double                   alpha, beta;
-	CBLAS_TRANSPOSE          ta, tb;
-	struct linear_matrix    *A, *B, *C;
-
-	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
-	B = luaL_checkudata(L, 2, LINEAR_MATRIX);
-	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
-	C = luaL_checkudata(L, 3, LINEAR_MATRIX);
-	luaL_argcheck(L, C->order == A->order, 3, "order mismatch");
-	ta = linear_checktranspose(L, 4);
-	tb = linear_checktranspose(L, 5);
-	m = ta == CblasNoTrans ? A->rows : A->cols;
-	n = tb == CblasNoTrans ? B->cols : B->rows;
-	ka = ta == CblasNoTrans ? A->cols : A->rows;
-	kb = tb == CblasNoTrans ? B->rows : B->cols;
-	luaL_argcheck(L, ka == kb, 2, "dimension mismatch");
-	alpha = luaL_optnumber(L, 6, 1.0);
-	beta = luaL_optnumber(L, 7, 0.0);
-	cblas_dgemm(A->order, ta, tb, m, n, ka, alpha, A->values, A->ld, B->values, B->ld, beta,
-			C->values, C->ld);
-	return 0;
-}
-
-static int linear_gesv (lua_State *L) {
-	int                   *ipiv, result;
-	struct linear_matrix  *A, *B;
-
-	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
-	luaL_argcheck(L, A->rows == A->cols, 1, "not square");
-	B = luaL_checkudata(L, 2, LINEAR_MATRIX);
-	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
-	luaL_argcheck(L, B->rows == A->rows, 2, "dimension mismatch");
-	ipiv = calloc(A->rows, sizeof(lapack_int));
-	if (ipiv == NULL) {
-		return luaL_error(L, "cannot allocate indexes");
-	}
-	result = LAPACKE_dgesv(A->order, A->rows, B->cols, A->values, A->ld, ipiv, B->values,
-		B->ld);
-	free(ipiv);
-	if (result < 0) {
-		return luaL_error(L, "internal error");
-	}
-	lua_pushboolean(L, result == 0);
-	return 1;
-}
-
-static int linear_gels (lua_State *L) {
-	int                    result;
-	char                   ta;
-	struct linear_matrix  *A, *B;
-
-	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
-	B = luaL_checkudata(L, 2, LINEAR_MATRIX);
-	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
-	ta = linear_lapacktranspose(linear_checktranspose(L, 3));
-	luaL_argcheck(L, B->rows == (A->rows >= A->cols ? A->rows : A->cols), 2,
-			"dimension mismatch");
-	result = LAPACKE_dgels(A->order, ta, A->rows, A->cols, B->cols, A->values, A->ld,
-			B->values, B->ld);
-	if (result < 0) {
-		return luaL_error(L, "internal error");
-	}
-	lua_pushboolean(L, result == 0);
-	return 1;
-}
-
-static int linear_inv (lua_State *L) {
-	int                   *ipiv, result;
-	struct linear_matrix  *A;
-
-	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
-	luaL_argcheck(L, A->rows == A->cols, 1, "not square");
-	ipiv = calloc(A->rows, sizeof(lapack_int));
-	if (ipiv == NULL) {
-		return luaL_error(L, "cannot allocate indexes");
-	}
-	result = LAPACKE_dgetrf(A->order, A->rows, A->cols, A->values, A->ld, ipiv);
-	if (result != 0) {
-		free(ipiv);
-		if (result < 0) {
-			return luaL_error(L, "internal error");
-		}
-		lua_pushboolean(L, 0);  /* matrix is singular at machine precision */
-		return 1;
-	}
-	result = LAPACKE_dgetri(A->order, A->rows, A->values, A->ld, ipiv);
-	free(ipiv);
-	if (result < 0) {
-		return luaL_error(L, "internal error");
-	}
-	lua_pushboolean(L, result == 0);
-	return 1;
-}
-
-static int linear_det (lua_State *L) {
-	int                   *ipiv, result, neg;
-	size_t                 n, i;
-	double                *copy, *d, *s, det;
-	struct linear_matrix  *A;
-
-	/* check and process arguments */
-	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
-	luaL_argcheck(L, A->rows == A->cols, 1, "not square");
-	n = A->rows;
-
-	/* copy matrix */
-	copy = calloc(n * n, sizeof(double));
-	if (copy == NULL) {
-		return luaL_error(L, "cannot allocate values");
-	}
-	d = copy;
-	s = A->values;
-	for (i = 0; i < n; i++) {
-		memcpy(d, s, n * sizeof(double));
-		d += n;
-		s += A->ld;
-	}
-
-	/* invoke subprograms */
-	ipiv = calloc(n, sizeof(lapack_int));
-	if (ipiv == NULL) {
-		free(copy);
-		return luaL_error(L, "cannot allocate indexes");
-	}
-	result = LAPACKE_dgetrf(A->order, n, n, copy, n, ipiv);
-	if (result != 0) {
-		free(copy);
-		free(ipiv);
-		if (result < 0) {
-			return luaL_error(L, "internal error");
-		}
-		lua_pushnumber(L, 0.0);  /* matrix is singular at machine precision */
-		return 1;
-	}
-
-	/* calculate determinant */
-	det = 1.0;
-	neg = 0;
-	for (i = 0; i < n; i++) {
-		det *= copy[i * n + i];
-		if ((size_t)ipiv[i] != i + 1) {
-			neg = !neg;
-		}
-	}
-	free(copy);
-	free(ipiv);
-	lua_pushnumber(L, neg ? -det : det);
-	return 1;
-}
-
-static int linear_cov (lua_State *L) {
-	size_t                 i, j, k, ddof;
-	double                *means, *v, *vi, *vj, sum;
-	struct linear_matrix  *A, *B;
-
-	/* check and process arguments */
-	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
-	B = luaL_checkudata(L, 2, LINEAR_MATRIX);
-	luaL_argcheck(L, A->cols == B->rows, 2, "dimension mismatch");
-	luaL_argcheck(L, B->rows == B->cols, 2, "not square");
-	ddof = luaL_optinteger(L, 3, 0);
-	luaL_argcheck(L, ddof < A->rows, 3, "bad ddof");
-
-	/* calculate means */
-	means = calloc(A->cols, sizeof(double));
-	if (means == NULL) {
-		return luaL_error(L, "cannot allocate values");
-	}
-	if (A->order == CblasColMajor) {
-		for (i = 0; i < A->cols; i++) {
-			sum = 0.0;
-			v = &A->values[i * A->ld];
-			for (j = 0; j < A->rows; j++) {
-				sum += v[j];
-			}
-			means[i] = sum / A->rows;
-		}
-	} else {
-		for (i = 0; i < A->cols; i++) {
-			sum = 0.0;
-			v = &A->values[i];
-			for (j = 0; j < A->rows; j++) {
-				sum += *v;
-				v += A->ld;
-			}
-			means[i] = sum / A->rows;
-		}
-	}
-
-	/* calculate covariances */
-	if (A->order == CblasColMajor) {
-		for (i = 0; i < A->cols; i++) {
-			for (j = i; j < A->cols; j++) {
-				sum = 0.0;
-				vi = &A->values[i * A->ld];
-				vj = &A->values[j * A->ld];
-				for (k = 0; k < A->rows; k++) {
-					sum += (vi[k] - means[i]) * (vj[k] - means[j]);
-				}
-				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
-						/ (A->rows - ddof);
-			}
-		}
-	} else {
-		for (i = 0; i < A->cols; i++) {
-			for (j = i; j < A->cols; j++) {
-				sum = 0.0;
-				vi = &A->values[i];
-				vj = &A->values[j];
-				for (k = 0; k < A->rows; k++) {
-					sum += (*vi - means[i]) * (*vj - means[j]);
-					vi += A->ld;
-					vj += A->ld;
-				}
-				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
-						/ (A->rows - ddof);
-			}
-		}
-	}
-	free(means);
-	return 0;
-}
-
-static int linear_corr (lua_State *L) {
-	size_t                 i, j, k;
-	double                *means, *stds, *v, *vi, *vj, sum;
-	struct linear_matrix  *A, *B;
-
-	/* check and process arguments */
-	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
-	B = luaL_checkudata(L, 2, LINEAR_MATRIX);
-	luaL_argcheck(L, A->cols == B->rows, 2, "dimension mismatch");
-	luaL_argcheck(L, B->rows == B->cols, 2, "not square");
-
-	/* calculate means and stds */
-	means = calloc(A->cols, sizeof(double));
-	if (means == NULL) {
-		return luaL_error(L, "cannot allocate values");
-	}
-	stds = calloc(A->cols, sizeof(double));
-	if (stds == NULL) {
-		free(means);
-		return luaL_error(L, "cannot allocate values");
-	}
-	if (A->order == CblasColMajor) {
-		for (i = 0; i < A->cols; i++) {
-			sum = 0.0;
-			v = &A->values[i * A->ld];
-			for (j = 0; j < A->rows; j++) {
-				sum += v[j];
-			}
-			means[i] = sum / A->rows;
-			sum = 0.0;
-			v = &A->values[i * A->ld];
-			for (j = 0; j < A->rows; j++) {
-				sum += (v[j] - means[i]) * (v[j] - means[i]);
-			}
-			stds[i] = sqrt(sum);
-		}
-	} else {
-		for (i = 0; i < A->cols; i++) {
-			sum = 0.0;
-			v = &A->values[i];
-			for (j = 0; j < A->rows; j++) {
-				sum += *v;
-				v += A->ld;
-			}
-			means[i] = sum / A->rows;
-			sum = 0.0;
-			v = &A->values[i];
-			for (j = 0; j < A->rows; j++) {
-				sum += (*v - means[i]) * (*v - means[i]);
-				v += A->ld;
-			}
-			stds[i] = sqrt(sum);
-		}
-	}
-
-	/* calculate Pearson product-moment correlation coefficients */
-	if (A->order == CblasColMajor) {
-		for (i = 0; i < A->cols; i++) {
-			for (j = i; j < A->cols; j++) {
-				sum = 0.0;
-				vi = &A->values[i * A->ld];
-				vj = &A->values[j * A->ld];
-				for (k = 0; k < A->rows; k++) {
-					sum += (vi[k] - means[i]) * (vj[k] - means[j]);
-				}
-				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
-						/ (stds[i] * stds[j]);
-			}
-		}
-	} else {
-		for (i = 0; i < A->cols; i++) {
-			for (j = i; j < A->cols; j++) {
-				sum = 0.0;
-				vi = &A->values[i];
-				vj = &A->values[j];
-				for (k = 0; k < A->rows; k++) {
-					sum += (*vi - means[i]) * (*vj - means[j]);
-					vi += A->ld;
-					vj += A->ld;
-				}
-				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
-						/ (stds[i] * stds[j]);
-			}
-		}
-	}
-	free(means);
-	free(stds);
-	return 0;
-}
 
 
 /*
@@ -1840,7 +724,6 @@ static int linear_corr (lua_State *L) {
 
 int luaopen_linear (lua_State *L) {
 	static const luaL_Reg FUNCTIONS[] = {
-		/* structural functions */
 		{ "vector", linear_vector },
 		{ "matrix", linear_matrix },
 		{ "totable", linear_totable },
@@ -1852,51 +735,8 @@ int luaopen_linear (lua_State *L) {
 		{ "unwind", linear_unwind },
 		{ "reshape", linear_reshape },
 #if LUA_VERSION_NUM < 502
-		{ "ipairs", ipairs },
+		{ "ipairs", linear_ipairs },
 #endif
-
-		/* elementary functions */
-		{ "inc", linear_inc },
-		{ "scal", linear_scal },
-		{ "pow", linear_pow },
-		{ "exp", linear_exp },
-		{ "log", linear_log },
-		{ "sgn", linear_sgn },
-		{ "abs", linear_abs },
-		{ "logistic", linear_logistic },
-		{ "tanh", linear_tanh },
-		{ "apply", linear_apply },
-		{ "set", linear_set },
-		{ "uniform", linear_uniform },
-		{ "normal", linear_normal },
-
-		/* unary vector functions */
-		{ "sum", linear_sum },
-		{ "mean", linear_mean },
-		{ "var", linear_var },
-		{ "std", linear_std },
-		{ "nrm2", linear_nrm2 },
-		{ "asum", linear_asum },
-
-		/* binary vector functions */
-		{ "axpy", linear_axpy },    /* deprecated */
-		{ "axpby", linear_axpby },
-		{ "mul", linear_mul },
-		{ "swap", linear_swap },
-		{ "copy", linear_copy },
-
-		/* program functions */
-		{ "dot", linear_dot },
-		{ "ger", linear_ger },
-		{ "gemv", linear_gemv },
-		{ "gemm", linear_gemm },
-		{ "gesv", linear_gesv },
-		{ "gels", linear_gels },
-		{ "inv", linear_inv },
-		{ "det", linear_det },
-		{ "cov", linear_cov },
-		{ "corr", linear_corr },
-
 		{ NULL, NULL }
 	};
 
@@ -1906,6 +746,10 @@ int luaopen_linear (lua_State *L) {
 #else
 	luaL_register(L, luaL_checkstring(L, 1), FUNCTIONS);
 #endif
+	linear_open_elementary(L);
+	linear_open_unary(L);
+	linear_open_binary(L);
+	linear_open_program(L);
 
 	/* vector metatable */
 	luaL_newmetatable(L, LINEAR_VECTOR);

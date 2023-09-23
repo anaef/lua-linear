@@ -1,7 +1,9 @@
 # Lua Linear Release Notes
 
 
-## Release 1.0.1
+## Release 1.1.0
+
+- The code base has been refactored into modules and made extensible.
 
 - The vectorization of many functions has been optimized.
 

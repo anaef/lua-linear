@@ -3,7 +3,7 @@
 The documentation is split into these sections:
 
 * [Types](Types.md)
-* [Structural Functions](Structural.md)
+* [Core Functions](Core.md)
 * [Elementary Functions](Elementary.md)
 * [Unary Vector Functions](Unary.md)
 * [Binary Vector Functions](Binary.md)

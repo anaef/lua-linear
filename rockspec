@@ -33,6 +33,10 @@ build = {
 		linear = {
 			sources = {
 				"src/linear_core.c",
+				"src/linear_elementary.c",
+				"src/linear_unary.c",
+				"src/linear_binary.c",
+				"src/linear_program.c",
 			},
 			defines = {
 				"_REENTRANT",

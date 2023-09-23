@@ -6,7 +6,7 @@ local EPSILON = 6E-5
 
 
 --
--- Structural functions
+-- Core functions
 --
 
 -- Tests the vector function
@@ -775,7 +775,7 @@ local function testCorr ()
 	assert(math.abs(B[2][2] - 1) < EPSILON)
 end
 
--- Structural function tests
+-- Core function tests
 testVector()
 testMatrix()
 testTotable()
