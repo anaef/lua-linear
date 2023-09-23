@@ -687,7 +687,7 @@ static int unwind (lua_State *L) {
 	}
 	x = luaL_checkudata(L, lua_gettop(L), LUALINEAR_VECTOR);
 	d = x->values;
-	last = d + x->length;
+	last = d + x->length * x->inc;
 	index = 1;
 	while (d < last) {
 		X = luaL_checkudata(L, index, LUALINEAR_MATRIX);
@@ -723,7 +723,7 @@ static int reshape (lua_State *L) {
 
 	x = luaL_checkudata(L, 1, LUALINEAR_VECTOR);
 	s = x->values;
-	last = x->values + x->length;
+	last = x->values + x->length * x->inc;
 	index = 2;
 	while (s < last) {
 		X = luaL_checkudata(L, index, LUALINEAR_MATRIX);
