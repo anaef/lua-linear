@@ -37,7 +37,7 @@ build = {
 			defines = {
 				"_REENTRANT",
 				"_GNU_SOURCE",
-				"LUA_LINEAR_USE_AXPBY=1"
+				"LUALINEAR_USE_AXPBY=1"
 			},
 			libraries = {
 				"blas",

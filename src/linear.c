@@ -1255,7 +1255,7 @@ static int axpy (lua_State *L) {
 
 static void _axpby (const int size, const double alpha, double *x, int incx, const double beta,
 		double *y, int incy) {
-#if LUA_LINEAR_USE_AXPBY
+#if LUALINEAR_USE_AXPBY
 	cblas_daxpby(size, alpha, x, incx, beta, y, incy);
 #else
 	if (beta != 1.0) {

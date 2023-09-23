@@ -4,7 +4,7 @@ LIBDIR=/usr/local/lib/lua/5.3
 CFLAGS=-Wall -Wextra -Wpointer-arith -Werror -fPIC -O3 -D_REENTRANT -D_GNU_SOURCE
 LDFLAGS=-shared -fPIC
 USE_AXPBY=1
-FEATURES=-DLUA_LINEAR_USE_AXPBY=$(USE_AXPBY) \
+FEATURES=-DLUALINEAR_USE_AXPBY=$(USE_AXPBY) \
 
 export LUA_CPATH=$(PWD)/?.so
 
