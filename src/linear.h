@@ -28,7 +28,7 @@ struct vector {
 	size_t        length;  /* length*/
 	size_t        inc;     /* increment to next value */
 	struct data  *data;    /* shared data */
-	double       *values;  /* values */
+	double       *values;  /* components */
 };
 
 struct matrix {
@@ -37,7 +37,7 @@ struct matrix {
 	size_t        ld;      /* increment to next major vector */
 	CBLAS_ORDER   order;   /* order */
 	struct data  *data;    /* shared data */
-	double       *values;  /* values */
+	double       *values;  /* elements */
 };
 
 
