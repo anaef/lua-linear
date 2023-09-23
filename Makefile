@@ -13,7 +13,7 @@ default: all
 all: linear.so
 
 linear.so: linear.o
-	gcc $(LDFLAGS) -o linear.so linear.o -lblas -llapacke
+	gcc $(LDFLAGS) -o linear.so linear.o -lm -lblas -llapacke
 
 linear.o: src/linear.h src/linear.c
 	gcc -c -o linear.o $(CFLAGS) $(FEATURES) -I$(LUA_INCDIR)  src/linear.c

@@ -40,6 +40,7 @@ build = {
 				"LUALINEAR_USE_AXPBY=1"
 			},
 			libraries = {
+				"m",
 				"blas",
 				"lapacke",
 			},
