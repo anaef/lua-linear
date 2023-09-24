@@ -92,6 +92,11 @@ int linear_checkargs (lua_State *L, int index, size_t size, linear_param_t *para
 			index++;
 			break;
 
+		case 'i':
+			args->i = luaL_optinteger(L, index, params->def.i);
+			index++;
+			break;
+
 		case 'd':
 			args->d = luaL_optinteger(L, index, params->def.d);
 			luaL_argcheck(L, args->d < size, index, "bad ddof");

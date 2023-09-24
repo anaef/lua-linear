@@ -19,6 +19,10 @@ static double linear_var_handler(int size, double *values, int inc, linear_arg_u
 static int linear_var(lua_State *L);
 static double linear_std_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_std(lua_State *L);
+static double linear_skew_handler(int size, double *values, int inc, linear_arg_u *args);
+static int linear_skew(lua_State *L);
+static double linear_kurt_handler(int size, double *values, int inc, linear_arg_u *args);
+static int linear_kurt(lua_State *L);
 static double linear_nrm2_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_nrm2(lua_State *L);
 static double linear_asum_handler(int size, double *values, int inc, linear_arg_u *args);
@@ -34,6 +38,10 @@ static linear_param_t LINEAR_PARAMS_NONE[] = {
 };
 static linear_param_t LINEAR_PARAMS_DDOF[] = {
 	{"ddof", 'd', {.d = 0}},
+	{NULL, '\0', {0.0}}
+};
+static linear_param_t LINEAR_PARAMS_SAMPLE[] = {
+	{"sample", 'i', {.i = 0}},
 	{NULL, '\0', {0.0}}
 };
 
@@ -177,6 +185,90 @@ static int linear_std (lua_State *L) {
 	return linear_unary(L, linear_std_handler, LINEAR_PARAMS_DDOF);
 }
 
+static double linear_skew_handler (int size, double *x, int incx, linear_arg_u *args) {
+	int     i;
+	double  sum, mean, m3, m2, skew;
+
+	sum = 0.0;
+	m3 = 0.0;
+	m2 = 0.0;
+	if (incx == 1) {
+		for (i = 0; i < size; i++) {
+			sum += x[i];
+		}
+		mean = sum / size;
+		for (i = 0; i < size; i++) {
+			m3 += pow(x[i] - mean, 3);
+			m2 += (x[i] - mean) * (x[i] - mean);
+		}
+	} else {
+		for (i = 0; i < size; i++) {
+			sum += *x;
+			x += incx;
+		}
+		mean = sum / size;
+		x -= (size_t)size * (size_t)incx;
+		for (i = 0; i < size; i++) {
+			m3 += pow(*x - mean, 3);
+			m2 += (*x - mean) * (*x - mean);
+			x += incx;
+		}
+	}
+	m3 /= size;
+	m2 /= size;
+	skew = m3 / pow(m2, 1.5);
+	if (args[0].d) {
+		skew *= sqrt((double)size * (size - 1)) / (size - 2);
+	}
+	return skew;
+}
+
+static int linear_skew (lua_State *L) {
+	return linear_unary(L, linear_skew_handler, LINEAR_PARAMS_SAMPLE);
+}
+
+static double linear_kurt_handler (int size, double *x, int incx, linear_arg_u *args) {
+	int     i;
+	double  sum, mean, m4, m2, kurt;
+
+	sum = 0.0;
+	m4 = 0.0;
+	m2 = 0.0;
+	if (incx == 1) {
+		for (i = 0; i < size; i++) {
+			sum += x[i];
+		}
+		mean = sum / size;
+		for (i = 0; i < size; i++) {
+			m4 += pow(x[i] - mean, 4);
+			m2 += (x[i] - mean) * (x[i] - mean);
+		}
+	} else {
+		for (i = 0; i < size; i++) {
+			sum += *x;
+			x += incx;
+		}
+		mean = sum / size;
+		x -= (size_t)size * (size_t)incx;
+		for (i = 0; i < size; i++) {
+			m4 += pow(*x - mean, 4);
+			m2 += (*x - mean) * (*x - mean);
+			x += incx;
+		}
+	}
+	m4 /= size;
+	m2 /= size;
+	kurt = m4 / (m2 * m2) - 3;  /* excess kurtosis */
+	if (args[0].d) {
+		kurt = ((double)(size - 1) / ((size - 2) * (size - 3))) * ((size + 1) * kurt + 6);
+	}
+	return kurt;
+}
+
+static int linear_kurt (lua_State *L) {
+	return linear_unary(L, linear_kurt_handler, LINEAR_PARAMS_SAMPLE);
+}
+
 static double linear_nrm2_handler (int size, double *x, int incx, linear_arg_u *args) {
 	(void)args;
 	return cblas_dnrm2(size, x, incx);
@@ -239,6 +331,8 @@ int linear_open_unary (lua_State *L) {
 		{"mean", linear_mean},
 		{"var", linear_var},
 		{"std", linear_std},
+		{"skew", linear_skew},
+		{"kurt", linear_kurt},
 		{"nrm2", linear_nrm2},
 		{"asum", linear_asum},
 		{"min", linear_min},

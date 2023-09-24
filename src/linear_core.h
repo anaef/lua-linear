@@ -41,18 +41,20 @@ typedef struct linear_matrix_s {
 } linear_matrix_t;
 
 typedef struct linear_param_s {
-	const char     *name;  /* name */
-	char            type;  /* 'n' number, 'd' ddof, 'r' random state */
+	const char          *name;  /* name */
+	char                 type;  /* 'n' number, 'i' integer, 'd' ddof, 'r' random state */
 	union {
-		double  n;     /* default number */
-		size_t  d;     /* default ddof */
+		lua_Number   n;     /* default number */
+		lua_Integer  i;     /* default integer */
+		size_t       d;     /* default ddof */
 	} def;
 } linear_param_t;
 
 typedef union linear_arg {
-	double     n;  /* number */
-	size_t     d;  /* ddof */
-	uint64_t  *r;  /* random state */
+	lua_Number   n;  /* number */
+	lua_Integer  i;  /* integer */
+	size_t       d;  /* ddof */
+	uint64_t    *r;  /* random state */
 } linear_arg_u;
 
 

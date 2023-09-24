@@ -10,7 +10,8 @@
 - The random state is now managed per Lua state, and the `linear.randomseed` function has been
 added.
 
-- The `linear.min` and `linear.max` unary vector function have been added.
+- The `linear.min`, `linear.max`, `linear.skew`, and `linear.kurt` unary vector functions have
+been added.
 
 - Fixed the unwind and reshape functions when operating on a vector with an increment different
 from one.
