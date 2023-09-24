@@ -23,6 +23,10 @@ static double linear_nrm2_handler(int size, double *values, int inc, linear_arg_
 static int linear_nrm2(lua_State *L);
 static double linear_asum_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_asum(lua_State *L);
+static double linear_min_handler(int size, double *x, int incx, linear_arg_u *args);
+static int linear_min(lua_State *L);
+static double linear_max_handler(int size, double *x, int incx, linear_arg_u *args);
+static int linear_max(lua_State *L);
 
 
 static linear_param_t LINEAR_PARAMS_NONE[] = {
@@ -191,15 +195,55 @@ static int linear_asum (lua_State *L) {
 	return linear_unary(L, linear_asum_handler, LINEAR_PARAMS_NONE);
 }
 
+static double linear_min_handler (int size, double *x, int incx, linear_arg_u *args) {
+	int     i;
+	double  min;
+
+	(void)args;
+	min = *x;
+	for (i = 1; i < size; i++) {
+		x += incx;
+		if (*x < min) {
+			min = *x;
+		}
+	}
+	return min;
+}
+
+static int linear_min (lua_State *L) {
+	return linear_unary(L, linear_min_handler, LINEAR_PARAMS_NONE);
+}
+
+static double linear_max_handler (int size, double *x, int incx, linear_arg_u *args) {
+	int     i;
+	double  max;
+
+	(void)args;
+	max = *x;
+	for (i = 1; i < size; i++) {
+		x += incx;
+		if (*x > max) {
+			max = *x;
+		}
+	}
+	return max;
+}
+
+static int linear_max (lua_State *L) {
+	return linear_unary(L, linear_max_handler, LINEAR_PARAMS_NONE);
+}
+
 int linear_open_unary (lua_State *L) {
 	static const luaL_Reg FUNCTIONS[] = {
-		{ "sum", linear_sum },
-		{ "mean", linear_mean },
-		{ "var", linear_var },
-		{ "std", linear_std },
-		{ "nrm2", linear_nrm2 },
-		{ "asum", linear_asum },
-		{ NULL, NULL }
+		{"sum", linear_sum},
+		{"mean", linear_mean},
+		{"var", linear_var},
+		{"std", linear_std},
+		{"nrm2", linear_nrm2},
+		{"asum", linear_asum},
+		{"min", linear_min},
+		{"max", linear_max},
+		{NULL, NULL}
 	};
 #if LUA_VERSION_NUM >= 502
 	luaL_setfuncs(L, FUNCTIONS, 0);

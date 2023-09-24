@@ -477,6 +477,26 @@ local function testAsum ()
 	assert(linear.asum(x) == 3)
 end
 
+-- Tests the min function
+local function testMin ()
+	local x = linear.tolinear({ -1, 1, 2 })
+	assert(linear.min(x) == -1)
+	x = linear.tolinear({ 1, -1, 2 })
+	assert(linear.min(x) == -1)
+	x = linear.tolinear({ 1, 2, -1 })
+	assert(linear.min(x) == -1)
+end
+
+-- Tests the max function
+local function testMax ()
+	local x = linear.tolinear({ -1, 1, 2 })
+	assert(linear.max(x) == 2)
+	x = linear.tolinear({ -1, 2, 1 })
+	assert(linear.max(x) == 2)
+	x = linear.tolinear({ 2, -1, 1 })
+	assert(linear.max(x) == 2)
+end
+
 
 --
 -- Binary vector functions
@@ -828,6 +848,8 @@ testVar()
 testStd()
 testNrm2()
 testAsum()
+testMin()
+testMax()
 
 -- Binary vector function tests
 testAxpy()

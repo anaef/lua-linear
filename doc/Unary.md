@@ -58,3 +58,13 @@ $y_i \leftarrow \lVert X^i \rVert_2$.
 
 Applies the absolute-value norm function (also known as L1 norm), formally
 $y_i \leftarrow \lVert X^i \rVert_1$.
+
+
+## `linear.min (x|X [, y [, order]])`
+
+Applies the minimum function, formally $y_i \leftarrow \min_j X_{ij}$.
+
+
+## `linear.max (x|X [, y [, order]])`
+
+Applies the maximum function, formally $y_i \leftarrow \max_j X_{ij}$.
