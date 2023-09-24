@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <time.h>
 #include <lauxlib.h>
 #include "linear_core.h"
@@ -51,7 +52,7 @@ static int linear_matrix_tostring(lua_State *L);
 static int linear_matrix_gc(lua_State *L);
 
 /* random */
-static void linear_seedrandomstate(uint64_t *s, uint64_t seed1, uint64_t seed2);
+static void linear_seedrandomstate(uint64_t *s, uint64_t seed);
 static uint64_t *linear_randomstate(lua_State *L);
 
 /* core functions */
@@ -413,15 +414,16 @@ static int linear_matrix_gc (lua_State *L) {
  * random
  */
 
-static void linear_seedrandomstate (uint64_t *r, uint64_t seed1, uint64_t seed2) {
-	int  i;
+static void linear_seedrandomstate (uint64_t *r, uint64_t seed) {
+	int       i;
+	uint64_t  z;
 
-	r[0] = seed1;
-	r[1] = 0xff;
-	r[2] = seed2;
-	r[3] = 0;
-	for (i = 0; i < 16; i++) {
-		(void)linear_random(r);
+	/* source: SplitMix64; https://prng.di.unimi.it/ */
+	for (i = 0; i < 4; i++) {
+		z = (seed += 0x9e3779b97f4a7c15);
+		z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
+		z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
+		r[i] = z ^ (z >> 31);
 	}
 }
 
@@ -446,7 +448,7 @@ double linear_random (uint64_t *r) {
 	r[0] ^= r[3];
 	r[2] ^= t;
 	r[3] = (r[3] << 45) | (r[3] >> (64 - 45));
-	return result * (0.5 / ((uint64_t)1 << 63));
+	return (result >> (64 - DBL_MANT_DIG)) * (1.0 / ((uint64_t)1 << DBL_MANT_DIG));  /* [0,1) */
 }
 
 
@@ -757,11 +759,10 @@ static int linear_reshape (lua_State *L) {
 }
 
 static int linear_randomseed (lua_State *L) {
-	uint64_t  seed1, seed2;
+	uint64_t  seed;
 
-	seed1 = luaL_checkinteger(L, 1);
-	seed2 = luaL_optinteger(L, 2, 0);
-	linear_seedrandomstate(linear_randomstate(L), seed1, seed2);
+	seed = luaL_checkinteger(L, 1);
+	linear_seedrandomstate(linear_randomstate(L), seed);
 	return 0;
 }
 
@@ -849,7 +850,7 @@ int luaopen_linear (lua_State *L) {
 
 	/* random state */
 	r = lua_newuserdata(L, 4 * sizeof(uint64_t));
-	linear_seedrandomstate(r, (uint64_t)time(NULL), (uintptr_t)L);
+	linear_seedrandomstate(r, (uint64_t)time(NULL) ^ (uintptr_t)L);
 	lua_setfield(L, LUA_REGISTRYINDEX, LINEAR_RANDOM);
 
 	return 1;
