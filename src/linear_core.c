@@ -26,7 +26,7 @@ void *luaL_testudata(lua_State *L, int index, const char *name);
 #endif
 
 /* vector */
-static void linear_push_vector(lua_State *L, size_t length, size_t inc, struct linear_data *data,
+static void linear_push_vector(lua_State *L, size_t length, size_t inc, linear_data_t *data,
 		double *values);
 static int linear_vector_len(lua_State *L);
 static int linear_vector_index(lua_State *L);
@@ -40,7 +40,7 @@ static int linear_vector_gc(lua_State *L);
 
 /* matrix */
 static void linear_push_matrix(lua_State *L, size_t rows, size_t cols, size_t ld, CBLAS_ORDER order,
-		struct linear_data *data, double *values);
+		linear_data_t *data, double *values);
 static int linear_matrix_len(lua_State *L);
 static int linear_matrix_index(lua_State *L);
 #if LUA_VERSION_NUM < 504
@@ -82,8 +82,8 @@ CBLAS_ORDER linear_checkorder (lua_State *L, int index) {
 			: CblasColMajor;
 }
 
-int linear_checkargs (lua_State *L, struct linear_param *params, size_t size, int index,
-		union linear_arg *args) {
+int linear_checkargs (lua_State *L, linear_param_t *params, size_t size, int index,
+		linear_arg_u *args) {
 	while (params->name) {
 		switch (params->type) {
 		case 'n':
@@ -154,31 +154,31 @@ void *luaL_testudata (lua_State *L, int index, const char *name) {
  * vector
  */
 
-struct linear_vector *linear_create_vector (lua_State *L, size_t length) {
-	struct linear_vector  *vector;
+linear_vector_t *linear_create_vector (lua_State *L, size_t length) {
+	linear_vector_t  *vector;
 
 	assert(length >= 1 && length <= INT_MAX);
-	vector = lua_newuserdata(L, sizeof(struct linear_vector));
+	vector = lua_newuserdata(L, sizeof(linear_vector_t));
 	vector->length = length;
 	vector->inc = 1;
 	vector->data = NULL;
 	luaL_getmetatable(L, LINEAR_VECTOR);
 	lua_setmetatable(L, -2);
-	vector->data = calloc(1, sizeof(struct linear_data) + length * sizeof(double));
+	vector->data = calloc(1, sizeof(linear_data_t) + length * sizeof(double));
 	if (vector->data == NULL) {
 		luaL_error(L, "cannot allocate data");
 	}
 	vector->data->refs = 1;
-	vector->values = (double *)((char *)vector->data + sizeof(struct linear_data));
+	vector->values = (double *)((char *)vector->data + sizeof(linear_data_t));
 	return vector;
 }
 
-static void linear_push_vector (lua_State *L, size_t length, size_t inc, struct linear_data *data,
+static void linear_push_vector (lua_State *L, size_t length, size_t inc, linear_data_t *data,
 		double *values) {
-	struct linear_vector  *vector;
+	linear_vector_t  *vector;
 
 	assert(length >= 1 && length <= INT_MAX);
-	vector = lua_newuserdata(L, sizeof(struct linear_vector));
+	vector = lua_newuserdata(L, sizeof(linear_vector_t));
 	vector->length = length;
 	vector->inc = inc;
 	vector->data = NULL;
@@ -190,7 +190,7 @@ static void linear_push_vector (lua_State *L, size_t length, size_t inc, struct 
 }
 
 static int linear_vector_len (lua_State *L) {
-	struct linear_vector  *x;
+	linear_vector_t  *x;
 
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	lua_pushinteger(L, x->length);
@@ -199,7 +199,7 @@ static int linear_vector_len (lua_State *L) {
 
 static int linear_vector_index (lua_State *L) {
 	size_t             index;
-	struct linear_vector  *x;
+	linear_vector_t  *x;
 
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	index = luaL_checkinteger(L, 2);
@@ -212,9 +212,9 @@ static int linear_vector_index (lua_State *L) {
 }
 
 static int linear_vector_newindex (lua_State *L) {
-	size_t             index;
-	double             value;
-	struct linear_vector  *x;
+	size_t            index;
+	double            value;
+	linear_vector_t  *x;
 
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	index = luaL_checkinteger(L, 2);
@@ -226,8 +226,8 @@ static int linear_vector_newindex (lua_State *L) {
 
 #if LUA_VERSION_NUM < 504
 static int linear_vector_next (lua_State *L) {
-	size_t             index;
-	struct linear_vector  *x;
+	size_t            index;
+	linear_vector_t  *x;
 
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	index = luaL_checkinteger(L, 2);
@@ -250,7 +250,7 @@ static int linear_vector_ipairs (lua_State *L) {
 #endif
 
 static int linear_vector_tostring (lua_State *L) {
-	struct linear_vector  *x;
+	linear_vector_t  *x;
 
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	lua_pushfstring(L, LINEAR_VECTOR ": %p", x);
@@ -258,7 +258,7 @@ static int linear_vector_tostring (lua_State *L) {
 }
 
 static int linear_vector_gc (lua_State *L) {
-	struct linear_vector  *x;
+	linear_vector_t  *x;
 
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	if (x->data) {
@@ -275,12 +275,12 @@ static int linear_vector_gc (lua_State *L) {
  * matrix
  */
 
-struct linear_matrix *linear_create_matrix (lua_State *L, size_t rows, size_t cols,
+linear_matrix_t *linear_create_matrix (lua_State *L, size_t rows, size_t cols,
 		CBLAS_ORDER order) {
-	struct linear_matrix  *matrix;
+	linear_matrix_t  *matrix;
 
 	assert(rows >= 1 && rows <= INT_MAX && cols >= 1 && cols <= INT_MAX);
-	matrix = lua_newuserdata(L, sizeof(struct linear_matrix));
+	matrix = lua_newuserdata(L, sizeof(linear_matrix_t));
 	matrix->rows = rows;
 	matrix->cols = cols;
 	matrix->ld = order == CblasRowMajor ? cols : rows;
@@ -288,21 +288,21 @@ struct linear_matrix *linear_create_matrix (lua_State *L, size_t rows, size_t co
 	matrix->data = NULL;
 	luaL_getmetatable(L, LINEAR_MATRIX);
 	lua_setmetatable(L, -2);
-	matrix->data = calloc(1, sizeof(struct linear_data) + rows * cols * sizeof(double));
+	matrix->data = calloc(1, sizeof(linear_data_t) + rows * cols * sizeof(double));
 	if (matrix->data == NULL) {
 		luaL_error(L, "cannot allocate data");
 	}
 	matrix->data->refs = 1;
-	matrix->values = (double *)((char *)matrix->data + sizeof(struct linear_data));
+	matrix->values = (double *)((char *)matrix->data + sizeof(linear_data_t));
 	return matrix;
 }
 
 static void linear_push_matrix (lua_State *L, size_t rows, size_t cols, size_t ld,
-		CBLAS_ORDER order, struct linear_data *data, double *values) {
-	struct linear_matrix  *matrix;
+		CBLAS_ORDER order, linear_data_t *data, double *values) {
+	linear_matrix_t  *matrix;
 
 	assert(rows >= 1 && rows <= INT_MAX && cols >= 1 && cols <= INT_MAX);
-	matrix = (struct linear_matrix *)lua_newuserdata(L, sizeof(struct linear_matrix));
+	matrix = (linear_matrix_t *)lua_newuserdata(L, sizeof(linear_matrix_t));
 	matrix->rows = rows;
 	matrix->cols = cols;
 	matrix->ld = ld;
@@ -316,7 +316,7 @@ static void linear_push_matrix (lua_State *L, size_t rows, size_t cols, size_t l
 }
 
 static int linear_matrix_len (lua_State *L) {
-	struct linear_matrix  *X;
+	linear_matrix_t  *X;
 
 	X = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	if (X->order == CblasRowMajor) {
@@ -328,8 +328,8 @@ static int linear_matrix_len (lua_State *L) {
 }
 
 static int linear_matrix_index (lua_State *L) {
-	size_t                 index;
-	struct linear_matrix  *X;
+	size_t            index;
+	linear_matrix_t  *X;
 
 	X = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	index = luaL_checkinteger(L, 2);
@@ -351,8 +351,8 @@ static int linear_matrix_index (lua_State *L) {
 
 #if LUA_VERSION_NUM < 504
 static int linear_matrix_next (lua_State *L) {
-	size_t                 index, majorsize, minorsize;
-	struct linear_matrix  *X;
+	size_t            index, majorsize, minorsize;
+	linear_matrix_t  *X;
 
 	X = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	index = luaL_checkinteger(L, 2);
@@ -382,7 +382,7 @@ static int linear_matrix_ipairs (lua_State *L) {
 #endif
 
 static int linear_matrix_tostring (lua_State *L) {
-	struct linear_matrix  *X;
+	linear_matrix_t  *X;
 
 	X = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	lua_pushfstring(L, LINEAR_MATRIX ": %p", X);
@@ -390,7 +390,7 @@ static int linear_matrix_tostring (lua_State *L) {
 }
 
 static int linear_matrix_gc (lua_State *L) {
-	struct linear_matrix  *X;
+	linear_matrix_t  *X;
 
 	X = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	if (X->data) {
@@ -471,10 +471,10 @@ static int linear_matrix (lua_State *L) {
 }
 
 static int linear_totable (lua_State *L) {
-	size_t                 i, j;
-	const double          *value;
-	struct linear_vector  *x;
-	struct linear_matrix  *X;
+	size_t            i, j;
+	const double     *value;
+	linear_vector_t  *x;
+	linear_matrix_t  *X;
 
 	x = luaL_testudata(L, 1, LINEAR_VECTOR);
 	if (x != NULL) {
@@ -518,11 +518,11 @@ static int linear_totable (lua_State *L) {
 }
 
 static int linear_tolinear (lua_State *L) {
-	double                *value;
-	size_t                 size, rows, cols, major, minor, i, j;
-	CBLAS_ORDER            order;
-	struct linear_vector  *x;
-	struct linear_matrix  *X;
+	double           *value;
+	size_t            size, rows, cols, major, minor, i, j;
+	CBLAS_ORDER       order;
+	linear_vector_t  *x;
+	linear_matrix_t  *X;
 
 	luaL_checktype(L, 1, LUA_TTABLE);
 	switch (linear_rawgeti(L, 1, 1)) {
@@ -598,8 +598,8 @@ static int linear_type (lua_State *L) {
 }
 
 static int linear_size (lua_State *L) {
-	struct linear_vector  *x;
-	struct linear_matrix  *X;
+	linear_vector_t  *x;
+	linear_matrix_t  *X;
 
 	x = luaL_testudata(L, 1, LINEAR_VECTOR);
 	if (x != NULL) {
@@ -617,8 +617,8 @@ static int linear_size (lua_State *L) {
 }
 
 static int linear_tvector (lua_State *L) {
-	size_t                 index, length;
-	struct linear_matrix  *X;
+	size_t            index, length;
+	linear_matrix_t  *X;
 
 	X = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	index = luaL_checkinteger(L, 2);
@@ -634,8 +634,8 @@ static int linear_tvector (lua_State *L) {
 }
 
 static int linear_sub (lua_State *L) {
-	struct linear_vector  *x;
-	struct linear_matrix  *X;
+	linear_vector_t  *x;
+	linear_matrix_t  *X;
 
 	x = luaL_testudata(L, 1, LINEAR_VECTOR);
 	if (x != NULL) {
@@ -676,11 +676,11 @@ static int linear_sub (lua_State *L) {
 }
 
 static int linear_unwind (lua_State *L) {
-	int                    index;
-	double                *s, *d, *last;
-	size_t                 i, j;
-	struct linear_vector  *x;
-	struct linear_matrix  *X;
+	int               index;
+	double           *s, *d, *last;
+	size_t            i, j;
+	linear_vector_t  *x;
+	linear_matrix_t  *X;
 
 	if (lua_gettop(L) == 0) {
 		return luaL_error(L, "wrong number of arguments");
@@ -715,11 +715,11 @@ static int linear_unwind (lua_State *L) {
 }
 
 static int linear_reshape (lua_State *L) {
-	int                    index;
-	double                *d, *s, *last;
-	size_t                 i, j;
-	struct linear_vector  *x;
-	struct linear_matrix  *X;
+	int               index;
+	double           *d, *s, *last;
+	size_t            i, j;
+	linear_vector_t  *x;
+	linear_matrix_t  *X;
 
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	s = x->values;

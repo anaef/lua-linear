@@ -13,10 +13,10 @@
 
 
 typedef void (*linear_binary_function)(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
+		linear_arg_u *args);
 
 
-int linear_binary(lua_State *L, linear_binary_function s, struct linear_param *params);
+int linear_binary(lua_State *L, linear_binary_function s, linear_param_t *params);
 int linear_open_binary(lua_State *L);
 
 

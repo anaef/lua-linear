@@ -12,42 +12,42 @@
 #include "linear_elementary.h"
 
 
-static void linear_inc_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_inc_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_inc(lua_State *L);
-static void linear_scal_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_scal_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_scal(lua_State *L);
-static void linear_pow_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_pow_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_pow(lua_State *L);
-static void linear_exp_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_exp_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_exp(lua_State *L);
-static void linear_log_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_log_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_log(lua_State *L);
-static void linear_sgn_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_sgn_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_sgn(lua_State *L);
-static void linear_abs_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_abs_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_abs(lua_State *L);
-static void linear_logistic_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_logistic_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_logistic(lua_State *L);
-static void linear_tanh_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_tanh_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_tanh(lua_State *L);
-static void linear_apply_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_apply_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_apply(lua_State *L);
-static void linear_set_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_set_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_set(lua_State *L);
-static void linear_uniform_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_uniform_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_uniform(lua_State *L);
-static void linear_normal_handler(int size, double *x, int incx, union linear_arg *args);
+static void linear_normal_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_normal(lua_State *L);
 
 
-static struct linear_param LINEAR_PARAMS_NONE[] = {
+static linear_param_t LINEAR_PARAMS_NONE[] = {
 	{NULL, '\0', {0.0}}
 };
-static struct linear_param LINEAR_PARAMS_ALPHA[] = {
+static linear_param_t LINEAR_PARAMS_ALPHA[] = {
 	{"alpha", 'n', {1.0}},
 	{NULL, '\0', {0.0}}
 };
-static struct linear_param LINEAR_PARAMS_RANDOM[] = {
+static linear_param_t LINEAR_PARAMS_RANDOM[] = {
 	{"random", 'r', {0.0}},
 	{NULL, '\0', {0.0}}
 };
@@ -55,13 +55,13 @@ static struct linear_param LINEAR_PARAMS_RANDOM[] = {
 static __thread lua_State  *linear_TL;
 
 
-int linear_elementary (lua_State *L, linear_elementary_function f, struct linear_param *params) {
-	int                    isnum;
-	size_t                 i;
-	double                 n;
-	union linear_arg       args[LINEAR_PARAMS_MAX];
-	struct linear_vector  *x;
-	struct linear_matrix  *X;
+int linear_elementary (lua_State *L, linear_elementary_function f, linear_param_t *params) {
+	int               isnum;
+	size_t            i;
+	double            n;
+	linear_arg_u      args[LINEAR_PARAMS_MAX];
+	linear_vector_t  *x;
+	linear_matrix_t  *X;
 
 	linear_checkargs(L, params, 0, 2, args);
 #if LUA_VERSION_NUM >= 502
@@ -104,7 +104,7 @@ int linear_elementary (lua_State *L, linear_elementary_function f, struct linear
 	return linear_argerror(L, 0, 1);
 }
 
-static void linear_inc_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_inc_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int     i;
 	double  alpha;
 
@@ -125,7 +125,7 @@ static int linear_inc (lua_State *L) {
 	return linear_elementary(L, linear_inc_handler, LINEAR_PARAMS_ALPHA);
 }
 
-static void linear_scal_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_scal_handler (int size, double *x, int incx, linear_arg_u *args) {
 	cblas_dscal(size, args[0].n, x, incx);
 }
 
@@ -133,7 +133,7 @@ static int linear_scal (lua_State *L) {
 	return linear_elementary(L, linear_scal_handler, LINEAR_PARAMS_ALPHA);
 }
 
-static void linear_pow_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_pow_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int     i;
 	double  alpha;
 
@@ -177,7 +177,7 @@ static int linear_pow (lua_State *L) {
 	return linear_elementary(L, linear_pow_handler, LINEAR_PARAMS_ALPHA);
 }
 
-static void linear_exp_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_exp_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int  i;
 
 	(void)args;
@@ -197,7 +197,7 @@ static int linear_exp (lua_State *L) {
 	return linear_elementary(L, linear_exp_handler, LINEAR_PARAMS_NONE);
 }
 
-static void linear_log_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_log_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int  i;
 
 	(void)args;
@@ -217,7 +217,7 @@ static int linear_log (lua_State *L) {
 	return linear_elementary(L, linear_log_handler, LINEAR_PARAMS_NONE);
 }
 
-static void linear_sgn_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_sgn_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int  i;
 
 	(void)args;
@@ -235,7 +235,7 @@ static int linear_sgn (lua_State *L) {
 	return linear_elementary(L, linear_sgn_handler, LINEAR_PARAMS_NONE);
 }
 
-static void linear_abs_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_abs_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int  i;
 
 	(void)args;
@@ -249,7 +249,7 @@ static int linear_abs (lua_State *L) {
 	return linear_elementary(L, linear_abs_handler, LINEAR_PARAMS_NONE);
 }
 
-static void linear_logistic_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_logistic_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int  i;
 
 	(void)args;
@@ -263,7 +263,7 @@ static int linear_logistic (lua_State *L) {
 	return linear_elementary(L, linear_logistic_handler, LINEAR_PARAMS_NONE);
 }
 
-static void linear_tanh_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_tanh_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int  i;
 
 	(void)args;
@@ -277,7 +277,7 @@ static int linear_tanh (lua_State *L) {
 	return linear_elementary(L, linear_tanh_handler, LINEAR_PARAMS_NONE);
 }
 
-static void linear_apply_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_apply_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int  i;
 
 	(void)args;
@@ -298,7 +298,7 @@ static int linear_apply (lua_State *L) {
 	return linear_elementary(L, linear_apply_handler, LINEAR_PARAMS_NONE);
 }
 
-static void linear_set_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_set_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int     i;
 	double  alpha;
 
@@ -319,7 +319,7 @@ static int linear_set (lua_State *L) {
 	return linear_elementary(L, linear_set_handler, LINEAR_PARAMS_ALPHA);
 }
 
-static void linear_uniform_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_uniform_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int        i;
 	uint64_t  *r;
 
@@ -334,7 +334,7 @@ static int linear_uniform (lua_State *L) {
 	return linear_elementary(L, linear_uniform_handler, LINEAR_PARAMS_RANDOM);
 }
 
-static void linear_normal_handler (int size, double *x, int incx, union linear_arg *args) {
+static void linear_normal_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int        i;
 	double     u1, u2, r, s, c;
 	uint64_t  *rs;

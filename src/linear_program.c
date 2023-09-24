@@ -41,7 +41,7 @@ static inline char linear_lapacktranspose (CBLAS_TRANSPOSE transpose) {
 }
 
 static int linear_dot (lua_State *L) {
-	struct linear_vector  *x, *y;
+	linear_vector_t  *x, *y;
 
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	y = luaL_checkudata(L, 2, LINEAR_VECTOR);
@@ -51,9 +51,9 @@ static int linear_dot (lua_State *L) {
 }
 
 static int linear_ger (lua_State *L) {
-	double                 alpha;
-	struct linear_vector  *x, *y;
-	struct linear_matrix  *A;
+	double            alpha;
+	linear_vector_t  *x, *y;
+	linear_matrix_t  *A;
 
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	y = luaL_checkudata(L, 2, LINEAR_VECTOR);
@@ -67,11 +67,11 @@ static int linear_ger (lua_State *L) {
 }
 
 static int linear_gemv (lua_State *L) {
-	size_t                  m, n;
-	double                  alpha, beta;
-	CBLAS_TRANSPOSE         ta;
-	struct linear_matrix   *A;
-	struct linear_vector   *x, *y;
+	size_t            m, n;
+	double            alpha, beta;
+	CBLAS_TRANSPOSE   ta;
+	linear_matrix_t  *A;
+	linear_vector_t  *x, *y;
 
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	x = luaL_checkudata(L, 2, LINEAR_VECTOR);
@@ -89,10 +89,10 @@ static int linear_gemv (lua_State *L) {
 }
 
 static int linear_gemm (lua_State *L) {
-	size_t                   m, n, ka, kb;
-	double                   alpha, beta;
-	CBLAS_TRANSPOSE          ta, tb;
-	struct linear_matrix    *A, *B, *C;
+	size_t            m, n, ka, kb;
+	double            alpha, beta;
+	CBLAS_TRANSPOSE   ta, tb;
+	linear_matrix_t  *A, *B, *C;
 
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	B = luaL_checkudata(L, 2, LINEAR_MATRIX);
@@ -114,8 +114,8 @@ static int linear_gemm (lua_State *L) {
 }
 
 static int linear_gesv (lua_State *L) {
-	int                   *ipiv, result;
-	struct linear_matrix  *A, *B;
+	int              *ipiv, result;
+	linear_matrix_t  *A, *B;
 
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	luaL_argcheck(L, A->rows == A->cols, 1, "not square");
@@ -137,9 +137,9 @@ static int linear_gesv (lua_State *L) {
 }
 
 static int linear_gels (lua_State *L) {
-	int                    result;
-	char                   ta;
-	struct linear_matrix  *A, *B;
+	int               result;
+	char              ta;
+	linear_matrix_t  *A, *B;
 
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	B = luaL_checkudata(L, 2, LINEAR_MATRIX);
@@ -157,8 +157,8 @@ static int linear_gels (lua_State *L) {
 }
 
 static int linear_inv (lua_State *L) {
-	int                   *ipiv, result;
-	struct linear_matrix  *A;
+	int              *ipiv, result;
+	linear_matrix_t  *A;
 
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	luaL_argcheck(L, A->rows == A->cols, 1, "not square");
@@ -185,10 +185,10 @@ static int linear_inv (lua_State *L) {
 }
 
 static int linear_det (lua_State *L) {
-	int                   *ipiv, result, neg;
-	size_t                 n, i;
-	double                *copy, *d, *s, det;
-	struct linear_matrix  *A;
+	int              *ipiv, result, neg;
+	size_t            n, i;
+	double           *copy, *d, *s, det;
+	linear_matrix_t  *A;
 
 	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
@@ -241,9 +241,9 @@ static int linear_det (lua_State *L) {
 }
 
 static int linear_cov (lua_State *L) {
-	size_t                 i, j, k, ddof;
-	double                *means, *v, *vi, *vj, sum;
-	struct linear_matrix  *A, *B;
+	size_t            i, j, k, ddof;
+	double           *means, *v, *vi, *vj, sum;
+	linear_matrix_t  *A, *B;
 
 	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
@@ -314,9 +314,9 @@ static int linear_cov (lua_State *L) {
 }
 
 static int linear_corr (lua_State *L) {
-	size_t                 i, j, k;
-	double                *means, *stds, *v, *vi, *vj, sum;
-	struct linear_matrix  *A, *B;
+	size_t            i, j, k;
+	double           *means, *stds, *v, *vi, *vj, sum;
+	linear_matrix_t  *A, *B;
 
 	/* check and process arguments */
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);

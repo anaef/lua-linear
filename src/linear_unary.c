@@ -11,34 +11,34 @@
 #include "linear_unary.h"
 
 
-static double linear_sum_handler(int size, double *values, int inc, union linear_arg *args);
+static double linear_sum_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_sum(lua_State *L);
-static double linear_mean_handler(int size, double *values, int inc, union linear_arg *args);
+static double linear_mean_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_mean(lua_State *L);
-static double linear_var_handler(int size, double *values, int inc, union linear_arg *args);
+static double linear_var_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_var(lua_State *L);
-static double linear_std_handler(int size, double *values, int inc, union linear_arg *args);
+static double linear_std_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_std(lua_State *L);
-static double linear_nrm2_handler(int size, double *values, int inc, union linear_arg *args);
+static double linear_nrm2_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_nrm2(lua_State *L);
-static double linear_asum_handler(int size, double *values, int inc, union linear_arg *args);
+static double linear_asum_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_asum(lua_State *L);
 
 
-static struct linear_param LINEAR_PARAMS_NONE[] = {
+static linear_param_t LINEAR_PARAMS_NONE[] = {
 	{NULL, '\0', {0.0}}
 };
-static struct linear_param LINEAR_PARAMS_DDOF[] = {
+static linear_param_t LINEAR_PARAMS_DDOF[] = {
 	{"ddof", 'd', {.defd = 0}},
 	{NULL, '\0', {0.0}}
 };
 
 
-int linear_unary (lua_State *L, linear_unary_function f, struct linear_param *params) {
-	size_t                 i;
-	union linear_arg       args[LINEAR_PARAMS_MAX];
-	struct linear_vector  *x, *y;
-	struct linear_matrix  *X;
+int linear_unary (lua_State *L, linear_unary_function f, linear_param_t *params) {
+	size_t            i;
+	linear_arg_u      args[LINEAR_PARAMS_MAX];
+	linear_vector_t  *x, *y;
+	linear_matrix_t  *X;
 
 	x = luaL_testudata(L, 1, LINEAR_VECTOR);
 	if (x != NULL) {
@@ -85,7 +85,7 @@ int linear_unary (lua_State *L, linear_unary_function f, struct linear_param *pa
 	return linear_argerror(L, 1, 0);
 }
 
-static double linear_sum_handler (int size, double *x, int incx, union linear_arg *args) {
+static double linear_sum_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int     i;
 	double  sum;
 
@@ -108,7 +108,7 @@ static int linear_sum (lua_State *L) {
 	return linear_unary(L, linear_sum_handler, LINEAR_PARAMS_NONE);
 }
 
-static double linear_mean_handler (int size, double *x, int incx, union linear_arg *args) {
+static double linear_mean_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int     i;
 	double  sum;
 
@@ -131,7 +131,7 @@ static int linear_mean (lua_State *L) {
 	return linear_unary(L, linear_mean_handler, LINEAR_PARAMS_NONE);
 }
 
-static double linear_var_handler (int size, double *x, int incx, union linear_arg *args) {
+static double linear_var_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int     i;
 	double  sum, mean;
 
@@ -165,7 +165,7 @@ static int linear_var (lua_State *L) {
 	return linear_unary(L, linear_var_handler, LINEAR_PARAMS_DDOF);
 }
 
-static double linear_std_handler (int size, double *x, int incx, union linear_arg *args) {
+static double linear_std_handler (int size, double *x, int incx, linear_arg_u *args) {
 	return sqrt(linear_var_handler(size, x, incx, args));
 }
 
@@ -173,7 +173,7 @@ static int linear_std (lua_State *L) {
 	return linear_unary(L, linear_std_handler, LINEAR_PARAMS_DDOF);
 }
 
-static double linear_nrm2_handler (int size, double *x, int incx, union linear_arg *args) {
+static double linear_nrm2_handler (int size, double *x, int incx, linear_arg_u *args) {
 	(void)args;
 	return cblas_dnrm2(size, x, incx);
 }
@@ -182,7 +182,7 @@ static int linear_nrm2 (lua_State *L) {
 	return linear_unary(L, linear_nrm2_handler, LINEAR_PARAMS_NONE);
 }
 
-static double linear_asum_handler (int size, double *x, int incx, union linear_arg *args) {
+static double linear_asum_handler (int size, double *x, int incx, linear_arg_u *args) {
 	(void)args;
 	return cblas_dasum(size, x, incx);
 }

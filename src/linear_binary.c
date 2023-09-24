@@ -12,41 +12,41 @@
 
 
 static void linear_axpy_handler(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
+		linear_arg_u *args);
 static int linear_axpy(lua_State *L);
 static void linear_axpby_handler(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
+		linear_arg_u *args);
 static int linear_axpby(lua_State *L);
 static void linear_mul_handler(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
+		linear_arg_u *args);
 static int linear_mul(lua_State *L);
 static void linear_swap_handler(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
+		linear_arg_u *args);
 static int linear_swap(lua_State *L);
 static void linear_copy_handler(int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args);
+		linear_arg_u *args);
 static int linear_copy(lua_State *L);
 
 
-static struct linear_param LINEAR_PARAMS_NONE[] = {
+static linear_param_t LINEAR_PARAMS_NONE[] = {
 	{NULL, '\0', {0.0}}
 };
-static struct linear_param LINEAR_PARAMS_ALPHA[] = {
+static linear_param_t LINEAR_PARAMS_ALPHA[] = {
 	{"alpha", 'n', {1.0}},
 	{NULL, '\0', {0.0}}
 };
-static struct linear_param LINEAR_PARAMS_ALPHA_BETA[] = {
+static linear_param_t LINEAR_PARAMS_ALPHA_BETA[] = {
 	{"alpha", 'n', {1.0}},
 	{"beta", 'n', {0.0}},
 	{NULL, '\0', {0.0}}
 };
 
 
-int linear_binary (lua_State *L, linear_binary_function f, struct linear_param *params) {
+int linear_binary (lua_State *L, linear_binary_function f, linear_param_t *params) {
 	size_t                 i;
-	union linear_arg       args[LINEAR_PARAMS_MAX];
-	struct linear_vector  *x, *y;
-	struct linear_matrix  *X, *Y;
+	linear_arg_u       args[LINEAR_PARAMS_MAX];
+	linear_vector_t  *x, *y;
+	linear_matrix_t  *X, *Y;
 
 	x = luaL_testudata(L, 1, LINEAR_VECTOR);
 	if (x != NULL) {
@@ -125,7 +125,7 @@ int linear_binary (lua_State *L, linear_binary_function f, struct linear_param *
 }
 
 static void linear_axpy_handler (int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args) {
+		linear_arg_u *args) {
 	cblas_daxpy(size, args[0].n, x, incx, y, incy);
 }
 
@@ -134,7 +134,7 @@ static int linear_axpy (lua_State *L) {
 }
 
 static void linear_axpby_handler (int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args) {
+		linear_arg_u *args) {
 #if LINEAR_USE_AXPBY
 	cblas_daxpby(size, args[0].n, x, incx, args[1].n, y, incy);
 #else
@@ -150,7 +150,7 @@ static int linear_axpby (lua_State *L) {
 }
 
 static void linear_mul_handler (int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args) {
+		linear_arg_u *args) {
 	int     i;
 	double  alpha;
 
@@ -199,7 +199,7 @@ static int linear_mul (lua_State *L) {
 }
 
 static void linear_swap_handler (int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args) {
+		linear_arg_u *args) {
 	(void)args;
 	cblas_dswap(size, x, incx, y, incy);
 }
@@ -209,7 +209,7 @@ static int linear_swap (lua_State *L) {
 }
 
 static void linear_copy_handler (int size, double *x, int incx, double *y, int incy,
-		union linear_arg *args) {
+		linear_arg_u *args) {
 	(void)args;
 	cblas_dcopy(size, x, incx, y, incy);
 }
