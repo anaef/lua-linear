@@ -83,17 +83,17 @@ CBLAS_ORDER linear_checkorder (lua_State *L, int index) {
 			: CblasColMajor;
 }
 
-int linear_checkargs (lua_State *L, linear_param_t *params, size_t size, int index,
+int linear_checkargs (lua_State *L, int index, size_t size, linear_param_t *params,
 		linear_arg_u *args) {
 	while (params->name) {
 		switch (params->type) {
 		case 'n':
-			args->n = luaL_optnumber(L, index, params->defn);
+			args->n = luaL_optnumber(L, index, params->def.n);
 			index++;
 			break;
 
 		case 'd':
-			args->d = luaL_optinteger(L, index, params->defd);
+			args->d = luaL_optinteger(L, index, params->def.d);
 			luaL_argcheck(L, args->d < size, index, "bad ddof");
 			index++;
 			break;

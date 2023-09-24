@@ -29,7 +29,7 @@ static linear_param_t LINEAR_PARAMS_NONE[] = {
 	{NULL, '\0', {0.0}}
 };
 static linear_param_t LINEAR_PARAMS_DDOF[] = {
-	{"ddof", 'd', {.defd = 0}},
+	{"ddof", 'd', {.d = 0}},
 	{NULL, '\0', {0.0}}
 };
 
@@ -43,7 +43,7 @@ int linear_unary (lua_State *L, linear_unary_function f, linear_param_t *params)
 	x = luaL_testudata(L, 1, LINEAR_VECTOR);
 	if (x != NULL) {
 		/* vector */
-		linear_checkargs(L, params, x->length, 2, args);
+		linear_checkargs(L, 2, x->length, params, args);
 		lua_pushnumber(L, f(x->length, x->values, x->inc, args));
 		return 1;
 	}
@@ -53,7 +53,7 @@ int linear_unary (lua_State *L, linear_unary_function f, linear_param_t *params)
 		y = luaL_checkudata(L, 2, LINEAR_VECTOR);
 		if (linear_checkorder(L, 3) == CblasRowMajor) {
 			luaL_argcheck(L, y->length == X->rows, 2, "dimension mismatch");
-			linear_checkargs(L, params, X->cols, 4, args);
+			linear_checkargs(L, 4, X->cols, params, args);
 			if (X->order == CblasRowMajor) {
 				for (i = 0; i < X->rows; i++) {
 					y->values[i * y->inc] = f(X->cols, &X->values[i * X->ld],
@@ -67,7 +67,7 @@ int linear_unary (lua_State *L, linear_unary_function f, linear_param_t *params)
 			}
 		} else {
 			luaL_argcheck(L, y->length == X->cols, 2, "dimension mismatch");
-			linear_checkargs(L, params, X->rows, 4, args);
+			linear_checkargs(L, 4, X->rows, params, args);
 			if (X->order == CblasColMajor) {
 				for (i = 0; i < X->cols; i++) {
 					y->values[i * y->inc] = f(X->rows, &X->values[i * X->ld],

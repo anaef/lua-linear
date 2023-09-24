@@ -21,32 +21,32 @@
 
 
 typedef struct linear_data_s {
-	size_t   refs;    /* number of references */
+	size_t   refs;  /* number of references */
 } linear_data_t;
 
 typedef struct linear_vector_s {
-	size_t              length;  /* length*/
-	size_t              inc;     /* increment to next value */
+	size_t          length;  /* length*/
+	size_t          inc;     /* increment to next value */
 	linear_data_t  *data;    /* shared data */
-	double              *values;  /* components */
+	double         *values;  /* components */
 } linear_vector_t;
 
 typedef struct linear_matrix_s {
-	size_t               rows;    /* number of rows */
-	size_t               cols;    /* number of columns*/
-	size_t               ld;      /* increment to next major vector */
-	CBLAS_ORDER          order;   /* order */
+	size_t          rows;    /* number of rows */
+	size_t          cols;    /* number of columns*/
+	size_t          ld;      /* increment to next major vector */
+	CBLAS_ORDER     order;   /* order */
 	linear_data_t  *data;    /* shared data */
-	double              *values;  /* elements */
+	double         *values;  /* elements */
 } linear_matrix_t;
 
 typedef struct linear_param_s {
-	const char  *name;      /* name */
-	char         type;      /* 'n' number, 'd' ddof, 'r' random state */
+	const char     *name;  /* name */
+	char            type;  /* 'n' number, 'd' ddof, 'r' random state */
 	union {
-		double  defn;   /* default number */
-		size_t  defd;   /* default ddof */
-	};
+		double  n;     /* default number */
+		size_t  d;     /* default ddof */
+	} def;
 } linear_param_t;
 
 typedef union linear_arg {
@@ -57,8 +57,8 @@ typedef union linear_arg {
 
 
 CBLAS_ORDER linear_checkorder(lua_State *L, int index);
-int linear_checkargs(lua_State *L, linear_param_t *params, size_t size, int index,
-	linear_arg_u *args);
+int linear_checkargs(lua_State *L, int index, size_t size, linear_param_t *params,
+		linear_arg_u *args);
 int linear_argerror(lua_State *L, int index, int numok);
 double linear_random(uint64_t *r);
 linear_vector_t *linear_create_vector(lua_State *L, size_t length);

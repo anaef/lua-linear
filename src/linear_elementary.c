@@ -63,7 +63,6 @@ int linear_elementary (lua_State *L, linear_elementary_function f, linear_param_
 	linear_vector_t  *x;
 	linear_matrix_t  *X;
 
-	linear_checkargs(L, params, 0, 2, args);
 #if LUA_VERSION_NUM >= 502
 	n = lua_tonumberx(L, 1, &isnum);
 #else
@@ -71,18 +70,21 @@ int linear_elementary (lua_State *L, linear_elementary_function f, linear_param_
 	n = lua_tonumber(L, 1);
 #endif
 	if (isnum) {
+		linear_checkargs(L, 2, 1, params, args);
 		f(1, &n, 1, args);
 		lua_pushnumber(L, n);
 		return 1;
 	}
 	x = luaL_testudata(L, 1, LINEAR_VECTOR);
 	if (x != NULL) {
+		linear_checkargs(L, 2, x->length, params, args);
 		f(x->length, x->values, x->inc, args);
 		return 0;
 	}
 	X = luaL_testudata(L, 1, LINEAR_MATRIX);
 	if (X != NULL) {
 		if (X->order == CblasRowMajor) {
+			linear_checkargs(L, 2, X->cols, params, args);
 			if (X->cols == X->ld && X->rows * X->cols <= INT_MAX) {
 				f(X->rows * X->cols, X->values, 1, args);
 			} else {
@@ -91,6 +93,7 @@ int linear_elementary (lua_State *L, linear_elementary_function f, linear_param_
 				}
 			}
 		} else {
+			linear_checkargs(L, 2, X->rows, params, args);
 			if (X->rows == X->ld && X->cols * X->rows <= INT_MAX) {
 				f(X->cols * X->rows, X->values, 1, args);
 			} else {

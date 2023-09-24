@@ -54,14 +54,14 @@ int linear_binary (lua_State *L, linear_binary_function f, linear_param_t *param
 		if (y != NULL) {
 			/* vector-vector */
 			luaL_argcheck(L, y->length == x->length, 2, "dimension mismatch");
-			linear_checkargs(L, params, 0, 3, args);
+			linear_checkargs(L, 3, x->length, params, args);
 			f(x->length, x->values, x->inc, y->values, y->inc, args);
 			return 0;
 		}
 		Y = luaL_testudata(L, 2, LINEAR_MATRIX);
 		if (Y != NULL) {
 			/* vector-matrix */
-			linear_checkargs(L, params, 0, 4, args);
+			linear_checkargs(L, 4, x->length, params, args);
 			if (linear_checkorder(L, 3) == CblasRowMajor) {
 				luaL_argcheck(L, x->length == Y->cols, 1, "dimension mismatch");
 				if (Y->order == CblasRowMajor) {
@@ -99,8 +99,8 @@ int linear_binary (lua_State *L, linear_binary_function f, linear_param_t *param
 		Y = luaL_checkudata(L, 2, LINEAR_MATRIX);
 		luaL_argcheck(L, X->order == Y->order, 2, "order mismatch");
 		luaL_argcheck(L, X->rows == Y->rows && X->cols == Y->cols, 2, "dimension mismatch");
-		linear_checkargs(L, params, 0, 3, args);
 		if (X->order == CblasRowMajor) {
+			linear_checkargs(L, 3, X->cols, params, args);
 			if (X->ld == X->cols && Y->ld == Y->cols && X->rows * X->cols <= INT_MAX) {
 				f(X->rows * X->cols, X->values, 1, Y->values, 1, args);
 			} else {
@@ -110,6 +110,7 @@ int linear_binary (lua_State *L, linear_binary_function f, linear_param_t *param
 				}
 			}
 		} else {
+			linear_checkargs(L, 3, X->rows, params, args);
 			if (X->ld == X->rows && Y->ld == Y->rows && X->cols * X->rows <= INT_MAX) {
 				f(X->cols * X->rows, X->values, 1, Y->values, 1, args);
 			} else {
