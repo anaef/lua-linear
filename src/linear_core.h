@@ -60,7 +60,6 @@ CBLAS_ORDER linear_checkorder(lua_State *L, int index);
 int linear_checkargs(lua_State *L, linear_param_t *params, size_t size, int index,
 	linear_arg_u *args);
 int linear_argerror(lua_State *L, int index, int numok);
-uint64_t *linear_randomstate(lua_State *L);
 double linear_random(uint64_t *r);
 linear_vector_t *linear_create_vector(lua_State *L, size_t length);
 linear_matrix_t *linear_create_matrix(lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order);

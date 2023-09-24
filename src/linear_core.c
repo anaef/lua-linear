@@ -52,6 +52,7 @@ static int linear_matrix_gc(lua_State *L);
 
 /* random */
 static void linear_seedrandomstate(uint64_t *s, uint64_t seed1, uint64_t seed2);
+static uint64_t *linear_randomstate(lua_State *L);
 
 /* core functions */
 static int linear_vector(lua_State *L);
@@ -419,7 +420,7 @@ static void linear_seedrandomstate (uint64_t *r, uint64_t seed1, uint64_t seed2)
 	}
 }
 
-uint64_t *linear_randomstate (lua_State *L) {
+static uint64_t *linear_randomstate (lua_State *L) {
 	uint64_t  *r;
 
 	lua_getfield(L, LUA_REGISTRYINDEX, LINEAR_RANDOM);
