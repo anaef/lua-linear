@@ -51,8 +51,8 @@ The non-negative argument `ddof` defaults to `0` and must be less than $N$.
 ## `linear.skew (x|X [, y [, order]] [, sample])`
 
 Applies the skewness function, formally
-$y_i \leftarrow \frac{[\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^3] / n}
-{([\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2] / n)^{3 / 2}}$ where $\bar{X^i}$ is the mean
+$y_i \leftarrow \frac{[\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^3] / N}
+{([\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2] / N)^{3 / 2}}$ where $\bar{X^i}$ is the mean
 value of vector $X^i$, and $N$ is its length. If the argument `sample` is `0` (the default), the
 function calculates the population skewness; if `sample` is not `0`, the function calculates the
 sample skewness, formally $y_i \leftarrow \frac{\sqrt{N (N - 1)}}{N - 2} s_i$ where $s_i$ is the
@@ -62,8 +62,8 @@ population skewness.
 ## `linear.kurt (x|X [, y [, order]] [, sample])`
 
 Applies the excess kurtosis function, formally
-$y_i \leftarrow \frac{[\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^4] / n}
-{([\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2] / n)^2} - 3$ where $\bar{X^i}$ is the mean value
+$y_i \leftarrow \frac{[\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^4] / N}
+{([\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2] / N)^2} - 3$ where $\bar{X^i}$ is the mean value
 of vector $X^i$, and $N$ is its length. If the argument `sample` is `0` (the default), the
 function calculates the population excess kurtosis; if `sample` is not `0`, the function
 calculates the sample excess kurtosis, formally

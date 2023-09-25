@@ -25,21 +25,21 @@ The following function descriptions assume a call with two vectors `x` and `y`.
 
 ## `linear.axpby (x|X, y|Y [, order] [, alpha [, beta]])`
 
-Scales and adds vector `x` to scaled vector `y`, formally $y \leftarrow \alpha x + \beta y$. The
-arguments `alpha` and `beta` default to `1.0` and `0.0`, respectively.
+Scales and adds vector `x` to scaled vector `y`, formally $y_i \leftarrow \alpha x_i + \beta y_i$.
+The arguments `alpha` and `beta` default to `1.0` and `0.0`, respectively.
 
 
 ## `linear.mul (x|X, y|Y [, order] [, alpha])`
 
 Multiplies the components of vector `y` with the components of vector `x` risen to power `alpha`,
-formally $y \leftarrow x^\alpha y$. The argument `alpha` defaults to `1.0`.
+formally $y_i \leftarrow {x_i}^\alpha y_i$. The argument `alpha` defaults to `1.0`.
 
 
 ## `linear.swap (x|X, y|Y [, order])`
 
-Swaps the components of vectors `x` and `y`, formally $x \leftrightarrow y$.
+Swaps the components of vectors `x` and `y`, formally $x_i \leftrightarrow y_i$.
 
 
 ## `linear.copy (x|X, y|Y [, order])`
 
-Copies the components of vector `x` to vector `y`, formally $y \leftarrow x$.
+Copies the components of vector `x` to vector `y`, formally $y_i \leftarrow x_i$.
