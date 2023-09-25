@@ -29,16 +29,16 @@ static int linear_copy(lua_State *L);
 
 
 static linear_param_t LINEAR_PARAMS_NONE[] = {
-	{NULL, '\0', {0.0}}
+	LINEAR_PARAMS_LAST
 };
 static linear_param_t LINEAR_PARAMS_ALPHA[] = {
-	{"alpha", 'n', {1.0}},
-	{NULL, '\0', {0.0}}
+	{'n', {.n = 1.0}},
+	LINEAR_PARAMS_LAST
 };
 static linear_param_t LINEAR_PARAMS_ALPHA_BETA[] = {
-	{"alpha", 'n', {1.0}},
-	{"beta", 'n', {0.0}},
-	{NULL, '\0', {0.0}}
+	{'n', {.n = 1.0}},
+	{'n', {.n = 0.0}},
+	LINEAR_PARAMS_LAST
 };
 
 

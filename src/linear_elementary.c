@@ -41,15 +41,15 @@ static int linear_normal(lua_State *L);
 
 
 static linear_param_t LINEAR_PARAMS_NONE[] = {
-	{NULL, '\0', {0.0}}
+	LINEAR_PARAMS_LAST
 };
 static linear_param_t LINEAR_PARAMS_ALPHA[] = {
-	{"alpha", 'n', {1.0}},
-	{NULL, '\0', {0.0}}
+	{'n', {.n = 1.0}},
+	LINEAR_PARAMS_LAST
 };
 static linear_param_t LINEAR_PARAMS_RANDOM[] = {
-	{"random", 'r', {0.0}},
-	{NULL, '\0', {0.0}}
+	{'r', {0.0}},
+	LINEAR_PARAMS_LAST
 };
 
 static __thread lua_State  *linear_TL;

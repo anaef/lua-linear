@@ -34,15 +34,16 @@ static int linear_max(lua_State *L);
 
 
 static linear_param_t LINEAR_PARAMS_NONE[] = {
-	{NULL, '\0', {0.0}}
+	LINEAR_PARAMS_LAST
 };
 static linear_param_t LINEAR_PARAMS_DDOF[] = {
-	{"ddof", 'd', {.d = 0}},
-	{NULL, '\0', {0.0}}
+	{'d', {.d = 0}},
+	LINEAR_PARAMS_LAST
 };
-static linear_param_t LINEAR_PARAMS_SAMPLE[] = {
-	{"sample", 'i', {.i = 0}},
-	{NULL, '\0', {0.0}}
+static const char *LINEAR_SETS[] = {"population", "sample", NULL};
+static linear_param_t LINEAR_PARAMS_SET[] = {
+	{'e', {.e = LINEAR_SETS}},
+	LINEAR_PARAMS_LAST
 };
 
 
@@ -217,14 +218,14 @@ static double linear_skew_handler (int size, double *x, int incx, linear_arg_u *
 	m3 /= size;
 	m2 /= size;
 	skew = m3 / pow(m2, 1.5);
-	if (args[0].d) {
+	if (args[0].e == 1) {
 		skew *= sqrt((double)size * (size - 1)) / (size - 2);
 	}
 	return skew;
 }
 
 static int linear_skew (lua_State *L) {
-	return linear_unary(L, linear_skew_handler, LINEAR_PARAMS_SAMPLE);
+	return linear_unary(L, linear_skew_handler, LINEAR_PARAMS_SET);
 }
 
 static double linear_kurt_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -259,14 +260,14 @@ static double linear_kurt_handler (int size, double *x, int incx, linear_arg_u *
 	m4 /= size;
 	m2 /= size;
 	kurt = m4 / (m2 * m2) - 3;  /* excess kurtosis */
-	if (args[0].d) {
+	if (args[0].e == 1) {
 		kurt = ((double)(size - 1) / ((size - 2) * (size - 3))) * ((size + 1) * kurt + 6);
 	}
 	return kurt;
 }
 
 static int linear_kurt (lua_State *L) {
-	return linear_unary(L, linear_kurt_handler, LINEAR_PARAMS_SAMPLE);
+	return linear_unary(L, linear_kurt_handler, LINEAR_PARAMS_SET);
 }
 
 static double linear_nrm2_handler (int size, double *x, int incx, linear_arg_u *args) {

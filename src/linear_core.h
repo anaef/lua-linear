@@ -14,10 +14,11 @@
 #include <cblas.h>
 
 
-#define LINEAR_VECTOR      "linear.vector"   /* vector metatable*/
-#define LINEAR_MATRIX      "linear.matrix"   /* matrix metatable */
-#define LINEAR_RANDOM      "linear.random"   /* random state */
-#define LINEAR_PARAMS_MAX  5                 /* maximum number of extra parameters */
+#define LINEAR_VECTOR       "linear.vector"      /* vector metatable*/
+#define LINEAR_MATRIX       "linear.matrix"      /* matrix metatable */
+#define LINEAR_RANDOM       "linear.random"      /* random state */
+#define LINEAR_PARAMS_MAX   5                    /* maximum number of extra parameters */
+#define LINEAR_PARAMS_LAST  {'\0', {0.0}}        /* params termination */
 
 
 typedef struct linear_data_s {
@@ -41,18 +42,19 @@ typedef struct linear_matrix_s {
 } linear_matrix_t;
 
 typedef struct linear_param_s {
-	const char          *name;  /* name */
-	char                 type;  /* 'n' number, 'i' integer, 'd' ddof, 'r' random state */
+	char                 type;   /* 'n' number, 'i' integer, 'e' enum, 'd' ddof, 'r' random */
 	union {
-		lua_Number   n;     /* default number */
-		lua_Integer  i;     /* default integer */
-		size_t       d;     /* default ddof */
+		lua_Number   n;      /* default number */
+		lua_Integer  i;      /* default integer */
+		const char **e;      /* enum; default = e[0] */
+		size_t       d;      /* default ddof */
 	} def;
 } linear_param_t;
 
 typedef union linear_arg {
 	lua_Number   n;  /* number */
 	lua_Integer  i;  /* integer */
+	int          e;  /* enum */
 	size_t       d;  /* ddof */
 	uint64_t    *r;  /* random state */
 } linear_arg_u;

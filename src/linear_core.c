@@ -86,7 +86,7 @@ CBLAS_ORDER linear_checkorder (lua_State *L, int index) {
 
 int linear_checkargs (lua_State *L, int index, size_t size, linear_param_t *params,
 		linear_arg_u *args) {
-	while (params->name) {
+	while (params->type) {
 		switch (params->type) {
 		case 'n':
 			args->n = luaL_optnumber(L, index, params->def.n);
@@ -95,6 +95,11 @@ int linear_checkargs (lua_State *L, int index, size_t size, linear_param_t *para
 
 		case 'i':
 			args->i = luaL_optinteger(L, index, params->def.i);
+			index++;
+			break;
+
+		case 'e':
+			args->e = luaL_checkoption(L, index, params->def.e[0], params->def.e);
 			index++;
 			break;
 
