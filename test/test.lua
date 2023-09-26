@@ -405,6 +405,30 @@ local function testNormal ()
 	assert(math.abs(linear.std(x, 1) - 1.0) < 0.012)
 end
 
+-- Test the normal PDF
+local function testNormalPdf ()
+	assert(math.abs(linear.normalpdf(0) - 0.398942) < EPSILON)
+	assert(math.abs(linear.normalpdf(1) - 0.241971) < EPSILON)
+	assert(math.abs(linear.normalpdf(1, 2.5) - 0.129518) < EPSILON)
+	assert(math.abs(linear.normalpdf(1, 2.5, 1.5) - 0.161314) < EPSILON)
+end
+
+-- Tests the normal CDF
+local function testNormalCdf ()
+	assert(math.abs(linear.normalcdf(0) - 0.5) < EPSILON)
+	assert(math.abs(linear.normalcdf(1) - 0.841345) < EPSILON)
+	assert(math.abs(linear.normalcdf(1, 2.5) - 0.066807) < EPSILON)
+	assert(math.abs(linear.normalcdf(1, 2.5, 1.5) - 0.158655) < EPSILON)
+end
+
+-- Tests the normal QF
+local function testNormalQf ()
+	assert(math.abs(linear.normalqf(0.5) - 0) < EPSILON)
+	assert(math.abs(linear.normalqf(0.841345) - 1) < EPSILON)
+	assert(math.abs(linear.normalqf(0.066807, 2.5) - 1) < EPSILON)
+	assert(math.abs(linear.normalqf(0.158655, 2.5, 1.5) - 1) < EPSILON)
+end
+
 
 --
 -- Unary vector functions
@@ -897,6 +921,9 @@ testApply()
 testSet()
 testUniform()
 testNormal()
+testNormalPdf()
+testNormalCdf()
+testNormalQf()
 
 -- Unary vector function tests
 testSum()

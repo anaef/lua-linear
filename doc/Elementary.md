@@ -86,3 +86,26 @@ interval $[0, 1)$.
 Applies the normal random function, formally $x_i \leftarrow n \in \mathcal{N}(0, 1)$. The
 function returns statistically random, normally distributed values with a mean of $0$ and a
 standard deviation of $1$.
+
+
+## `linear.normalpdf (n|x|X [, mu [, sigma]])`
+
+Applies the normal probability density function with mean `mu` and standard deviation `sigma`,
+formally $x_i \leftarrow \frac{1}{\sigma \sqrt{2 \pi}} e^{-\frac{1}{2}(\frac{x_i- \mu}{\sigma})^2}$.
+The argument `mu` defaults to `0.0`, and the argument `sigma` defaults to `1.0`.
+
+
+## `linear.normalcdf (n|x|X [, mu [, sigma]])`
+
+Applies the normal cumulative distribution function with mean `mu` and standard deviation `sigma`,
+formally $x_i \leftarrow \frac{1}{2}(1 + \mathop{\mathrm{erf}} \  (\frac{x_i - \mu}
+{\sigma \sqrt{2}}))$. The argument `mu` defaults to `0.0`, and the argument `sigma` defaults to
+`1.0`.
+
+
+## `linear.normalqf (n|x|X [, mu [, sigma]])`
+
+Applies the normal quantile function with mean `mu` and standard deviation `sigma`, formally
+$\mu + \sigma \sqrt{2} \mathop{\mathrm{erf}}^{-1} \  (2 x_i - 1)$. The argument `mu`
+defaults to `0.0`, and the argument `sigma` defaults to `1.0`. The function is the inverse of the
+cumulative distribution function.

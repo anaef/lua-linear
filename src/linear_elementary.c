@@ -51,6 +51,11 @@ static linear_param_t LINEAR_PARAMS_RANDOM[] = {
 	{'r', {0.0}},
 	LINEAR_PARAMS_LAST
 };
+static linear_param_t LINEAR_PARAMS_MU_SIGMA[] = {
+	{'n', {.n = 0.0}},
+	{'n', {.n = 1.0}},
+	LINEAR_PARAMS_LAST
+};
 
 static __thread lua_State  *linear_TL;
 
@@ -366,22 +371,91 @@ static int linear_normal (lua_State *L) {
 	return linear_elementary(L, linear_normal_handler, LINEAR_PARAMS_RANDOM);
 }
 
+static void linear_normalpdf_handler (int size, double *x, int incx, linear_arg_u *args) {
+	int     i;
+	double  mu, sigma;
+
+	mu = args[0].n;
+	sigma = args[1].n;
+	for (i = 0; i < size; i++) {
+		*x = (M_2_SQRTPI / (sigma * M_SQRT2 * 2)) * exp(-0.5 * ((*x - mu) / sigma)
+				* ((*x - mu) / sigma));
+		x += incx;
+	}
+}
+
+static int linear_normalpdf (lua_State *L) {
+	return linear_elementary(L, linear_normalpdf_handler, LINEAR_PARAMS_MU_SIGMA);
+}
+
+static void linear_normalcdf_handler (int size, double *x, int incx, linear_arg_u *args) {
+	int     i;
+	double  mu, sigma;
+
+	mu = args[0].n;
+	sigma = args[1].n;
+	for (i = 0; i < size; i++) {
+		*x = 0.5 * (1 + erf((*x - mu) / (sigma * M_SQRT2)));
+		x += incx;
+	}
+}
+
+static int linear_normalcdf (lua_State *L) {
+	return linear_elementary(L, linear_normalcdf_handler, LINEAR_PARAMS_MU_SIGMA);
+}
+
+static void linear_normalqf_handler (int size, double *x, int incx, linear_arg_u *args) {
+	int     i;
+	double  mu, sigma, p, inverf, inverf_prev, f, fx;
+
+	mu = args[0].n;
+	sigma = args[1].n;
+	for (i = 0; i < size; i++) {
+		p = 2 * *x - 1;
+		if (p < -1 || p > 1) {
+			inverf = NAN;
+		} else if (p == -1) {
+			inverf = -INFINITY;
+		} else if (p == 1) {
+			inverf = INFINITY;
+		} else {
+			/* Newton-Raphson; ~ 4-8 iterations */
+			inverf = sqrt(-log((1 - p) * (1 + p))) * (p >= 0 ? 1 : -1);
+			do {
+				inverf_prev = inverf;
+				f = erf(inverf) - p;
+				fx = M_2_SQRTPI * exp(-(inverf * inverf));
+				inverf -= f / fx;
+			} while (fabs(inverf - inverf_prev) > 1e-16);
+		}
+		*x = mu + sigma * M_SQRT2 * inverf;
+		x += incx;
+	}
+}
+
+static int linear_normalqf (lua_State *L) {
+	return linear_elementary(L, linear_normalqf_handler, LINEAR_PARAMS_MU_SIGMA);
+}
+
 int linear_open_elementary (lua_State *L) {
 	static const luaL_Reg FUNCTIONS[] = {
-		{ "inc", linear_inc },
-		{ "scal", linear_scal },
-		{ "pow", linear_pow },
-		{ "exp", linear_exp },
-		{ "log", linear_log },
-		{ "sgn", linear_sgn },
-		{ "abs", linear_abs },
-		{ "logistic", linear_logistic },
-		{ "tanh", linear_tanh },
-		{ "apply", linear_apply },
-		{ "set", linear_set },
-		{ "uniform", linear_uniform },
-		{ "normal", linear_normal },
-		{ NULL, NULL }
+		{"inc", linear_inc},
+		{"scal", linear_scal},
+		{"pow", linear_pow},
+		{"exp", linear_exp},
+		{"log", linear_log},
+		{"sgn", linear_sgn},
+		{"abs", linear_abs},
+		{"logistic", linear_logistic},
+		{"tanh", linear_tanh},
+		{"apply", linear_apply},
+		{"set", linear_set},
+		{"uniform", linear_uniform},
+		{"normal", linear_normal},
+		{"normalpdf", linear_normalpdf},
+		{"normalcdf", linear_normalcdf},
+		{"normalqf", linear_normalqf},
+		{NULL, NULL}
 	};
 #if LUA_VERSION_NUM >= 502
 	luaL_setfuncs(L, FUNCTIONS, 0);
