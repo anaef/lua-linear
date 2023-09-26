@@ -36,22 +36,22 @@ where $N$ is the length of the row vectors of matrix `X`.
 
 Applies the variance function with the specified delta degrees of freedom, `ddof`, formally
 $y_i \leftarrow \frac{\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2}{N - \textrm{ddof}}$ where
-$\bar{X^i}$ is the mean value of row vector $X^i$, and $N$ is its length. The non-negative argument
-`ddof` defaults to `0` and must be less than $N$.
+$\bar{X^i}$ is the mean value of the $i$-th row vector of $X$, and $N$ is its length. The
+non-negative argument `ddof` defaults to `0` and must be less than $N$.
 
 
 ## `linear.std (x|X [, y [, order]] [, ddof])`
 
 Applies the standard deviation function with the specified delta degrees of freedom, `ddof`,
 formally $y_i \leftarrow \sqrt{\frac{\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2}
-{N - \textrm{ddof}}}$ where $\bar{X^i}$ is the mean value of row vector $X^i$, and $N$ is its
-length. The non-negative argument `ddof` defaults to `0` and must be less than $N$.
+{N - \textrm{ddof}}}$ where $\bar{X^i}$ is the mean value of the $i$-th row vector of $X$, and $N$
+is its length. The non-negative argument `ddof` defaults to `0` and must be less than $N$.
 
 
 ## `linear.skew (x|X [, y [, order]] [, set])`
 
 Applies the population or sample skewness function. The argument `set` can take the values `'p'`
-or `'s'` and defaults to `'p'`. If set to `'p'`, the function calculates the population skewnewss,
+or `'s'` and defaults to `'p'`. If set to `'p'`, the function calculates the population skewness,
 formally $y_i \leftarrow \frac{\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^3}
 {(\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2)^\frac{3}{2}}$ where $\bar{X^i}$ is the
 mean value of the $i$-th row vector of $X$, and $N$ is its length; if set to `'s'`, the function
@@ -74,16 +74,16 @@ before.
 ## `linear.median (x|X [, y [, order]])`
 
 Applies the median function, formally $y_i \leftarrow m(X^i)$ where $X^i$ is the $i$-th row
-vector of $X$, and the function $m(x)$ creates a sorted temporary copy of x, and then returns
+vector of $X$, and the function $m(x)$ creates a sorted temporary copy of $x$, and then returns
 its central component if the length of $x$ is odd, or the arithmetic mean of its two central
 components if the length of $x$ is even.
 
 
 ## `linear.mad (x|X [, y [, order]])`
 
-Applies the median absolute deviation function, formally $y_i \leftarrow m(|X_{ij} - m(X^i)|)
+Applies the median absolute deviation function, formally $y_i \leftarrow m(|X_{ij} - m(X^i)|)$
 where $X^i$ is the $i$-th row vector of $X$, and the function $m(x)$ creates a sorted temporary
-copy of x, and then returns its central component if the length of $x$ is odd, or the arithmetic
+copy of $x$, and then returns its central component if the length of $x$ is odd, or the arithmetic
 mean of its two central components if the length of $x$ is even.
 
 

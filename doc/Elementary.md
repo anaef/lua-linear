@@ -78,14 +78,16 @@ Applies the set function, formally $x_i \leftarrow \alpha$. The argument `alpha`
 
 Applies the uniform random function, formally $x_i \leftarrow u \in \mathcal{U}(0, 1 - \epsilon)$.
 The function returns statistically random, uniformly distributed values from the half-open
-interval $[0, 1)$.
+interval $[0, 1)$. You can re-seed the random state with the `linear.randomseed`
+[core function](Core.md).
 
 
 ## `linear.normal (n|x|X)`
 
 Applies the normal random function, formally $x_i \leftarrow n \in \mathcal{N}(0, 1)$. The
 function returns statistically random, normally distributed values with a mean of $0$ and a
-standard deviation of $1$.
+standard deviation of $1$. You can re-seed the random state with the `linear.randomseed`
+[core function](Core.md).
 
 
 ## `linear.normalpdf (n|x|X [, mu [, sigma]])`
