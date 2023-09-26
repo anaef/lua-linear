@@ -109,6 +109,10 @@ int linear_checkargs (lua_State *L, int index, size_t size, linear_param_t *para
 			index++;
 			break;
 
+		case 'L':
+			args->L = L;
+			break;
+
 		case 'r':
 			args->r = linear_randomstate(L);
 			break;

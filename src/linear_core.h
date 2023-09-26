@@ -42,7 +42,7 @@ typedef struct linear_matrix_s {
 } linear_matrix_t;
 
 typedef struct linear_param_s {
-	char                 type;   /* 'n' number, 'i' integer, 'e' enum, 'd' ddof, 'r' random */
+	char                 type;   /* see linear_arg_u below */
 	union {
 		lua_Number   n;      /* default number */
 		lua_Integer  i;      /* default integer */
@@ -56,6 +56,7 @@ typedef union linear_arg {
 	lua_Integer  i;  /* integer */
 	int          e;  /* enum */
 	size_t       d;  /* ddof */
+	lua_State   *L;  /* Lua state */
 	uint64_t    *r;  /* random state */
 } linear_arg_u;
 

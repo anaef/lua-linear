@@ -5,12 +5,14 @@
  */
 
 
+#include <stdlib.h>
 #include <math.h>
 #include <lauxlib.h>
 #include "linear_core.h"
 #include "linear_unary.h"
 
 
+static int linear_comparison_handler(const void *a, const void *b);
 static double linear_sum_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_sum(lua_State *L);
 static double linear_mean_handler(int size, double *values, int inc, linear_arg_u *args);
@@ -24,6 +26,10 @@ static int linear_skew(lua_State *L);
 static double linear_kurt_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_kurt(lua_State *L);
 static double linear_nrm2_handler(int size, double *values, int inc, linear_arg_u *args);
+static int linear_median(lua_State *L);
+static double linear_median_handler(int size, double *values, int inc, linear_arg_u *args);
+static int linear_mad(lua_State *L);
+static double linear_mad_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_nrm2(lua_State *L);
 static double linear_asum_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_asum(lua_State *L);
@@ -43,6 +49,10 @@ static linear_param_t LINEAR_PARAMS_DDOF[] = {
 static const char *LINEAR_SETS[] = {"population", "sample", NULL};
 static linear_param_t LINEAR_PARAMS_SET[] = {
 	{'e', {.e = LINEAR_SETS}},
+	LINEAR_PARAMS_LAST
+};
+static linear_param_t LINEAR_PARAMS_LUA[] = {
+	{'L', {0.0}},
 	LINEAR_PARAMS_LAST
 };
 
@@ -96,6 +106,14 @@ int linear_unary (lua_State *L, linear_unary_function f, linear_param_t *params)
 		return 0;
 	}
 	return linear_argerror(L, 1, 0);
+}
+
+static int linear_comparison_handler (const void *a, const void *b) {
+	double  da, db;
+
+	da = *(const double *)a;
+	db = *(const double *)b;
+	return da < db ? -1 : (da > db ? 1 : 0);
 }
 
 static double linear_sum_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -270,6 +288,84 @@ static int linear_kurt (lua_State *L) {
 	return linear_unary(L, linear_kurt_handler, LINEAR_PARAMS_SET);
 }
 
+static double linear_median_handler (int size, double *x, int incx, linear_arg_u *args) {
+	int      i, mid;
+	double  *copy, median;
+
+	copy = malloc(size * sizeof(double));
+	if (copy == NULL) {
+		return luaL_error(args[0].L, "cannot allocate values");
+	}
+	if (incx == 1) {
+		for (i = 0; i < size; i++) {
+			copy[i] = x[i];
+		}
+	} else {
+		for (i = 0; i < size; i++) {
+			copy[i] = *x;
+			x += incx;
+		}
+	}
+	qsort(copy, size, sizeof(double), linear_comparison_handler);
+	mid = size / 2;
+	if (size % 2 == 0) {
+		median = (copy[mid - 1] + copy[mid]) / 2;
+	} else {
+		median = copy[mid];
+	}
+	free(copy);
+	return median;
+}
+
+static int linear_median (lua_State *L) {
+	return linear_unary(L, linear_median_handler, LINEAR_PARAMS_LUA);
+}
+
+static double linear_mad_handler (int size, double *x, int incx, linear_arg_u *args) {
+	int      i, mid;
+	double  *copy, median, mad;
+
+	/* calculat the median */
+	copy = malloc(size * sizeof(double));
+	if (copy == NULL) {
+		return luaL_error(args[0].L, "cannot allocate values");
+	}
+	if (incx == 1) {
+		for (i = 0; i < size; i++) {
+			copy[i] = x[i];
+		}
+	} else {
+		for (i = 0; i < size; i++) {
+			copy[i] = *x;
+			x += incx;
+		}
+	}
+	qsort(copy, size, sizeof(double), linear_comparison_handler);
+	mid = size / 2;
+	if (size % 2 == 0) {
+		median = (copy[mid - 1] + copy[mid]) / 2;
+	} else {
+		median = copy[mid];
+	}
+
+	/* calculate the median absolute deviation */
+	for (i = 0; i < size; i++) {
+		copy[i] = fabs(copy[i] - median);
+	}
+	qsort(copy, size, sizeof(double), linear_comparison_handler);
+	if (size % 2 == 0) {
+		mad = (copy[mid - 1] + copy[mid]) / 2;
+	} else {
+		mad = copy[mid];
+	}
+	free(copy);
+	return mad;
+}
+
+static int linear_mad (lua_State *L) {
+	return linear_unary(L, linear_mad_handler, LINEAR_PARAMS_LUA);
+}
+
 static double linear_nrm2_handler (int size, double *x, int incx, linear_arg_u *args) {
 	(void)args;
 	return cblas_dnrm2(size, x, incx);
@@ -334,6 +430,8 @@ int linear_open_unary (lua_State *L) {
 		{"std", linear_std},
 		{"skew", linear_skew},
 		{"kurt", linear_kurt},
+		{"median", linear_median},
+		{"mad", linear_mad},
 		{"nrm2", linear_nrm2},
 		{"asum", linear_asum},
 		{"min", linear_min},

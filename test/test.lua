@@ -500,6 +500,28 @@ local function testKurt ()
 	assert(math.abs(linear.kurt(x, "sample") - (0.342857)) < EPSILON)
 end
 
+-- Tests the median function
+local function testMedian ()
+	local x = linear.tolinear({ 1 })
+	assert(linear.median(x) == 1)
+	x = linear.tolinear({ 2, 1, 3 })
+	assert(linear.median(x) == 2)
+	x = linear.tolinear({ 2, 1, 3, 4 })
+	assert(linear.median(x) == 2.5)
+end
+
+-- Tests the median absolute deviation function
+local function testMad ()
+	local x = linear.tolinear({ 1 })
+	assert(linear.mad(x) == 0)
+	x = linear.tolinear({ 2, 1, 3 })
+	assert(linear.mad(x) == 1)
+	x = linear.tolinear({ 2, 1, 3, 4 })
+	assert(linear.mad(x) == 1)
+	x = linear.tolinear({ 1, 2, 4, 8, 16 })
+	assert(linear.mad(x) == 3)
+end
+
 -- Tests the nrm2 function
 local function testNrm2 ()
 	local x = linear.tolinear({ 1, 2 })
@@ -883,6 +905,8 @@ testVar()
 testStd()
 testSkew()
 testKurt()
+testMedian()
+testMad()
 testNrm2()
 testAsum()
 testMin()

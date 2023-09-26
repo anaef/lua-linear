@@ -70,6 +70,22 @@ excess kurtosis function, formally $y_i \leftarrow \frac{N - 1}{(N - 2) (N - 3)}
 where $k_i$ is the population excess kurtosis.
 
 
+## `linear.median (x|X [, y [, order]])`
+
+Applies the median function, formally $y_i \leftarrow m(X^i)$ where $X^i$ is the $i$-th row
+vector of $X$, and the function $m(x)$ creates a sorted temporary copy of x, and then returns
+its central component if the length of $x$ is odd, or the arithmetic mean of its two central
+components if the length of $x$ is even.
+
+
+## `linear.mad (x|X [, y [, order]])`
+
+Applies the median absolute deviation function, formally $y_i \leftarrow m(|X_{ij} - m(X^i)|)
+where $X^i$ is the $i$-th row vector of $X$, and the function $m(x)$ creates a sorted temporary
+copy of x, and then returns its central component if the length of $x$ is odd, or the arithmetic
+mean of its two central components if the length of $x$ is even.
+
+
 ## `linear.nrm2 (x|X [, y [, order]])`
 
 Applies the Euclidean norm function (also known as L2 norm), formally
