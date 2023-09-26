@@ -46,7 +46,7 @@ static linear_param_t LINEAR_PARAMS_DDOF[] = {
 	{'d', {.d = 0}},
 	LINEAR_PARAMS_LAST
 };
-static const char *LINEAR_SETS[] = {"population", "sample", NULL};
+static const char *LINEAR_SETS[] = {"p", "s", NULL};
 static linear_param_t LINEAR_PARAMS_SET[] = {
 	{'e', {.e = LINEAR_SETS}},
 	LINEAR_PARAMS_LAST

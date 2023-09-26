@@ -50,24 +50,25 @@ length. The non-negative argument `ddof` defaults to `0` and must be less than $
 
 ## `linear.skew (x|X [, y [, order]] [, set])`
 
-Applies the population skewness function, formally
-$y_i \leftarrow \frac{\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^3}
-{(\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2)^\frac{3}{2}}$ where $\bar{X^i}$ is the mean
-value of row vector $X^i$, and $N$ is its length. The argument `set` can take the values
-`"population"` (the default) or `"sample"`. If set to `"sample"`, the function applies the sample
-skewness function, formally $y_i \leftarrow \frac{\sqrt{N (N - 1)}}{N - 2} s_i$ where $s_i$ is the
-population skewness.
+Applies the population or sample skewness function. The argument `set` can take the values `'p'`
+or `'s'` and defaults to `'p'`. If set to `'p'`, the function calculates the population skewnewss,
+formally $y_i \leftarrow \frac{\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^3}
+{(\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2)^\frac{3}{2}}$ where $\bar{X^i}$ is the
+mean value of the $i$-th row vector of $X$, and $N$ is its length; if set to `'s'`, the function
+calculates the sample skewness, formally $y_i \leftarrow \frac{\sqrt{N (N - 1)}}{N - 2} s_i$
+where $s_i$ is the population skewness as defined before.
 
 
 ## `linear.kurt (x|X [, y [, order]] [, set])`
 
-Applies the population excess kurtosis function, formally
-$y_i \leftarrow \frac{\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^4}
-{(\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2)^2} - 3$ where $\bar{X^i}$ is the mean
-value of row vector $X^i$, and $N$ is its length. The argument `set` can take the values
-`"population"` (the default) or `"sample"`. If set to `"sample"`, the function applies the sample
-excess kurtosis function, formally $y_i \leftarrow \frac{N - 1}{(N - 2) (N - 3)} ((N + 1) k_i + 6)$
-where $k_i$ is the population excess kurtosis.
+Applies the population or sample excess kurtosis function. The argument `set` can take the values
+`'p'` or `'s'` and defaults to `'p'`. If set to `'p'`, the function calculates the population
+excess kurtosis, formally $y_i \leftarrow \frac{\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} -
+\bar{X^i})^4}{(\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2)^2} - 3$ where $\bar{X^i}$
+is the mean value of the $i$-th row vector of $X$, and $N$ is its length; if set to `'s'`, the
+function calculates the sample excess kurtosis, formally $y_i \leftarrow \frac{N - 1}
+{(N - 2) (N - 3)}((N + 1) k_i + 6)$ where $k_i$ is the population excess kurtosis as defined
+before.
 
 
 ## `linear.median (x|X [, y [, order]])`
