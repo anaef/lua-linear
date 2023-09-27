@@ -10,8 +10,8 @@
 - The random state is now managed per Lua state, and the `linear.randomseed` function has been
 added.
 
-- The `linear.normalpdf`, `linear.normalcdf`, and `linear.normalqf` elementary functions have
-been added.
+- The `linear.clip`, `linear.normalpdf`, `linear.normalcdf`, and `linear.normalqf` elementary
+functions have been added.
 
 - The `linear.min`, `linear.max`, `linear.skew`, `linear.kurt`, `linear.median`, and `linear.mad`
 unary vector functions have been added.

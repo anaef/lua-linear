@@ -363,6 +363,20 @@ local function testSet ()
 	end
 end
 
+-- Tests the clip function
+local function testClip ()
+	local x = linear.tolinear({ -1, 0.5, 2 })
+	linear.clip(x)
+	assert(x[1] == 0)
+	assert(x[2] == 0.5)
+	assert(x[3] == 1)
+	x = linear.tolinear({ 1, 2, 3 })
+	linear.clip(x, 1.5, 2.5)
+	assert(x[1] == 1.5)
+	assert(x[2] == 2)
+	assert(x[3] == 2.5)
+end
+
 -- Tests the uniform function
 local function testUniform ()
 	local x = linear.vector(3)
@@ -919,6 +933,7 @@ testLogistic()
 testTanh()
 testApply()
 testSet()
+testClip()
 testUniform()
 testNormal()
 testNormalPdf()

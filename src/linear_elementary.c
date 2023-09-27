@@ -34,6 +34,8 @@ static void linear_apply_handler(int size, double *x, int incx, linear_arg_u *ar
 static int linear_apply(lua_State *L);
 static void linear_set_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_set(lua_State *L);
+static void linear_clip_handler(int size, double *x, int incx, linear_arg_u *args);
+static int linear_clip(lua_State *L);
 static void linear_uniform_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_uniform(lua_State *L);
 static void linear_normal_handler(int size, double *x, int incx, linear_arg_u *args);
@@ -50,6 +52,11 @@ static linear_param_t LINEAR_PARAMS_NONE[] = {
 	LINEAR_PARAMS_LAST
 };
 static linear_param_t LINEAR_PARAMS_ALPHA[] = {
+	{'n', {.n = 1.0}},
+	LINEAR_PARAMS_LAST
+};
+static linear_param_t LINEAR_PARAMS_MIN_MAX[] = {
+	{'n', {.n = 0.0}},
 	{'n', {.n = 1.0}},
 	LINEAR_PARAMS_LAST
 };
@@ -333,6 +340,26 @@ static int linear_set (lua_State *L) {
 	return linear_elementary(L, linear_set_handler, LINEAR_PARAMS_ALPHA);
 }
 
+static void linear_clip_handler (int size, double *x, int incx, linear_arg_u *args) {
+	int     i;
+	double  min, max;
+
+	min = args[0].n;
+	max = args[1].n;
+	for (i = 0; i < size; i++) {
+		if (*x < min) {
+			*x = min;
+		} else if (*x > max) {
+			*x = max;
+		}
+		x += incx;
+	}
+}
+
+static int linear_clip (lua_State *L) {
+	return linear_elementary(L, linear_clip_handler, LINEAR_PARAMS_MIN_MAX);
+}
+
 static void linear_uniform_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int        i;
 	uint64_t  *r;
@@ -456,6 +483,7 @@ int linear_open_elementary (lua_State *L) {
 		{"tanh", linear_tanh},
 		{"apply", linear_apply},
 		{"set", linear_set},
+		{"clip", linear_clip},
 		{"uniform", linear_uniform},
 		{"normal", linear_normal},
 		{"normalpdf", linear_normalpdf},

@@ -74,6 +74,12 @@ Applies function `f`, formally $x_i \leftarrow f(x_i)$.
 Applies the set function, formally $x_i \leftarrow \alpha$. The argument `alpha` defaults to `1.0`.
 
 
+## `linear.clip (n|x|X [, min [, max]])`
+
+Applies the clip function, formally $x_i \leftarrow \max(\textrm{min}, \min(\textrm{max}, x_i))$.
+The argument `min` defaults to `0`, and the argument `max` defaults to `1`.
+
+
 ## `linear.uniform (n|x|X)`
 
 Applies the uniform random function, formally $x_i \leftarrow u \in \mathcal{U}(0, 1 - \epsilon)$.
