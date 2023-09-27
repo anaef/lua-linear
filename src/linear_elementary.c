@@ -38,6 +38,12 @@ static void linear_uniform_handler(int size, double *x, int incx, linear_arg_u *
 static int linear_uniform(lua_State *L);
 static void linear_normal_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_normal(lua_State *L);
+static void linear_normalpdf_handler(int size, double *x, int incx, linear_arg_u *args);
+static int linear_normalpdf(lua_State *L);
+static void linear_normalcdf_handler(int size, double *x, int incx, linear_arg_u *args);
+static int linear_normalcdf(lua_State *L);
+static void linear_normalqf_handler(int size, double *x, int incx, linear_arg_u *args);
+static int linear_normalqf(lua_State *L);
 
 
 static linear_param_t LINEAR_PARAMS_NONE[] = {
