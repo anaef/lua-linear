@@ -21,6 +21,12 @@ unary vector functions have been added.
 - Fixed the unwind and reshape functions when operating on a vector with an increment different
 from one.
 
+- The the default value of `beta` in the `linear.axpby` function has been set to `1` (changed from
+`0`.)
+
+> [!WARNING]
+> If your code uses `linear.axpby` without an explicit value for `beta`, it must be updated.
+
 
 ## Release 1.0.0 (2023-09-20)
 

@@ -37,7 +37,7 @@ static linear_param_t LINEAR_PARAMS_ALPHA[] = {
 };
 static linear_param_t LINEAR_PARAMS_ALPHA_BETA[] = {
 	{'n', {.n = 1.0}},
-	{'n', {.n = 0.0}},
+	{'n', {.n = 1.0}},
 	LINEAR_PARAMS_LAST
 };
 

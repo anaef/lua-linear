@@ -26,7 +26,7 @@ The following function descriptions assume a call with two vectors `x` and `y`.
 ## `linear.axpby (x|X, y|Y [, order] [, alpha [, beta]])`
 
 Scales and adds vector `x` to scaled vector `y`, formally $y_i \leftarrow \alpha x_i + \beta y_i$.
-The arguments `alpha` and `beta` default to `1.0` and `0.0`, respectively.
+The arguments `alpha` and `beta` both default to `1.0`.
 
 
 ## `linear.mul (x|X, y|Y [, order] [, alpha])`

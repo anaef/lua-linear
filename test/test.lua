@@ -718,13 +718,16 @@ local function testAxpby ()
 	assert(Y[1][1] == 1)
 	assert(Y[1][2] == 2)
 	assert(Y[2][1] == 1)
-	assert(Y[2][2] == 2)
+	assert(Y[2][2] == 1)
 
 	-- matrix-matrix
 	local X = linear.matrix(2, 2)
 	X[2][2] = 1
 	linear.axpby(X, Y, 2, 3)
-	assert(Y[2][2] == 8)
+	assert(Y[1][1] == 3)
+	assert(Y[1][2] == 6)
+	assert(Y[2][1] == 3)
+	assert(Y[2][2] == 5)
 end
 
 -- Tests the mul function
