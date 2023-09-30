@@ -59,6 +59,7 @@ static int linear_vector(lua_State *L);
 static int linear_matrix(lua_State *L);
 static int linear_totable(lua_State *L);
 static int linear_tolinear(lua_State *L);
+static int linear_tovector(lua_State *L);
 static int linear_type(lua_State *L);
 static int linear_size(lua_State *L);
 static int linear_tvector(lua_State *L);
@@ -604,6 +605,77 @@ static int linear_tolinear (lua_State *L) {
 	}
 }
 
+static int linear_tovector (lua_State *L) {
+	double           *value;
+	size_t            size, i;
+	const char       *key;
+	linear_data_t    *data;
+	linear_vector_t  *x;
+
+	luaL_checktype(L, 1, LUA_TTABLE);
+	size = lua_rawlen(L, 1);
+	luaL_argcheck(L, size >= 1 && size <= INT_MAX, 1, "bad dimension");
+	x = linear_create_vector(L, size);
+	value = x->values;
+	switch (lua_type(L, 2)) {
+	case LUA_TSTRING:
+		key = lua_tostring(L, 2);
+		for (i = 0; i < size; i++) {
+			if (linear_rawgeti(L, 1, i + 1) != LUA_TTABLE) {
+				return luaL_error(L, "bad value at index %d", i + 1);
+			}
+			switch (linear_getfield(L, -1, key)) {
+			case LUA_TNUMBER:
+				*value++ = lua_tonumber(L, -1);
+				break;
+
+			case LUA_TNIL:
+				break;
+
+			default:
+				return luaL_error(L, "bad value at index %d", i + 1);
+			}
+			lua_pop(L, 2);
+		}
+		break;
+
+	case LUA_TFUNCTION:
+		for (i = 0; i < size; i++) {
+			lua_pushvalue(L, 2);
+			lua_rawgeti(L, 1, i + 1);
+			lua_call(L, 1, 1);
+			switch (lua_type(L, -1)) {
+			case LUA_TNUMBER:
+				*value++ = lua_tonumber(L, -1);
+				break;
+
+			case LUA_TNIL:
+				break;
+
+			default:
+				return luaL_error(L, "bad value at index %d", i + 1);
+			}
+			lua_pop(L, 1);
+		}
+		break;
+
+	default:
+		return luaL_argerror(L, 2, "bad selector");
+	}
+	x->length = value - x->values;
+	if (x->length == 0) {
+		return luaL_error(L, "bad dimension");
+	}
+	if (x->length < size / 2) {
+		data = realloc(x->data, sizeof(linear_data_t) + x->length * sizeof(double));
+		if (data) {
+			x->data = data;
+			x->values = (double *)((char *)x->data + sizeof(linear_data_t));
+		}
+	}
+	return 1;
+}
+
 static int linear_type (lua_State *L) {
 	if (luaL_testudata(L, 1, LINEAR_VECTOR) != NULL) {
 		lua_pushliteral(L, "vector");
@@ -797,17 +869,18 @@ static int linear_ipairs (lua_State *L) {
 
 int luaopen_linear (lua_State *L) {
 	static const luaL_Reg FUNCTIONS[] = {
-		{ "vector", linear_vector },
-		{ "matrix", linear_matrix },
-		{ "totable", linear_totable },
-		{ "tolinear", linear_tolinear },
-		{ "type", linear_type },
-		{ "size", linear_size },
-		{ "tvector", linear_tvector },
-		{ "sub", linear_sub },
-		{ "unwind", linear_unwind },
-		{ "reshape", linear_reshape },
-		{ "randomseed", linear_randomseed },
+		{"vector", linear_vector},
+		{"matrix", linear_matrix},
+		{"totable", linear_totable},
+		{"tolinear", linear_tolinear},
+		{"tovector", linear_tovector},
+		{"type", linear_type},
+		{"size", linear_size},
+		{"tvector", linear_tvector},
+		{"sub", linear_sub},
+		{"unwind", linear_unwind},
+		{"reshape", linear_reshape},
+		{"randomseed", linear_randomseed},
 #if LUA_VERSION_NUM < 502
 		{ "ipairs", linear_ipairs },
 #endif

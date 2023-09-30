@@ -121,6 +121,35 @@ local function testTolinear ()
 	assert(X[2][3] == 1)
 end
 
+-- Tests the tovector function
+local function testTovector ()
+	local objects = {
+		{ value = 1 },
+		{ },
+		{ value = 3 },
+		{ value = 4 }
+	}
+	local x = linear.tovector(objects, "value")
+	assert(#x == 3)
+	assert(x[1] == 1)
+	assert(x[2] == 3)
+	assert(x[3] == 4)
+	x = linear.tovector(objects, function (o) return o.value and o.value - 1 or nil end)
+	assert(#x == 3)
+	assert(x[1] == 0)
+	assert(x[2] == 2)
+	assert(x[3] == 3)
+	objects = { }
+	for i = 1, 100 do
+		table.insert(objects, { value = i <= 10 and i + 1 or nil })
+	end
+	x = linear.tovector(objects, "value")
+	assert(#x == 10)
+	for i = 1, 10 do
+		assert(x[i] == i + 1)
+	end
+end
+
 -- Tests the type function
 local function testType ()
 	local x = linear.vector(1)
@@ -980,6 +1009,7 @@ testVector()
 testMatrix()
 testTotable()
 testTolinear()
+testTovector()
 testType()
 testSize()
 testTvector()

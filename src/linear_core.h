@@ -66,6 +66,7 @@ int linear_checkargs(lua_State *L, int index, size_t size, linear_param_t *param
 		linear_arg_u *args);
 int linear_argerror(lua_State *L, int index, int numok);
 inline int linear_rawgeti(lua_State *L, int index, int n);
+inline int linear_getfield(lua_State *L, int index, const char *key);
 double linear_random(uint64_t *r);
 int linear_comparison_handler(const void *a, const void *b);
 linear_vector_t *linear_create_vector(lua_State *L, size_t length);
@@ -82,5 +83,13 @@ inline int linear_rawgeti (lua_State *L, int index, int n) {
 #endif
 }
 
+inline int linear_getfield (lua_State *L, int index, const char *key) {
+#if LUA_VERSION_NUM >= 503
+	return lua_getfield(L, index, key);
+#else
+	lua_getfield(L, index, key);
+	return lua_type(L, -1);
+#endif
+}
 
 #endif /* _LINEAR_CORE_INCLUDED */

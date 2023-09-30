@@ -36,6 +36,16 @@ numbers correspond to the major order vectors of the matrix. The parameter `orde
 returned. All nested lists of numbers must have the same length.
 
 
+## `linear.tovector (list, selector)`
+
+Returns a vector with components selected from the specified list of tables. The function attempts
+to extract a value from each table. If the selector is a string, the function indexes the string
+as a key in each table; if the selector is a function, it is called with each table as its
+argument. The result of the indexing operation or of the function call must be a number or `nil`.
+If it is a number, the number is appended to the vector; if it is `nil`, the result is ignored.
+The function generates an error if the resulting vector would be empty.
+
+
 ## `linear.type (x|X)`
 
 Returns the string `"vector"` if the value is a vector, `"matrix"` if the value is a matrix, or
