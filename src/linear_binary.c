@@ -221,12 +221,12 @@ static int linear_copy (lua_State *L) {
 
 int linear_open_binary (lua_State *L) {
 	static const luaL_Reg FUNCTIONS[] = {
-		{ "axpy", linear_axpy },    /* deprecated */
-		{ "axpby", linear_axpby },
-		{ "mul", linear_mul },
-		{ "swap", linear_swap },
-		{ "copy", linear_copy },
-		{ NULL, NULL }
+		{"axpy", linear_axpy},    /* deprecated */
+		{"axpby", linear_axpby},
+		{"mul", linear_mul},
+		{"swap", linear_swap},
+		{"copy", linear_copy},
+		{NULL, NULL}
 	};
 #if LUA_VERSION_NUM >= 502
 	luaL_setfuncs(L, FUNCTIONS, 0);

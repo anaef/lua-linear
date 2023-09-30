@@ -14,11 +14,11 @@
 #include <cblas.h>
 
 
-#define LINEAR_VECTOR       "linear.vector"      /* vector metatable*/
-#define LINEAR_MATRIX       "linear.matrix"      /* matrix metatable */
-#define LINEAR_RANDOM       "linear.random"      /* random state */
-#define LINEAR_PARAMS_MAX   5                    /* maximum number of extra parameters */
-#define LINEAR_PARAMS_LAST  {'\0', {0.0}}        /* params termination */
+#define LINEAR_VECTOR       "linear.vector"  /* vector metatable*/
+#define LINEAR_MATRIX       "linear.matrix"  /* matrix metatable */
+#define LINEAR_RANDOM       "linear.random"  /* random state */
+#define LINEAR_PARAMS_MAX   5                /* maximum number of extra parameters */
+#define LINEAR_PARAMS_LAST  {'\0', {0.0}}    /* params termination */
 
 
 typedef struct linear_data_s {
