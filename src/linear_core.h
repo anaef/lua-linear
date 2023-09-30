@@ -65,10 +65,22 @@ CBLAS_ORDER linear_checkorder(lua_State *L, int index);
 int linear_checkargs(lua_State *L, int index, size_t size, linear_param_t *params,
 		linear_arg_u *args);
 int linear_argerror(lua_State *L, int index, int numok);
+inline int linear_rawgeti(lua_State *L, int index, int n);
 double linear_random(uint64_t *r);
+int linear_comparison_handler(const void *a, const void *b);
 linear_vector_t *linear_create_vector(lua_State *L, size_t length);
 linear_matrix_t *linear_create_matrix(lua_State *L, size_t rows, size_t cols, CBLAS_ORDER order);
 int luaopen_linear(lua_State *L);
+
+
+inline int linear_rawgeti (lua_State *L, int index, int n) {
+#if LUA_VERSION_NUM >= 503
+	return lua_rawgeti(L, index, n);
+#else
+	lua_rawgeti(L, index, n);
+	return lua_type(L, -1);
+#endif
+}
 
 
 #endif /* _LINEAR_CORE_INCLUDED */

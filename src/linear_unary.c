@@ -12,7 +12,6 @@
 #include "linear_unary.h"
 
 
-static int linear_comparison_handler(const void *a, const void *b);
 static double linear_sum_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_sum(lua_State *L);
 static double linear_mean_handler(int size, double *values, int inc, linear_arg_u *args);
@@ -106,14 +105,6 @@ int linear_unary (lua_State *L, linear_unary_function f, linear_param_t *params)
 		return 0;
 	}
 	return linear_argerror(L, 1, 0);
-}
-
-static int linear_comparison_handler (const void *a, const void *b) {
-	double  da, db;
-
-	da = *(const double *)a;
-	db = *(const double *)b;
-	return da < db ? -1 : (da > db ? 1 : 0);
 }
 
 static double linear_sum_handler (int size, double *x, int incx, linear_arg_u *args) {

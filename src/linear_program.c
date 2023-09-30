@@ -26,6 +26,9 @@ static int linear_inv(lua_State *L);
 static int linear_det(lua_State *L);
 static int linear_cov(lua_State *L);
 static int linear_corr(lua_State *L);
+static int linear_ranks(lua_State *L);
+static int linear_quantile(lua_State *L);
+static int linear_rank(lua_State *L);
 
 
 static const char *const LINEAR_TRANSPOSES[] = {"notrans", "trans", NULL};
@@ -403,18 +406,188 @@ static int linear_corr (lua_State *L) {
 	return 0;
 }
 
+static int linear_ranks (lua_State *L) {
+	const char  *mode;
+	int          q, k, l, u;
+
+	q = luaL_checkinteger(L, 1);
+	luaL_argcheck(L, q > 0, 1, "bad sign");
+	mode = luaL_optstring(L, 2, "");
+	l = strchr(mode, 'z') ? 0 : 1;
+	u = strchr(mode, 'q') ? q : q - 1;
+	lua_createtable(L, u - l + 1, 0);
+	for (k = l; k <= u; k++) {
+		lua_pushnumber(L, (double)k / q);
+		lua_rawseti(L, -2, k - l + 1);
+	}
+	return 1;
+}
+
+static int linear_quantile (lua_State *L) {
+	size_t            i, index, count;
+	double           *copy, *v;
+	double            rank, pos, frac;
+	linear_vector_t  *x;
+
+	/* copy vector */
+	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
+	copy = lua_newuserdata(L, x->length * sizeof(double));
+	v = x->values;
+	for (i = 0; i < x->length; i++) {
+		if (isnan(*v)) {
+			return luaL_error(L, "bad value");
+		}
+		copy[i] = *v;
+		v += x->inc;
+	}
+	qsort(copy, x->length, sizeof(double), linear_comparison_handler);
+
+	/* handle cases */
+	switch (lua_type(L, 2)) {
+	case LUA_TNUMBER:
+		rank = lua_tonumber(L, 2);
+		luaL_argcheck(L, rank >= 0 && rank <= 1, 2, "bad rank");
+		pos = rank * (x->length - 1);
+		frac = fmod(pos, 1);
+		index = floor(pos);
+		if (frac > 0) {
+			lua_pushnumber(L, copy[index] + (copy[index + 1] - copy[index]) * frac);
+		} else {
+			lua_pushnumber(L, copy[index]);
+		}
+		break;
+
+	case LUA_TTABLE:
+		count = lua_rawlen(L, 2);
+		lua_createtable(L, count, 0);
+		for (i = 0; i < count; i++) {
+			if (linear_rawgeti(L, 2, i + 1) != LUA_TNUMBER) {
+				return luaL_error(L, "bad rank at index %d", i + 1);
+			}
+			rank = lua_tonumber(L, -1);
+			if (!(rank >= 0 && rank <= 1)) {
+				return luaL_error(L, "bad rank at index %d", i + 1);
+			}
+			pos = rank * (x->length - 1);
+			frac = fmod(pos, 1);
+			index = floor(pos);
+			if (frac > 0) {
+				lua_pushnumber(L, copy[index] + (copy[index + 1] - copy[index])
+						* frac);
+			} else {
+				lua_pushnumber(L, copy[index]);
+			}
+			lua_rawseti(L, -3, i + 1);
+			lua_pop(L, 1);
+		}
+		break;
+
+	default:
+		luaL_argerror(L, 2, "number or table expected");
+	}
+	return 1;
+}
+
+static int linear_rank (lua_State *L) {
+	size_t            i, lower, upper, mid, count;
+	double           *copy, *v;
+	double            q;
+	linear_vector_t  *x;
+
+	/* copy vector */
+	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
+	luaL_argcheck(L, 1, x->length >= 2, "bad vector");
+	copy = lua_newuserdata(L, x->length * sizeof(double));
+	v = x->values;
+	for (i = 0; i < x->length; i++) {
+		if (isnan(*v)) {
+			return luaL_error(L, "bad value");
+		}
+		copy[i] = *v;
+		v += x->inc;
+	}
+	qsort(copy, x->length, sizeof(double), linear_comparison_handler);
+
+	/* handle cases */
+	switch (lua_type(L, 2)) {
+	case LUA_TNUMBER:
+		q = lua_tonumber(L, 2);
+		if (q <= copy[0]) {
+			lua_pushnumber(L, 0);
+		} else if (q >= copy[x->length - 1]) {
+			lua_pushnumber(L, 1);
+		} else if (!isnan(q)) {
+			lower = 0;
+			upper = x->length - 1;
+			while (lower <= upper) {
+				mid = (lower + upper) / 2;
+				if (copy[mid] < q) {
+					lower = mid + 1;
+				} else {
+					upper = mid - 1;
+				}
+			}
+			lua_pushnumber(L, (upper + (q - copy[upper]) / (copy[lower]
+					- copy[upper])) / (x->length - 1));
+		} else {
+			return luaL_error(L, "bad quantile");
+		}
+		break;
+
+	case LUA_TTABLE:
+		count = lua_rawlen(L, 2);
+		lua_createtable(L, count, 0);
+		for (i = 0; i < count; i++) {
+			if (linear_rawgeti(L, 2, i + 1) != LUA_TNUMBER) {
+				return luaL_error(L, "bad quantile at index %d", i + 1);
+			}
+			q = lua_tonumber(L, -1);
+			if (q <= copy[0]) {
+				lua_pushnumber(L, 0);
+			} else if (q >= copy[x->length - 1]) {
+				lua_pushnumber(L, 1);
+			} else if (!isnan(q)) {
+				lower = 0;
+				upper = x->length - 1;
+				while (lower <= upper) {
+					mid = (lower + upper) / 2;
+					if (copy[mid] < q) {
+						lower = mid + 1;
+					} else {
+						upper = mid - 1;
+					}
+				}
+				lua_pushnumber(L, (upper + (q - copy[upper]) / (copy[lower]
+						- copy[upper])) / (x->length - 1));
+			} else {
+				return luaL_error(L, "bad quantile at index %d", i + 1);
+			}
+			lua_rawseti(L, -3, i + 1);
+			lua_pop(L, 1);
+		}
+		break;
+
+	default:
+		luaL_argerror(L, 2, "number or table expected");
+	}
+	return 1;
+}
+
 int linear_open_program  (lua_State *L) {
 	static const luaL_Reg FUNCTIONS[] = {
-		{ "dot", linear_dot },
-		{ "ger", linear_ger },
-		{ "gemv", linear_gemv },
-		{ "gemm", linear_gemm },
-		{ "gesv", linear_gesv },
-		{ "gels", linear_gels },
-		{ "inv", linear_inv },
-		{ "det", linear_det },
-		{ "cov", linear_cov },
-		{ "corr", linear_corr },
+		{"dot", linear_dot},
+		{"ger", linear_ger},
+		{"gemv", linear_gemv},
+		{"gemm", linear_gemm},
+		{"gesv", linear_gesv},
+		{"gels", linear_gels},
+		{"inv", linear_inv},
+		{"det", linear_det},
+		{"cov", linear_cov},
+		{"corr", linear_corr},
+		{"ranks", linear_ranks},
+		{"quantile", linear_quantile},
+		{"rank", linear_rank},
 		{ NULL, NULL }
 	};
 #if LUA_VERSION_NUM >= 502

@@ -20,7 +20,6 @@
 
 
 /* compatibility */
-static inline int linear_rawgeti(lua_State *L, int index, int n);
 #if LUA_VERSION_NUM < 502
 #define lua_rawlen  lua_objlen
 void *luaL_testudata(lua_State *L, int index, const char *name);
@@ -138,15 +137,6 @@ int linear_argerror (lua_State *L, int index, int numok) {
 /*
  * compatibility
  */
-
-static inline int linear_rawgeti (lua_State *L, int index, int n) {
-#if LUA_VERSION_NUM >= 503
-	return lua_rawgeti(L, index, n);
-#else
-	lua_rawgeti(L, index, n);
-	return lua_type(L, -1);
-#endif
-}
 
 #if LUA_VERSION_NUM < 502
 void *luaL_testudata (lua_State *L, int index, const char *name) {
@@ -458,6 +448,19 @@ double linear_random (uint64_t *r) {
 	r[2] ^= t;
 	r[3] = (r[3] << 45) | (r[3] >> (64 - 45));
 	return (result >> (64 - DBL_MANT_DIG)) * (1.0 / ((uint64_t)1 << DBL_MANT_DIG));  /* [0,1) */
+}
+
+
+/*
+ * comparison
+ */
+
+int linear_comparison_handler (const void *a, const void *b) {
+	double  da, db;
+
+	da = *(const double *)a;
+	db = *(const double *)b;
+	return da < db ? -1 : (da > db ? 1 : 0);
 }
 
 

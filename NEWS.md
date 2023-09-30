@@ -16,6 +16,8 @@ functions have been added.
 - The `linear.min`, `linear.max`, `linear.skew`, `linear.kurt`, `linear.median`, and `linear.mad`
 unary vector functions have been added.
 
+- The `linear.ranks`, `linear.quantile` and `linear.rank` program functions have been added.
+
 - Fixed the unwind and reshape functions when operating on a vector with an increment different
 from one.
 

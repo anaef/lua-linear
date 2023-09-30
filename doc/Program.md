@@ -105,3 +105,34 @@ $i$-th column vector of $A$, and $N$ is its length.
 
 > [!NOTE]
 > The function is generally faster when matrix `A` is a column major matrix.
+
+
+## `linear.ranks (q [, mode])`
+
+Returns a list of normalized ranks of the $q$-quantiles, formally $k / q$ for $0 \lt k \lt q$.
+The argument `q` must be a positive integer. For example, if $q$ is $4$, the function returns
+the normalized rank of the first, second, and third quartile, i.e., $[0.25, 0.50, 0.75]$.
+
+The optional argument `mode` must be a string. If it includes the letter `'z'`, the list
+additionally contains the normalized rank of $0$-th quantile, i.e., $0$; if it includes the letter
+`'q'`, the list additionally contains the normalized rank of the $q$-th quantile, i.e., $1$.
+
+
+## `linear.quantile (values, r)`
+
+Returns the quantile with normalized rank `r` within the specified values. If `r` is a list of
+values, the function returns a list of quantiles with the requested normalized ranks. The
+normalized ranks must satisfy $0 \le r \le 1$.
+
+The function creates a temporary, sorted copy of the values, and then uses linear interpolation
+to calculate the quantiles.
+
+
+## `linear.rank (values, q)`
+
+Returns the normalized rank of value `q` within the specified values. If `q` is a list of values,
+the function returns a list of the normalized ranks of the requested values. The normalized
+ranks satisfy $0 \le r \le 1$.
+
+The function creates a temporary, sorted copy of the values, and then uses linear interpolation
+to calculate the normalized ranks.
