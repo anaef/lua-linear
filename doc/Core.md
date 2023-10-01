@@ -38,12 +38,12 @@ returned. All nested lists of numbers must have the same length.
 
 ## `linear.tovector (list, selector)`
 
-Returns a vector with components selected from the specified list of tables. The function attempts
-to extract a value from each table. If the selector is a string, the function indexes the string
-as a key in each table; if the selector is a function, it is called with each table as its
-argument. The result of the indexing operation or of the function call must be a number or `nil`.
-If it is a number, the number is appended to the vector; if it is `nil`, the result is ignored.
-The function generates an error if the resulting vector would be empty.
+Returns a vector with components selected from the specified list of values. If the selector is a
+string, the function indexes each value with the string as the key; if the selector is a function,
+the function is called with each value as the sole argument. The result of the indexing operation
+or of the function call must be a number or `nil`. If it is a number, the number is appended to
+the vector; if it is `nil`, the result is ignored. The function generates an error if a result is
+neither a number nor `nil`, or if the resulting vector would be empty.
 
 
 ## `linear.type (x|X)`

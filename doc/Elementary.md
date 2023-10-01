@@ -82,18 +82,25 @@ The argument `min` defaults to `0`, and the argument `max` defaults to `1`.
 
 ## `linear.uniform (n|x|X)`
 
-Applies the uniform random function, formally $x_i \leftarrow u \in \mathcal{U}(0, 1 - \epsilon)$.
+Applies the uniform random function, formally $x_i \leftarrow u \sim \mathcal{U}(0, 1 - \epsilon)$.
 The function returns statistically random, uniformly distributed values from the half-open
 interval $[0, 1)$. You can re-seed the random state with the `linear.randomseed`
 [core function](Core.md).
 
+> [!NOTE]
+> The random number generator used is optimized for statistical purposes, and is completely
+> unsuitable for cryptographic use cases.
+
 
 ## `linear.normal (n|x|X)`
 
-Applies the normal random function, formally $x_i \leftarrow n \in \mathcal{N}(0, 1)$. The
+Applies the normal random function, formally $x_i \leftarrow n \sim \mathcal{N}(0, 1)$. The
 function returns statistically random, normally distributed values with a mean of $0$ and a
 standard deviation of $1$. You can re-seed the random state with the `linear.randomseed`
 [core function](Core.md).
+
+> [!NOTE]
+> Please see the note above.
 
 
 ## `linear.normalpdf (n|x|X [, mu [, sigma]])`

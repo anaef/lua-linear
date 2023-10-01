@@ -27,12 +27,14 @@ defaults to `notrans`. If set to `trans`, the operation is performed on $A^T$. T
 Performs a matrix-matrix product and addition operation, formally
 $C \leftarrow \alpha A B + \beta C$. The transpose arguments are one of `notrans`, `trans`, and
 default to `notrans`. If set to `trans`, the operation is performed on $A^T$ and $B^T$,
-respectively. The arguments `alpha` and `beta` default to `1.0` and `0.0`, respectively.
+respectively. The arguments `alpha` and `beta` default to `1.0` and `0.0`, respectively. The
+order of the matrices must match.
 
 
 ## `linear.gesv (A, B)`
 
-Solves systems of linear equations, formally $A X = B$.
+Solves systems of linear equations, formally $A X = B$. Matrix `A` must be square. The order of
+the matrices must match.
 
 On input, each column of matrix `B` represents the right-hand sides of a system. On output, the
 solutions $X$ are stored in matrix `B`.
@@ -45,7 +47,7 @@ value in a factor, implying that matrix `A` does not have full rank.
 ## `linear.gels (A, B [, transpose])`
 
 Solves overdetermined or underdetermined systems of linear equations, formally $A X = B$. Matrix
-`A` is assumed to have full rank.
+`A` is assumed to have full rank. The order of the matrices must match.
 
 On input, each column of matrix `B` represents the right-hand sides of a system. On output, the
 solutions $X$ are stored in in matrix `B`.
