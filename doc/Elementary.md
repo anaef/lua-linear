@@ -89,7 +89,7 @@ interval $[0, 1)$. You can re-seed the random state with the `linear.randomseed`
 
 > [!NOTE]
 > The random number generator used is optimized for statistical purposes, and is completely
-> unsuitable for cryptographic use cases.
+> unsuitable for security or cryptographic use cases.
 
 
 ## `linear.normal (n|x|X)`
