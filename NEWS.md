@@ -1,7 +1,7 @@
 # Lua Linear Release Notes
 
 
-## Release 1.1.0
+## Release 1.1.0 (2023-10-01)
 
 - The code base has been refactored into modules and made extensible.
 

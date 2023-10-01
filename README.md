@@ -2,8 +2,8 @@
 
 ## Introduction
 
-Lua Linear provides comprehensive linear algebra support for the Lua programming language. Where
-applicable, the BLAS and LAPACK implementations on the system are used.
+Lua Linear provides comprehensive linear algebra and statistics support for the Lua programming
+language. Where applicable, the BLAS and LAPACK implementations on the system are used.
 
 Here are some quick examples:
 
@@ -43,7 +43,7 @@ Output:
 
 ```
 x^T y   10.0
-N(10, 5)        7.6755368439453 11.817516987964 11.047801936107 ...
+N(10,5) 7.6755368439453 11.817516987964 11.047801936107 ...
 mean, std       9.6617642376046 4.8338730760376
 solutions       5.0     1.0
 correlations    -0.0026144290886127     0.0063412466674457      -0.004072920697946

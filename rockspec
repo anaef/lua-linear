@@ -1,12 +1,12 @@
 rockspec_format = "3.0"
 package = "lua-linear"
-version = "1.0.0-1"
+version = "1.1.0-1"
 description = {
-	summary = "Linear algebra for Lua",
+	summary = "Linear algebra and statistics for Lua",
 	detailed = [[
-		Lua Linear provides comprehensive linear algebra support for the Lua programming
-		language. Where applicable, the BLAS and LAPACK implementations on the system are
-		used.
+		Lua Linear provides comprehensive linear algebra and statistics support for the
+		Lua programming language. Where applicable, the BLAS and LAPACK implementations
+		on the system are used.
 	]],
 	license = "MIT",
 	homepage = "https://github.com/anaef/lua-linear",
@@ -25,7 +25,7 @@ external_dependencies = {
 }
 source = {
 	url = "git+https://github.com/anaef/lua-linear.git",
-	tag = "v1.0.0",
+	tag = "v1.1.0",
 }
 build = {
 	type = "builtin",
