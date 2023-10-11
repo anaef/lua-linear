@@ -14,6 +14,17 @@
 #include "linear_program.h"
 
 
+typedef struct linear_spline_s {
+	size_t   n;              /* number of polynomials */
+	int      extrapolation;  /* extrapolation mode */
+	double  *x;              /* x cut-ins; n + 1 values */
+	double  *a;              /* constant coefficients; equals y; n + 1 values */
+	double  *b;              /* linear coefficients; n values */
+	double  *c;              /* quadratic coefficients; n values */
+	double  *d;              /* cubic coefficients; n values */
+} linear_spline_t;
+
+
 static inline CBLAS_TRANSPOSE linear_checktranspose(lua_State *L, int index);
 static inline char linear_lapacktranspose(CBLAS_TRANSPOSE transpose);
 static int linear_dot(lua_State *L);
@@ -29,9 +40,13 @@ static int linear_corr(lua_State *L);
 static int linear_ranks(lua_State *L);
 static int linear_quantile(lua_State *L);
 static int linear_rank(lua_State *L);
+static int linear_interpolant(lua_State *L);
+static int linear_spline(lua_State *L);
 
 
 static const char *const LINEAR_TRANSPOSES[] = {"notrans", "trans", NULL};
+static const char *const LINEAR_BOUNDARIES[] = {"not-a-knot", "natural", "clamped", NULL};
+static const char *const LINEAR_EXTRAPOLATIONS[] = {"none", "const", "linear", "cubic", NULL};
 
 
 static inline CBLAS_TRANSPOSE linear_checktranspose (lua_State *L, int index) {
@@ -573,6 +588,185 @@ static int linear_rank (lua_State *L) {
 	return 1;
 }
 
+static int linear_interpolant (lua_State *L) {
+	double            x, y;
+	size_t            lower, upper, mid;
+	linear_spline_t  *spline;
+
+	spline = (void *)lua_topointer(L, lua_upvalueindex(1));
+	x = luaL_checknumber(L, 1);
+	if (x >= spline->x[0] && x <= spline->x[spline->n]) {
+		/* interpolation */
+		lower = 0;
+		upper = spline->n - 1;
+		while (lower <= upper) {
+			mid = (lower + upper) / 2;
+			if (spline->x[mid] <= x) {
+				lower = mid + 1;
+			} else {
+				upper = mid - 1;
+			}
+		}
+		x -= spline->x[upper];
+		y = ((spline->d[upper] * x + spline->c[upper]) * x + spline->b[upper]) * x
+				+ spline->a[upper];
+	} else if (x < spline->x[0]) {
+		/* left extrapolation */
+		switch (spline->extrapolation) {
+		case 0:  /* none */
+			return luaL_argerror(L, 1, "too small");
+
+		case 1:  /* const */
+			y = spline->a[0];
+			break;
+
+		case 2:  /* linear */
+			x -= spline->x[0];
+			y = spline->b[0] * x + spline->a[0];
+			break;
+
+		case 3:  /* cubic */
+			x -= spline->x[0];
+			y = ((spline->d[0] * x + spline->c[0]) * x + spline->b[0]) * x
+				+ spline->a[0];
+			break;
+
+		default:
+			return 0;  /* not reached */
+		}
+	} else if (x > spline->x[spline->n]) {
+		/* right extrapolation */
+		switch (spline->extrapolation) {
+			case 0:  /* none */
+				return luaL_argerror(L, 1, "too large");
+
+			case 1:  /* const */
+				y = spline->a[spline->n];
+				break;
+
+			case 2:  /* linear */
+				x -= spline->x[spline->n];
+				y = spline->b[spline->n - 1] * x + spline->a[spline->n];
+				break;
+
+			case 3:  /* cubic */
+				x -= spline->x[spline->n - 1];
+				y = ((spline->d[spline->n - 1] * x + spline->c[spline->n - 1]) * x
+						+ spline->b[spline->n - 1]) * x
+						+ spline->a[spline->n - 1];
+				break;
+
+			default:
+				return 0;  /* not reached */
+		}
+	} else {
+		return luaL_argerror(L, 1, "bad value");
+	}
+	lua_pushnumber(L, y);
+	return 1;
+}
+
+static int linear_spline (lua_State *L) {
+	int                    boundary, extrapolation;
+	double                *h, *dl, *d, *du, *b;
+	double                 da, db;
+	size_t                 i, n;
+	linear_vector_t       *x, *y;
+	linear_spline_t       *spline;
+
+	/* process arguments */
+	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
+	y = luaL_checkudata(L, 2, LINEAR_VECTOR);
+	boundary = luaL_checkoption(L, 3, "not-a-knot", LINEAR_BOUNDARIES);
+	extrapolation = luaL_checkoption(L, 4, "none", LINEAR_EXTRAPOLATIONS);
+	da = boundary == 2 ? luaL_checknumber(L, 5) : 0.0;  /* clamped */
+	db = boundary == 2 ? luaL_checknumber(L, 6) : 0.0;
+	luaL_argcheck(L, x->length >= (boundary == 0 ? 4 : 3), 0, "bad dimension");
+	luaL_argcheck(L, x->length == y->length, 2, "dimension mismatch");
+	n = x->length - 1;  /* number of polynomials */
+
+	/* prepare the tridiagonal system */
+	spline = lua_newuserdata(L, sizeof(linear_spline_t) + (5 * n + 2) * sizeof(double));
+	spline->n = n;
+	spline->extrapolation = extrapolation;
+	spline->x = (double *)((char *)(spline) + sizeof(linear_spline_t));
+	spline->a = spline->x + (n + 1);
+	spline->b = spline->a + (n + 1);
+	spline->c = spline->b + n;
+	spline->d = spline->c + n;
+	h = spline->d;
+	dl = spline->b;
+	d = spline->x;
+	du = spline->c;
+	b = spline->a;
+	for (i = 0; i < n; i++) {
+		h[i] = x->values[(i + 1) * x->inc] - x->values[i * x->inc];
+		if (!(h[i] > 0)) {
+			return luaL_argerror(L, 1, "bad order");
+		}
+	}
+	for (i = 1; i < n; i++) {
+		dl[i - 1] = h[i - 1];
+		d[i] = 2 * (h[i - 1] + h[i]);
+		du[i] = h[i];
+		b[i] = 3 * ((y->values[(i + 1) * y->inc] - y->values[i * y->inc]) / h[i]
+				- (y->values[i * y->inc] - y->values[(i - 1) * y->inc]) / h[i- 1]);
+	}
+	switch (boundary) {
+	case 0:  /* not-a-knot*/
+		d[0] = h[0] - (h[1] * h[1]) / h[0];
+		du[0] = 3 * h[1] + 2 * h[0] + (h[1] * h[1]) / h[0];
+		b[0] = 3 * ((y->values[2 * y->inc] - y->values[1 * y->inc]) / h[1]
+				- (y->values[1 * y->inc] - y->values[0 * y->inc]) / h[0]);
+		dl[n - 1] = 3 * h[n - 2] + 2 * h[n - 1] + (h[n - 2] * h[n - 2]) / h[n - 1];
+		d[n] = h[n - 1] - (h[n - 2] * h[n - 2]) / h[n - 1];
+		b[n] = 3 * ((y->values[n * y->inc] - y->values[(n - 1) * y->inc]) / h[n - 1]
+				- (y->values[(n - 1) * y->inc] - y->values[(n - 2) * y->inc])
+				/ h[n - 2]);
+		break;
+
+	case 1:  /* natural */
+		d[0] = 1;
+		du[0] = 0;
+		b[0] = 0;
+		dl[n - 1] = 0;
+		d[n] = 1;
+		b[n] = 0;
+		break;
+
+	case 2:  /* clamped */
+		d[0] = 2 * h[0];
+		du[0] = h[0];
+		b[0] = 3 * ((y->values[1 * y->inc] - y->values[0 * y->inc]) / h[0] - da);
+		dl[n - 1] = h[n - 1];
+		d[n] = 2 * h[n - 1];
+		b[n] = 3 * (db - (y->values[n * y->inc] - y->values[(n - 1) * y->inc])
+				/ h[n - 1]);
+		break;
+	}
+
+	/* solve the tridiagonal system */
+	if (LAPACKE_dgtsv(LAPACK_ROW_MAJOR, n + 1, 1, dl, d, du, b, 1) != 0) {
+		return luaL_error(L, "internal error");
+	}
+
+	/* make polynomials */
+	for (i = 0; i < n; i++) {
+		spline->b[i] = (y->values[(i + 1) * y->inc] - y->values[i * y->inc]) / h[i]
+				- (2 * b[i] + b[i + 1]) * h[i] / 3;
+		spline->c[i] = b[i];
+		spline->d[i] = (b[i + 1] - b[i]) / (3 * h[i]);  /* overwrites h[i] */
+		spline->x[i] = x->values[i * x->inc];
+		spline->a[i] = y->values[i * y->inc];  /* overwrites b[i] */
+	}
+	spline->x[n] = x->values[n * x->inc];
+	spline->a[n] = y->values[n * y->inc];
+
+	/* return interpolant */
+	lua_pushcclosure(L, linear_interpolant, 1);
+	return 1;
+}
+
 int linear_open_program  (lua_State *L) {
 	static const luaL_Reg FUNCTIONS[] = {
 		{"dot", linear_dot},
@@ -588,6 +782,7 @@ int linear_open_program  (lua_State *L) {
 		{"ranks", linear_ranks},
 		{"quantile", linear_quantile},
 		{"rank", linear_rank},
+		{"spline", linear_spline},
 		{ NULL, NULL }
 	};
 #if LUA_VERSION_NUM >= 502

@@ -1007,6 +1007,41 @@ local function testRank ()
 	assert(r[4] == 0.25)
 end
 
+-- Tests the spline function
+local function testSpline ()
+	local x = linear.vector(9)
+	local y = linear.vector(9)
+	for i = 0, 8 do
+		local a = i * math.pi / 4
+		x[i + 1] = a
+		y[i + 1] = math.sin(a)
+	end
+	local spline = linear.spline(x, y, "not-a-knot")
+	for i = 0, 128 do
+		local a = i * math.pi / 64
+		assert(math.abs(math.sin(a) - spline(a)) < 1E-2)
+	end
+	spline = linear.spline(x, y, "natural")
+	for i = 0, 128 do
+		local a = i * math.pi / 64
+		assert(math.abs(math.sin(a) - spline(a)) < 1E-2)
+	end
+	spline = linear.spline(x, y, "clamped", nil, math.cos(0), math.cos(2 * math.pi))
+	for i = 0, 128 do
+		local a = i * math.pi / 64
+		assert(math.abs(math.sin(a) - spline(a)) < 1E-2)
+	end
+	spline = linear.spline(x, y, nil, "const")
+	assert(spline(-1) == 0)
+	assert(math.abs(spline(2 * math.pi + 1) - 0) < EPSILON)
+	spline = linear.spline(x, y, nil, "linear")
+	assert(math.abs(spline(-0.01) - (-0.01)) < 1E-3)
+	assert(math.abs(spline(2 * math.pi + 0.01) - 0.01) < 4E-3)
+	spline = linear.spline(x, y, nil, "cubic")
+	assert(math.abs(spline(-0.01) - (-0.01)) < 1E-3)
+	assert(math.abs(spline(2 * math.pi + 0.01) - 0.01) < 1E-3)
+end
+
 -- Core function tests
 testVector()
 testMatrix()
@@ -1075,3 +1110,4 @@ testCorr()
 testRanks()
 testQuantile()
 testRank()
+testSpline()

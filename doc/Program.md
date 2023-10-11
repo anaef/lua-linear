@@ -138,3 +138,24 @@ ranks satisfy $0 \le r \le 1$.
 
 The function creates a temporary, sorted copy of the values, and then uses linear interpolation
 to calculate the normalized ranks.
+
+
+## `linear.spline (x, y [, boundary [, extrapolation [, da, db]]])`
+
+Returns a cubic spline interpolant for the specified vectors `x` and `y`, where $y_i = f(x_i)$.
+The returned function accepts a single argument from the domain of vector `x`, and returns the
+interpolated value from the domain of vector `y`. The lengths of the vectors `x` and `y` must
+match, and be at least `3`, or `4` in case of the *not-a-knot* boundary condition. The components
+of vector `x` must be strictly increasing.
+
+The argument `boundary` controls the boundary conditions of the interpolant, and can take the
+value `"not-a-knot"` (the default), `"natural"`, or `"clamped"`. If set to `"clamped"`, the
+arguments `da` and `db` must be provided, specifying the derivative of the underlying function
+at the first and last value of vector `x`, respectively.
+
+The argument `extrapolation` controls the extrapolation behavior of the interpolant, and can take
+the value `"none"` (the default), `"const"`, `"linear"`, or `"cubic"`. If set to `"none"`, the
+interpolation function generates an error when extrapolation is attempted; if set to `"const"`,
+the function returns the first or last value of vector `y`, respectively; if set to `"linear"`",
+the function expands the linear coefficient from the first or last polynomial, respectively; if
+set to `"cubic"`, the function expands the full first or last polynomial, respectively.
