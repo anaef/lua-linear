@@ -17,16 +17,16 @@ The argument `alpha` defaults to `1.0`.
 ## `linear.gemv (A, x, y [transpose, [, alpha [, beta]]])`
 
 Performs a matrix-vector product and addition operation, formally
-$y \leftarrow \alpha A x + \beta y$. The argument transpose is one of `notrans`, `trans`, and
-defaults to `notrans`. If set to `trans`, the operation is performed on $A^T$. The arguments
+$y \leftarrow \alpha A x + \beta y$. The argument transpose can take the value `"notrans"` (the
+default) or `"trans"`. If set to `"trans"`, the operation is performed on $A^T$. The arguments
 `alpha` and `beta` default to `1.0` and `0.0`, respectively.
 
 
 ## `linear.gemm (A, B, C [, transposeA [, transposeB [, alpha [, beta]]]])`
 
 Performs a matrix-matrix product and addition operation, formally
-$C \leftarrow \alpha A B + \beta C$. The transpose arguments are one of `notrans`, `trans`, and
-default to `notrans`. If set to `trans`, the operation is performed on $A^T$ and $B^T$,
+$C \leftarrow \alpha A B + \beta C$. The transpose arguments can take the value `"notrans"` (the
+default) or `"trans"`. If set to `"trans"`, the operation is performed on $A^T$ and/or $B^T$,
 respectively. The arguments `alpha` and `beta` default to `1.0` and `0.0`, respectively. The
 order of the matrices must match.
 
@@ -56,8 +56,8 @@ In case of overdetermined systems, the function solves the least squares problem
 $\min \lVert b - A x \rVert_2$, and in case of underdetermined systems, the function finds minimum
 L2 norm solutions.
 
-The argument transpose is one of `notrans`, `trans`, and defaults to `notrans`. If set to `trans`,
-the operation is performed on $A^T$.
+The argument transpose can take the value `"notrans"` (the default) or `"trans"`. If set to
+`"trans"`, the operation is performed on $A^T$.
 
 The function replaces the elements of matrix `A` with a factorization. It returns `true` if the
 solutions have been computed, and `false` if the solutions could not be computed due to a zero
@@ -111,9 +111,9 @@ $i$-th column vector of $A$, and $N$ is its length.
 
 ## `linear.ranks (q [, mode])`
 
-Returns a list of normalized ranks of the $q$-quantiles, formally $k / q$ for $0 \lt k \lt q$.
+Returns a list of the normalized ranks of the $q$-quantiles, formally $k / q$ for $0 \lt k \lt q$.
 The argument `q` must be a positive integer. For example, if $q$ is $4$, the function returns
-the normalized rank of the first, second, and third quartile, i.e., $[0.25, 0.50, 0.75]$.
+the normalized ranks of the first, second, and third quartile, i.e., $[0.25, 0.50, 0.75]$.
 
 The optional argument `mode` must be a string. If it includes the letter `'z'`, the list
 additionally contains the normalized rank of $0$-th quantile, i.e., $0$; if it includes the letter
@@ -123,7 +123,7 @@ additionally contains the normalized rank of $0$-th quantile, i.e., $0$; if it i
 ## `linear.quantile (values, r)`
 
 Returns the quantile with normalized rank `r` within the specified values. If `r` is a list of
-values, the function returns a list of quantiles with the requested normalized ranks. The
+values, the function returns a list of quantiles with the respective normalized ranks. The
 normalized ranks must satisfy $0 \le r \le 1$.
 
 The function creates a temporary, sorted copy of the values, and then uses linear interpolation
@@ -133,8 +133,8 @@ to calculate the quantiles.
 ## `linear.rank (values, q)`
 
 Returns the normalized rank of value `q` within the specified values. If `q` is a list of values,
-the function returns a list of the normalized ranks of the requested values. The normalized
-ranks satisfy $0 \le r \le 1$.
+the function returns a list of normalized ranks of the respective values. The normalized ranks
+satisfy $0 \le r \le 1$.
 
 The function creates a temporary, sorted copy of the values, and then uses linear interpolation
 to calculate the normalized ranks.
@@ -145,13 +145,18 @@ to calculate the normalized ranks.
 Returns a cubic spline interpolant for the specified vectors `x` and `y`, where $y_i = f(x_i)$.
 The returned function accepts a single argument from the domain of vector `x`, and returns the
 interpolated value from the domain of vector `y`. The lengths of the vectors `x` and `y` must
-match, and be at least `3`, or `4` in case of the *not-a-knot* boundary condition. The components
+match, and be at least `3` (or `4` in case of *not-a-knot* boundary conditions.) The components
 of vector `x` must be strictly increasing.
 
 The argument `boundary` controls the boundary conditions of the interpolant, and can take the
-value `"not-a-knot"` (the default), `"natural"`, or `"clamped"`. If set to `"clamped"`, the
-arguments `da` and `db` must be provided, specifying the derivative of the underlying function
-at the first and last value of vector `x`, respectively.
+value `"not-a-knot"` (the default), `"clamped"`, or `"natural"`. If set to `"not-a-knot"`, the
+third derivatives of first and last pairs of polynomials are equated at their touch points,
+formally $p_1'''(x_1) = p_2'''(x_1)$ and $p_{n-1}'''(x_{n-1}) = p_n'''(x_{n - 1})$; if set to
+`"clamped"`, the first derivatives of the underlying function at the first and last value of
+vector `x` are specified through the required arguments `da` and `db`, formally $p_1'(x_0) =
+f'(x_0) = \textrm{da}$ and $p_n'(x_n) = f'(x_n) = \textrm{db}$; if set to `"natural"`, the second
+derivatives of the first and last polynomial at the first and last value of vector `x` are equated
+to $0$, formally, $p_1''(x_0) = p_n''(x_n) = 0$.
 
 The argument `extrapolation` controls the extrapolation behavior of the interpolant, and can take
 the value `"none"` (the default), `"const"`, `"linear"`, or `"cubic"`. If set to `"none"`, the

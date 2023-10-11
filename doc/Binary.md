@@ -7,8 +7,8 @@ If called with two vectors `x`and `y`, the function applies vector `x` to vector
 lengths of the vectors must match.
 
 If called with a vector `x` and a matrix `Y`, the function applies vector `x` to the vectors of
-matrix `Y`. If `order` is `row` (the default), vector `x` is applied to the row vectors
-of matrix `Y`; if order is `col`, vector `x` is applied to the column vectors of matrix `Y`. The
+matrix `Y`. If `order` is `"row"` (the default), vector `x` is applied to the row vectors
+of matrix `Y`; if order is `"col"`, vector `x` is applied to the column vectors of matrix `Y`. The
 lengths of the vectors must match.
 
 > [!IMPORTANT]

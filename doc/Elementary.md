@@ -88,8 +88,8 @@ interval $[0, 1)$. You can re-seed the random state with the `linear.randomseed`
 [core function](Core.md).
 
 > [!NOTE]
-> The random number generator used is optimized for statistical purposes, and is completely
-> unsuitable for security or cryptographic use cases.
+> The underlying random number generator is optimized for statistical purposes, and is completely
+> unsuitable for security or cryptography.
 
 
 ## `linear.normal (n|x|X)`
