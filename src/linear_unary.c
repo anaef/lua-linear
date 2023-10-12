@@ -321,7 +321,7 @@ static double linear_mad_handler (int size, double *x, int incx, linear_arg_u *a
 	int      i, mid;
 	double  *copy, median, mad;
 
-	/* calculat the median */
+	/* calculate the median */
 	copy = malloc(size * sizeof(double));
 	if (copy == NULL) {
 		return luaL_error(args[0].L, "cannot allocate values");
