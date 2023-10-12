@@ -50,7 +50,7 @@ static int linear_spline(lua_State *L);
 
 
 static const char *const LINEAR_TRANSPOSES[] = {"notrans", "trans", NULL};
-static const char *const LINEAR_BOUNDARIES[] = {"not-a-knot", "natural", "clamped", NULL};
+static const char *const LINEAR_BOUNDARIES[] = {"not-a-knot", "clamped", "natural", NULL};
 static const char *const LINEAR_EXTRAPOLATIONS[] = {"none", "const", "linear", "cubic", NULL};
 
 
@@ -684,8 +684,8 @@ static int linear_spline (lua_State *L) {
 	y = luaL_checkudata(L, 2, LINEAR_VECTOR);
 	boundary = luaL_checkoption(L, 3, "not-a-knot", LINEAR_BOUNDARIES);
 	extrapolation = luaL_checkoption(L, 4, "none", LINEAR_EXTRAPOLATIONS);
-	da = boundary == 2 ? luaL_checknumber(L, 5) : 0.0;  /* clamped */
-	db = boundary == 2 ? luaL_checknumber(L, 6) : 0.0;
+	da = boundary == 1 ? luaL_checknumber(L, 5) : 0.0;  /* clamped */
+	db = boundary == 1 ? luaL_checknumber(L, 6) : 0.0;
 	luaL_argcheck(L, x->length >= (boundary == 0 ? 4 : 3), 0, "bad dimension");
 	luaL_argcheck(L, x->length == y->length, 2, "dimension mismatch");
 	n = x->length - 1;  /* number of polynomials */
@@ -730,16 +730,7 @@ static int linear_spline (lua_State *L) {
 				/ h[n - 2]);
 		break;
 
-	case 1:  /* natural */
-		d[0] = 1;
-		du[0] = 0;
-		b[0] = 0;
-		dl[n - 1] = 0;
-		d[n] = 1;
-		b[n] = 0;
-		break;
-
-	case 2:  /* clamped */
+	case 1:  /* clamped */
 		d[0] = 2 * h[0];
 		du[0] = h[0];
 		b[0] = 3 * ((y->values[1 * y->inc] - y->values[0 * y->inc]) / h[0] - da);
@@ -747,6 +738,15 @@ static int linear_spline (lua_State *L) {
 		d[n] = 2 * h[n - 1];
 		b[n] = 3 * (db - (y->values[n * y->inc] - y->values[(n - 1) * y->inc])
 				/ h[n - 1]);
+		break;
+
+	case 2:  /* natural */
+		d[0] = 1;
+		du[0] = 0;
+		b[0] = 0;
+		dl[n - 1] = 0;
+		d[n] = 1;
+		b[n] = 0;
 		break;
 	}
 
