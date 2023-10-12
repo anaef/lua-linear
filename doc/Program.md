@@ -150,7 +150,7 @@ of vector `x` must be strictly increasing.
 
 The argument `boundary` controls the boundary conditions of the interpolant, and can take the
 value `"not-a-knot"` (the default), `"clamped"`, or `"natural"`. If set to `"not-a-knot"`, the
-third derivatives of first and last pairs of polynomials are equated at their touch points,
+third derivatives of the first and last pairs of polynomials are equated at their touch points,
 formally $p_1'''(x_1) = p_2'''(x_1)$ and $p_{n-1}'''(x_{n-1}) = p_n'''(x_{n - 1})$; if set to
 `"clamped"`, the first derivatives of the underlying function at the first and last value of
 vector `x` are specified through the required arguments `da` and `db`, formally $p_1'(x_0) =

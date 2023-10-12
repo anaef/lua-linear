@@ -5,13 +5,13 @@ This section describes the core functions of Lua Linear.
 
 ## `linear.vector (length)`
 
-Creates a new vector of the specified length.
+Creates a new vector of the specified length. The components of the vector are initialized to 0.
 
 
 ## `linear.matrix (rows, cols [, order])`
 
 Creates a new matrix of the specified size. Order is one of `"row"`, `"col"`, and defaults to
-creating a matrix with row major order.
+creating a matrix with row major order. The elements of the matrix are initialized to 0.
 
 
 ## `linear.totable (x|X)`
@@ -55,7 +55,7 @@ Returns the string `"vector"` if the value is a vector, `"matrix"` if the value 
 ## `linear.size (x|X)`
 
 Returns the length of vector `x`, or three values for the number of rows and columns as well as
-the order of a matrix `X`.
+the order of matrix `X`.
 
 
 ## `linear.tvector (X, index)`

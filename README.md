@@ -72,7 +72,6 @@ print("correlations", C[1][2], C[1][3], C[2][3])  -- should be close to zero
 
 ```
 correlations    -0.0026144290886127     0.0063412466674457      -0.004072920697946
-
 ```
 
 ### Order Statistics
