@@ -12,6 +12,11 @@
 #include "linear_unary.h"
 
 
+#if LUA_VERSION_NUM < 502
+#define luaL_testudata  linear_testudata
+#endif
+
+
 static double linear_sum_handler(int size, double *values, int inc, linear_arg_u *args);
 static int linear_sum(lua_State *L);
 static double linear_mean_handler(int size, double *values, int inc, linear_arg_u *args);

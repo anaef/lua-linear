@@ -21,9 +21,10 @@
 
 /* compatibility */
 #if LUA_VERSION_NUM < 502
-#define lua_rawlen  lua_objlen
-void *luaL_testudata(lua_State *L, int index, const char *name);
+#define lua_rawlen      lua_objlen
+#define luaL_testudata  linear_testudata
 #endif
+
 
 /* vector */
 static void linear_push_vector(lua_State *L, size_t length, size_t inc, linear_data_t *data,
@@ -140,7 +141,7 @@ int linear_argerror (lua_State *L, int index, int numok) {
  */
 
 #if LUA_VERSION_NUM < 502
-void *luaL_testudata (lua_State *L, int index, const char *name) {
+void *linear_testudata (lua_State *L, int index, const char *name) {
 	void  *userdata;
 
 	userdata = lua_touserdata(L, index);

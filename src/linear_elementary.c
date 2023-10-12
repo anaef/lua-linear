@@ -12,6 +12,11 @@
 #include "linear_elementary.h"
 
 
+#if LUA_VERSION_NUM < 502
+#define luaL_testudata  linear_testudata
+#endif
+
+
 static void linear_inc_handler(int size, double *x, int incx, linear_arg_u *args);
 static int linear_inc(lua_State *L);
 static void linear_scal_handler(int size, double *x, int incx, linear_arg_u *args);

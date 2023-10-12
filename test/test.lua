@@ -6,6 +6,20 @@ local EPSILON = 6E-5
 
 
 --
+-- Compatibility
+--
+
+local ipairs = _VERSION > "Lua 5.1" and _G.ipairs or function (t)
+	local type = linear.type(t)
+	if type == "vector" or type == "matrix" then
+	       return linear.ipairs(t)
+	else
+	       return _G.ipairs(t)
+	end
+end
+
+
+--
 -- Core functions
 --
 

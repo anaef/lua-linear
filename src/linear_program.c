@@ -14,6 +14,11 @@
 #include "linear_program.h"
 
 
+#if LUA_VERSION_NUM < 502
+#define lua_rawlen  lua_objlen
+#endif
+
+
 typedef struct linear_spline_s {
 	size_t   n;              /* number of polynomials */
 	int      extrapolation;  /* extrapolation mode */

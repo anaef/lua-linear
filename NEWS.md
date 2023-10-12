@@ -6,6 +6,9 @@
 - The `linear.spline` program function has been added, supporting cubic spline interpolants with
 the not-a-knot, natural, and clamped boundary conditions.
 
+- Compilation errors against Lua 5.1 have been fixed, and tests have been amended with
+compatibility logic.
+
 
 ## Release 1.1.0 (2023-10-01)
 

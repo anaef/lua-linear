@@ -11,6 +11,11 @@
 #include "linear_binary.h"
 
 
+#if LUA_VERSION_NUM < 502
+#define luaL_testudata  linear_testudata
+#endif
+
+
 static void linear_axpy_handler(int size, double *x, int incx, double *y, int incy,
 		linear_arg_u *args);
 static int linear_axpy(lua_State *L);
