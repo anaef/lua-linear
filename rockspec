@@ -54,4 +54,16 @@ build = {
 			},
 		},
 	},
+	platforms = {
+		linux = {
+			type = "make",
+			build_variables = {
+				CFLAGS = "-fPIC -O3 -D_REENTRANT -D_GNU_SOURCE",
+				LUA_INCDIR = "$(LUA_INCDIR)",
+			},
+			install_variables = {
+				LIBDIR = "$(LIBDIR)",
+			},
+		}
+	},
 }

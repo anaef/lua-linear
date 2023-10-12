@@ -9,6 +9,9 @@ the not-a-knot, natural, and clamped boundary conditions.
 - Compilation errors against Lua 5.1 have been fixed, and tests have been amended with
 compatibility logic.
 
+- The rockspec has been modified to build with the make backend on Linux to use the -O3 flag
+for vectorization.
+
 
 ## Release 1.1.0 (2023-10-01)
 
