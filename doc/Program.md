@@ -85,6 +85,28 @@ The determinant is computed on a copy of the elements of matrix `A`, which remai
 The functions returns `0.0` if matrix `A` is singular.
 
 
+## `linear.svd (A, U, s, VT [, ns])`
+
+Calculates the singular value decomposition of matrix `A`, formally $A = U \Sigma V^T$ where
+matrix `A` is an $m$ by $n$ matrix, i.e., it has $m$ rows and $n$ columns. The order of the
+matrices must match. The columns of matrix `U` are set to the left singular vectors, the rows of
+matrix `VT` are set to the right singular vectors, and vector `s` is set to the singular values of
+matrix `A`, in descending order. The content of matrix `A` is destroyed. The function returns
+`true` if the calculation was successful, and `false` if convergence failed.
+
+If the argument `ns` is omitted, the function calculates all singular vectors. Matrices `U`
+and `VT` must be square matrices of sizes $m$ and $n$, respectively.
+
+If the argument `ns` is provided, it specifies the number of singular values to calculate and must
+satisfy $1 \le \textrm{ns} \le \min(m, n)$. Matrix `U` must be an $m$ by $\textrm{ns}$ matrix, and
+matrix `VT` must be an $\textrm{ns}$ by $n$ matrix. The function calculates the largest $ns$
+singular values. If $\textrm{ns}$ is less than $\min(m, n)$, the function uses an eigenvalue
+problem to compute the subset of the singular values.
+
+Vector `s` must be of length $\min(m, n)$ regardless of whether `ns` is specified, and the vector
+must not be a transposed vector.
+
+
 ## `linear.cov (A, B [, ddof])`
 
 Calculates the pairwise covariances of the column vectors of $A$ with the specified delta

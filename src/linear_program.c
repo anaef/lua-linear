@@ -40,6 +40,7 @@ static int linear_gesv(lua_State *L);
 static int linear_gels(lua_State *L);
 static int linear_inv(lua_State *L);
 static int linear_det(lua_State *L);
+static int linear_svd(lua_State *L);
 static int linear_cov(lua_State *L);
 static int linear_corr(lua_State *L);
 static int linear_ranks(lua_State *L);
@@ -260,6 +261,59 @@ static int linear_det (lua_State *L) {
 	free(copy);
 	free(ipiv);
 	lua_pushnumber(L, neg ? -det : det);
+	return 1;
+}
+
+static int linear_svd (lua_State *L) {
+	int               full;
+	size_t            min, ns;
+	double           *superb;
+	lapack_int       *isuperb, nsout, result;
+	linear_vector_t  *s;
+	linear_matrix_t  *A, *U, *VT;
+
+	/* check arguments */
+	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
+	U = luaL_checkudata(L, 2, LINEAR_MATRIX);
+	s = luaL_checkudata(L, 3, LINEAR_VECTOR);
+	VT = luaL_checkudata(L, 4, LINEAR_MATRIX);
+	min = A->cols < A->rows ? A->cols : A->rows;
+	full = lua_gettop(L) == 4;
+	ns = full ? min : (size_t)luaL_checkinteger(L, 5);
+	luaL_argcheck(L, U->order == A->order, 2, "order mismatch");
+	luaL_argcheck(L, U->rows == A->rows && U->cols == (full ? A->rows : ns), 2,
+			"dimension mismatch");
+	luaL_argcheck(L, s->inc == 1, 3, "bad increment");
+	luaL_argcheck(L, s->length == min, 3, "dimension mismatch");
+	luaL_argcheck(L, VT->order == A->order, 4, "order mismatch");
+	luaL_argcheck(L, VT->rows == (full ? A->cols : ns) && VT->cols == A->cols, 4,
+			"dimension mismatch");
+	luaL_argcheck(L, ns >= 1 && ns <= min, 5, "dimension mismatch");
+
+	/* invoke subprogram */
+	if (ns == min) {
+		superb = malloc((min - 1) * sizeof(double));
+		if (superb == NULL) {
+			return luaL_error(L, "cannot allocate unconverged elements");
+		}
+		result = LAPACKE_dgesvd(A->order, full ? 'A' : 'S', full ? 'A' : 'S', A->rows,
+				A->cols, A->values, A->ld, s->values, U->values, U->ld, VT->values,
+				VT->ld, superb);
+		free(superb);
+	} else {
+		isuperb = malloc((12 * min - 1) * sizeof(lapack_int));
+		if (isuperb == NULL) {
+			return luaL_error(L, "cannot allocate unconverged indexes");
+		}
+		result = LAPACKE_dgesvdx(A->order, 'V', 'V', 'I', A->rows, A->cols, A->values,
+			A->ld, 0, 0, 1, ns, &nsout, s->values, U->values, U->ld, VT->values,
+			VT->ld,	isuperb);
+		free(isuperb);
+	}
+	if (result < 0) {
+		return luaL_error(L, "internal error");
+	}
+	lua_pushboolean(L, result == 0);
 	return 1;
 }
 
@@ -782,6 +836,7 @@ int linear_open_program  (lua_State *L) {
 		{"gels", linear_gels},
 		{"inv", linear_inv},
 		{"det", linear_det},
+		{"svd", linear_svd},
 		{"cov", linear_cov},
 		{"corr", linear_corr},
 		{"ranks", linear_ranks},

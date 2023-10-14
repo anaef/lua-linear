@@ -1,6 +1,12 @@
 # Lua Linear Release Notes
 
 
+## Release 1.3.0
+
+- The `linear.svd` program function has been added, calculating the singular value decomposition
+of matrices.
+
+
 ## Release 1.2.0 (2023-10-12)
 
 - The `linear.spline` program function has been added, supporting cubic spline interpolants with
