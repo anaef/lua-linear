@@ -33,14 +33,14 @@ static void linear_copy_handler(int size, double *x, int incx, double *y, int in
 static int linear_copy(lua_State *L);
 
 
-static linear_param_t LINEAR_PARAMS_NONE[] = {
+static linear_param_t linear_params_none[] = {
 	LINEAR_PARAMS_LAST
 };
-static linear_param_t LINEAR_PARAMS_ALPHA[] = {
+static linear_param_t linear_params_alpha[] = {
 	{'n', {.n = 1.0}},
 	LINEAR_PARAMS_LAST
 };
-static linear_param_t LINEAR_PARAMS_ALPHA_BETA[] = {
+static linear_param_t linear_params_alpha_beta[] = {
 	{'n', {.n = 1.0}},
 	{'n', {.n = 1.0}},
 	LINEAR_PARAMS_LAST
@@ -136,7 +136,7 @@ static void linear_axpy_handler (int size, double *x, int incx, double *y, int i
 }
 
 static int linear_axpy (lua_State *L) {
-	return linear_binary(L, linear_axpy_handler, LINEAR_PARAMS_ALPHA);
+	return linear_binary(L, linear_axpy_handler, linear_params_alpha);
 }
 
 static void linear_axpby_handler (int size, double *x, int incx, double *y, int incy,
@@ -152,7 +152,7 @@ static void linear_axpby_handler (int size, double *x, int incx, double *y, int 
 }
 
 static int linear_axpby (lua_State *L) {
-	return linear_binary(L, linear_axpby_handler, LINEAR_PARAMS_ALPHA_BETA);
+	return linear_binary(L, linear_axpby_handler, linear_params_alpha_beta);
 }
 
 static void linear_mul_handler (int size, double *x, int incx, double *y, int incy,
@@ -201,7 +201,7 @@ static void linear_mul_handler (int size, double *x, int incx, double *y, int in
 }
 
 static int linear_mul (lua_State *L) {
-	return linear_binary(L, linear_mul_handler, LINEAR_PARAMS_ALPHA);
+	return linear_binary(L, linear_mul_handler, linear_params_alpha);
 }
 
 static void linear_swap_handler (int size, double *x, int incx, double *y, int incy,
@@ -211,7 +211,7 @@ static void linear_swap_handler (int size, double *x, int incx, double *y, int i
 }
 
 static int linear_swap (lua_State *L) {
-	return linear_binary(L, linear_swap_handler, LINEAR_PARAMS_NONE);
+	return linear_binary(L, linear_swap_handler, linear_params_none);
 }
 
 static void linear_copy_handler (int size, double *x, int incx, double *y, int incy,
@@ -221,11 +221,11 @@ static void linear_copy_handler (int size, double *x, int incx, double *y, int i
 }
 
 static int linear_copy (lua_State *L) {
-	return linear_binary(L, linear_copy_handler, LINEAR_PARAMS_NONE);
+	return linear_binary(L, linear_copy_handler, linear_params_none);
 }
 
 int linear_open_binary (lua_State *L) {
-	static const luaL_Reg FUNCTIONS[] = {
+	static const luaL_Reg functions[] = {
 		{"axpy", linear_axpy},    /* deprecated */
 		{"axpby", linear_axpby},
 		{"mul", linear_mul},
@@ -234,11 +234,11 @@ int linear_open_binary (lua_State *L) {
 		{NULL, NULL}
 	};
 #if LUA_VERSION_NUM >= 502
-	luaL_setfuncs(L, FUNCTIONS, 0);
+	luaL_setfuncs(L, functions, 0);
 #else
 	const luaL_Reg  *reg;
 
-	for (reg = FUNCTIONS; reg->name; reg++) {
+	for (reg = functions; reg->name; reg++) {
 		lua_pushcfunction(L, reg->func);
 		lua_setfield(L, -2, reg->name);
 	}

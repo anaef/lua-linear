@@ -53,23 +53,23 @@ static void linear_normalqf_handler(int size, double *x, int incx, linear_arg_u 
 static int linear_normalqf(lua_State *L);
 
 
-static linear_param_t LINEAR_PARAMS_NONE[] = {
+static linear_param_t linear_params_none[] = {
 	LINEAR_PARAMS_LAST
 };
-static linear_param_t LINEAR_PARAMS_ALPHA[] = {
+static linear_param_t linear_params_alpha[] = {
 	{'n', {.n = 1.0}},
 	LINEAR_PARAMS_LAST
 };
-static linear_param_t LINEAR_PARAMS_MIN_MAX[] = {
+static linear_param_t linear_params_min_max[] = {
 	{'n', {.n = 0.0}},
 	{'n', {.n = 1.0}},
 	LINEAR_PARAMS_LAST
 };
-static linear_param_t LINEAR_PARAMS_RANDOM[] = {
+static linear_param_t linear_params_random[] = {
 	{'r', {0.0}},
 	LINEAR_PARAMS_LAST
 };
-static linear_param_t LINEAR_PARAMS_MU_SIGMA[] = {
+static linear_param_t linear_params_mu_sigma[] = {
 	{'n', {.n = 0.0}},
 	{'n', {.n = 1.0}},
 	LINEAR_PARAMS_LAST
@@ -148,7 +148,7 @@ static void linear_inc_handler (int size, double *x, int incx, linear_arg_u *arg
 }
 
 static int linear_inc (lua_State *L) {
-	return linear_elementary(L, linear_inc_handler, LINEAR_PARAMS_ALPHA);
+	return linear_elementary(L, linear_inc_handler, linear_params_alpha);
 }
 
 static void linear_scal_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -156,7 +156,7 @@ static void linear_scal_handler (int size, double *x, int incx, linear_arg_u *ar
 }
 
 static int linear_scal (lua_State *L) {
-	return linear_elementary(L, linear_scal_handler, LINEAR_PARAMS_ALPHA);
+	return linear_elementary(L, linear_scal_handler, linear_params_alpha);
 }
 
 static void linear_pow_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -200,7 +200,7 @@ static void linear_pow_handler (int size, double *x, int incx, linear_arg_u *arg
 }
 
 static int linear_pow (lua_State *L) {
-	return linear_elementary(L, linear_pow_handler, LINEAR_PARAMS_ALPHA);
+	return linear_elementary(L, linear_pow_handler, linear_params_alpha);
 }
 
 static void linear_exp_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -220,7 +220,7 @@ static void linear_exp_handler (int size, double *x, int incx, linear_arg_u *arg
 }
 
 static int linear_exp (lua_State *L) {
-	return linear_elementary(L, linear_exp_handler, LINEAR_PARAMS_NONE);
+	return linear_elementary(L, linear_exp_handler, linear_params_none);
 }
 
 static void linear_log_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -240,7 +240,7 @@ static void linear_log_handler (int size, double *x, int incx, linear_arg_u *arg
 }
 
 static int linear_log (lua_State *L) {
-	return linear_elementary(L, linear_log_handler, LINEAR_PARAMS_NONE);
+	return linear_elementary(L, linear_log_handler, linear_params_none);
 }
 
 static void linear_sgn_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -258,7 +258,7 @@ static void linear_sgn_handler (int size, double *x, int incx, linear_arg_u *arg
 }
 
 static int linear_sgn (lua_State *L) {
-	return linear_elementary(L, linear_sgn_handler, LINEAR_PARAMS_NONE);
+	return linear_elementary(L, linear_sgn_handler, linear_params_none);
 }
 
 static void linear_abs_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -272,7 +272,7 @@ static void linear_abs_handler (int size, double *x, int incx, linear_arg_u *arg
 }
 
 static int linear_abs (lua_State *L) {
-	return linear_elementary(L, linear_abs_handler, LINEAR_PARAMS_NONE);
+	return linear_elementary(L, linear_abs_handler, linear_params_none);
 }
 
 static void linear_logistic_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -286,7 +286,7 @@ static void linear_logistic_handler (int size, double *x, int incx, linear_arg_u
 }
 
 static int linear_logistic (lua_State *L) {
-	return linear_elementary(L, linear_logistic_handler, LINEAR_PARAMS_NONE);
+	return linear_elementary(L, linear_logistic_handler, linear_params_none);
 }
 
 static void linear_tanh_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -300,7 +300,7 @@ static void linear_tanh_handler (int size, double *x, int incx, linear_arg_u *ar
 }
 
 static int linear_tanh (lua_State *L) {
-	return linear_elementary(L, linear_tanh_handler, LINEAR_PARAMS_NONE);
+	return linear_elementary(L, linear_tanh_handler, linear_params_none);
 }
 
 static void linear_apply_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -321,7 +321,7 @@ static int linear_apply (lua_State *L) {
 	luaL_checktype(L, 2, LUA_TFUNCTION);
 	lua_settop(L, 2);
 	linear_TL = L;
-	return linear_elementary(L, linear_apply_handler, LINEAR_PARAMS_NONE);
+	return linear_elementary(L, linear_apply_handler, linear_params_none);
 }
 
 static void linear_set_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -342,7 +342,7 @@ static void linear_set_handler (int size, double *x, int incx, linear_arg_u *arg
 }
 
 static int linear_set (lua_State *L) {
-	return linear_elementary(L, linear_set_handler, LINEAR_PARAMS_ALPHA);
+	return linear_elementary(L, linear_set_handler, linear_params_alpha);
 }
 
 static void linear_clip_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -362,7 +362,7 @@ static void linear_clip_handler (int size, double *x, int incx, linear_arg_u *ar
 }
 
 static int linear_clip (lua_State *L) {
-	return linear_elementary(L, linear_clip_handler, LINEAR_PARAMS_MIN_MAX);
+	return linear_elementary(L, linear_clip_handler, linear_params_min_max);
 }
 
 static void linear_uniform_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -377,7 +377,7 @@ static void linear_uniform_handler (int size, double *x, int incx, linear_arg_u 
 }
 
 static int linear_uniform (lua_State *L) {
-	return linear_elementary(L, linear_uniform_handler, LINEAR_PARAMS_RANDOM);
+	return linear_elementary(L, linear_uniform_handler, linear_params_random);
 }
 
 static void linear_normal_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -406,7 +406,7 @@ static void linear_normal_handler (int size, double *x, int incx, linear_arg_u *
 }
 
 static int linear_normal (lua_State *L) {
-	return linear_elementary(L, linear_normal_handler, LINEAR_PARAMS_RANDOM);
+	return linear_elementary(L, linear_normal_handler, linear_params_random);
 }
 
 static void linear_normalpdf_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -423,7 +423,7 @@ static void linear_normalpdf_handler (int size, double *x, int incx, linear_arg_
 }
 
 static int linear_normalpdf (lua_State *L) {
-	return linear_elementary(L, linear_normalpdf_handler, LINEAR_PARAMS_MU_SIGMA);
+	return linear_elementary(L, linear_normalpdf_handler, linear_params_mu_sigma);
 }
 
 static void linear_normalcdf_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -439,7 +439,7 @@ static void linear_normalcdf_handler (int size, double *x, int incx, linear_arg_
 }
 
 static int linear_normalcdf (lua_State *L) {
-	return linear_elementary(L, linear_normalcdf_handler, LINEAR_PARAMS_MU_SIGMA);
+	return linear_elementary(L, linear_normalcdf_handler, linear_params_mu_sigma);
 }
 
 static void linear_normalqf_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -472,11 +472,11 @@ static void linear_normalqf_handler (int size, double *x, int incx, linear_arg_u
 }
 
 static int linear_normalqf (lua_State *L) {
-	return linear_elementary(L, linear_normalqf_handler, LINEAR_PARAMS_MU_SIGMA);
+	return linear_elementary(L, linear_normalqf_handler, linear_params_mu_sigma);
 }
 
 int linear_open_elementary (lua_State *L) {
-	static const luaL_Reg FUNCTIONS[] = {
+	static const luaL_Reg functions[] = {
 		{"inc", linear_inc},
 		{"scal", linear_scal},
 		{"pow", linear_pow},
@@ -497,11 +497,11 @@ int linear_open_elementary (lua_State *L) {
 		{NULL, NULL}
 	};
 #if LUA_VERSION_NUM >= 502
-	luaL_setfuncs(L, FUNCTIONS, 0);
+	luaL_setfuncs(L, functions, 0);
 #else
 	const luaL_Reg  *reg;
 
-	for (reg = FUNCTIONS; reg->name; reg++) {
+	for (reg = functions; reg->name; reg++) {
 		lua_pushcfunction(L, reg->func);
 		lua_setfield(L, -2, reg->name);
 	}

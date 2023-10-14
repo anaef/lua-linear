@@ -50,13 +50,13 @@ static int linear_interpolant(lua_State *L);
 static int linear_spline(lua_State *L);
 
 
-static const char *const LINEAR_TRANSPOSES[] = {"notrans", "trans", NULL};
-static const char *const LINEAR_BOUNDARIES[] = {"not-a-knot", "clamped", "natural", NULL};
-static const char *const LINEAR_EXTRAPOLATIONS[] = {"none", "const", "linear", "cubic", NULL};
+static const char *const linear_transposes[] = {"notrans", "trans", NULL};
+static const char *const linear_boundaries[] = {"not-a-knot", "clamped", "natural", NULL};
+static const char *const linear_extrapolations[] = {"none", "const", "linear", "cubic", NULL};
 
 
 static inline CBLAS_TRANSPOSE linear_checktranspose (lua_State *L, int index) {
-	return luaL_checkoption(L, index, "notrans", LINEAR_TRANSPOSES) == 0 ? CblasNoTrans
+	return luaL_checkoption(L, index, "notrans", linear_transposes) == 0 ? CblasNoTrans
 			: CblasTrans;
 }
 
@@ -737,8 +737,8 @@ static int linear_spline (lua_State *L) {
 	/* process arguments */
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	y = luaL_checkudata(L, 2, LINEAR_VECTOR);
-	boundary = luaL_checkoption(L, 3, "not-a-knot", LINEAR_BOUNDARIES);
-	extrapolation = luaL_checkoption(L, 4, "none", LINEAR_EXTRAPOLATIONS);
+	boundary = luaL_checkoption(L, 3, "not-a-knot", linear_boundaries);
+	extrapolation = luaL_checkoption(L, 4, "none", linear_extrapolations);
 	da = boundary == 1 ? luaL_checknumber(L, 5) : 0.0;  /* clamped */
 	db = boundary == 1 ? luaL_checknumber(L, 6) : 0.0;
 	luaL_argcheck(L, x->length >= (boundary == 0 ? 4 : 3), 0, "bad dimension");
@@ -828,7 +828,7 @@ static int linear_spline (lua_State *L) {
 }
 
 int linear_open_program  (lua_State *L) {
-	static const luaL_Reg FUNCTIONS[] = {
+	static const luaL_Reg functions[] = {
 		{"dot", linear_dot},
 		{"ger", linear_ger},
 		{"gemv", linear_gemv},
@@ -847,11 +847,11 @@ int linear_open_program  (lua_State *L) {
 		{ NULL, NULL }
 	};
 #if LUA_VERSION_NUM >= 502
-	luaL_setfuncs(L, FUNCTIONS, 0);
+	luaL_setfuncs(L, functions, 0);
 #else
 	const luaL_Reg  *reg;
 
-	for (reg = FUNCTIONS; reg->name; reg++) {
+	for (reg = functions; reg->name; reg++) {
 		lua_pushcfunction(L, reg->func);
 		lua_setfield(L, -2, reg->name);
 	}

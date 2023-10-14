@@ -73,7 +73,7 @@ static int linear_ipairs(lua_State *L);
 #endif
 
 
-static const char *const LINEAR_ORDERS[] = {"row", "col", NULL};
+static const char *const linear_orders[] = {"row", "col", NULL};
 
 
 /*
@@ -81,7 +81,7 @@ static const char *const LINEAR_ORDERS[] = {"row", "col", NULL};
  */
 
 CBLAS_ORDER linear_checkorder (lua_State *L, int index) {
-	return luaL_checkoption(L, index, "row", LINEAR_ORDERS) == 0 ? CblasRowMajor
+	return luaL_checkoption(L, index, "row", linear_orders) == 0 ? CblasRowMajor
 			: CblasColMajor;
 }
 
@@ -703,7 +703,7 @@ static int linear_size (lua_State *L) {
 	if (X != NULL) {
 		lua_pushinteger(L, X->rows);
 		lua_pushinteger(L, X->cols);
-		lua_pushstring(L, LINEAR_ORDERS[X->order == CblasRowMajor ? 0 : 1]);
+		lua_pushstring(L, linear_orders[X->order == CblasRowMajor ? 0 : 1]);
 		return 3;
 	}
 	return linear_argerror(L, 1, 0);
@@ -869,7 +869,7 @@ static int linear_ipairs (lua_State *L) {
  */
 
 int luaopen_linear (lua_State *L) {
-	static const luaL_Reg FUNCTIONS[] = {
+	static const luaL_Reg functions[] = {
 		{"vector", linear_vector},
 		{"matrix", linear_matrix},
 		{"totable", linear_totable},
@@ -891,9 +891,9 @@ int luaopen_linear (lua_State *L) {
 
 	/* register functions */
 #if LUA_VERSION_NUM >= 502
-	luaL_newlib(L, FUNCTIONS);
+	luaL_newlib(L, functions);
 #else
-	luaL_register(L, luaL_checkstring(L, 1), FUNCTIONS);
+	luaL_register(L, luaL_checkstring(L, 1), functions);
 #endif
 	linear_open_elementary(L);
 	linear_open_unary(L);

@@ -43,19 +43,19 @@ static double linear_max_handler(int size, double *x, int incx, linear_arg_u *ar
 static int linear_max(lua_State *L);
 
 
-static linear_param_t LINEAR_PARAMS_NONE[] = {
+static linear_param_t linear_params_none[] = {
 	LINEAR_PARAMS_LAST
 };
-static linear_param_t LINEAR_PARAMS_DDOF[] = {
+static linear_param_t linear_params_ddof[] = {
 	{'d', {.d = 0}},
 	LINEAR_PARAMS_LAST
 };
-static const char *LINEAR_SETS[] = {"p", "s", NULL};
-static linear_param_t LINEAR_PARAMS_SET[] = {
-	{'e', {.e = LINEAR_SETS}},
+static const char *linear_sets[] = {"p", "s", NULL};
+static linear_param_t linear_params_set[] = {
+	{'e', {.e = linear_sets}},
 	LINEAR_PARAMS_LAST
 };
-static linear_param_t LINEAR_PARAMS_LUA[] = {
+static linear_param_t linear_params_lua[] = {
 	{'L', {0.0}},
 	LINEAR_PARAMS_LAST
 };
@@ -132,7 +132,7 @@ static double linear_sum_handler (int size, double *x, int incx, linear_arg_u *a
 }
 
 static int linear_sum (lua_State *L) {
-	return linear_unary(L, linear_sum_handler, LINEAR_PARAMS_NONE);
+	return linear_unary(L, linear_sum_handler, linear_params_none);
 }
 
 static double linear_mean_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -155,7 +155,7 @@ static double linear_mean_handler (int size, double *x, int incx, linear_arg_u *
 }
 
 static int linear_mean (lua_State *L) {
-	return linear_unary(L, linear_mean_handler, LINEAR_PARAMS_NONE);
+	return linear_unary(L, linear_mean_handler, linear_params_none);
 }
 
 static double linear_var_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -189,7 +189,7 @@ static double linear_var_handler (int size, double *x, int incx, linear_arg_u *a
 }
 
 static int linear_var (lua_State *L) {
-	return linear_unary(L, linear_var_handler, LINEAR_PARAMS_DDOF);
+	return linear_unary(L, linear_var_handler, linear_params_ddof);
 }
 
 static double linear_std_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -197,7 +197,7 @@ static double linear_std_handler (int size, double *x, int incx, linear_arg_u *a
 }
 
 static int linear_std (lua_State *L) {
-	return linear_unary(L, linear_std_handler, LINEAR_PARAMS_DDOF);
+	return linear_unary(L, linear_std_handler, linear_params_ddof);
 }
 
 static double linear_skew_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -239,7 +239,7 @@ static double linear_skew_handler (int size, double *x, int incx, linear_arg_u *
 }
 
 static int linear_skew (lua_State *L) {
-	return linear_unary(L, linear_skew_handler, LINEAR_PARAMS_SET);
+	return linear_unary(L, linear_skew_handler, linear_params_set);
 }
 
 static double linear_kurt_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -281,7 +281,7 @@ static double linear_kurt_handler (int size, double *x, int incx, linear_arg_u *
 }
 
 static int linear_kurt (lua_State *L) {
-	return linear_unary(L, linear_kurt_handler, LINEAR_PARAMS_SET);
+	return linear_unary(L, linear_kurt_handler, linear_params_set);
 }
 
 static double linear_median_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -314,7 +314,7 @@ static double linear_median_handler (int size, double *x, int incx, linear_arg_u
 }
 
 static int linear_median (lua_State *L) {
-	return linear_unary(L, linear_median_handler, LINEAR_PARAMS_LUA);
+	return linear_unary(L, linear_median_handler, linear_params_lua);
 }
 
 static double linear_mad_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -359,7 +359,7 @@ static double linear_mad_handler (int size, double *x, int incx, linear_arg_u *a
 }
 
 static int linear_mad (lua_State *L) {
-	return linear_unary(L, linear_mad_handler, LINEAR_PARAMS_LUA);
+	return linear_unary(L, linear_mad_handler, linear_params_lua);
 }
 
 static double linear_nrm2_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -368,7 +368,7 @@ static double linear_nrm2_handler (int size, double *x, int incx, linear_arg_u *
 }
 
 static int linear_nrm2 (lua_State *L) {
-	return linear_unary(L, linear_nrm2_handler, LINEAR_PARAMS_NONE);
+	return linear_unary(L, linear_nrm2_handler, linear_params_none);
 }
 
 static double linear_asum_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -377,7 +377,7 @@ static double linear_asum_handler (int size, double *x, int incx, linear_arg_u *
 }
 
 static int linear_asum (lua_State *L) {
-	return linear_unary(L, linear_asum_handler, LINEAR_PARAMS_NONE);
+	return linear_unary(L, linear_asum_handler, linear_params_none);
 }
 
 static double linear_min_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -396,7 +396,7 @@ static double linear_min_handler (int size, double *x, int incx, linear_arg_u *a
 }
 
 static int linear_min (lua_State *L) {
-	return linear_unary(L, linear_min_handler, LINEAR_PARAMS_NONE);
+	return linear_unary(L, linear_min_handler, linear_params_none);
 }
 
 static double linear_max_handler (int size, double *x, int incx, linear_arg_u *args) {
@@ -415,11 +415,11 @@ static double linear_max_handler (int size, double *x, int incx, linear_arg_u *a
 }
 
 static int linear_max (lua_State *L) {
-	return linear_unary(L, linear_max_handler, LINEAR_PARAMS_NONE);
+	return linear_unary(L, linear_max_handler, linear_params_none);
 }
 
 int linear_open_unary (lua_State *L) {
-	static const luaL_Reg FUNCTIONS[] = {
+	static const luaL_Reg functions[] = {
 		{"sum", linear_sum},
 		{"mean", linear_mean},
 		{"var", linear_var},
@@ -435,11 +435,11 @@ int linear_open_unary (lua_State *L) {
 		{NULL, NULL}
 	};
 #if LUA_VERSION_NUM >= 502
-	luaL_setfuncs(L, FUNCTIONS, 0);
+	luaL_setfuncs(L, functions, 0);
 #else
 	const luaL_Reg  *reg;
 
-	for (reg = FUNCTIONS; reg->name; reg++) {
+	for (reg = functions; reg->name; reg++) {
 		lua_pushcfunction(L, reg->func);
 		lua_setfield(L, -2, reg->name);
 	}
