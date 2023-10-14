@@ -138,7 +138,7 @@ static int linear_gemm (lua_State *L) {
 }
 
 static int linear_gesv (lua_State *L) {
-	int              *ipiv, result;
+	lapack_int       *ipiv, result;
 	linear_matrix_t  *A, *B;
 
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
@@ -146,7 +146,7 @@ static int linear_gesv (lua_State *L) {
 	B = luaL_checkudata(L, 2, LINEAR_MATRIX);
 	luaL_argcheck(L, B->order == A->order, 2, "order mismatch");
 	luaL_argcheck(L, B->rows == A->rows, 2, "dimension mismatch");
-	ipiv = calloc(A->rows, sizeof(lapack_int));
+	ipiv = malloc(A->rows * sizeof(lapack_int));
 	if (ipiv == NULL) {
 		return luaL_error(L, "cannot allocate indexes");
 	}
@@ -161,8 +161,8 @@ static int linear_gesv (lua_State *L) {
 }
 
 static int linear_gels (lua_State *L) {
-	int               result;
 	char              ta;
+	lapack_int        result;
 	linear_matrix_t  *A, *B;
 
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
@@ -181,12 +181,12 @@ static int linear_gels (lua_State *L) {
 }
 
 static int linear_inv (lua_State *L) {
-	int              *ipiv, result;
+	lapack_int       *ipiv, result;
 	linear_matrix_t  *A;
 
 	A = luaL_checkudata(L, 1, LINEAR_MATRIX);
 	luaL_argcheck(L, A->rows == A->cols, 1, "not square");
-	ipiv = calloc(A->rows, sizeof(lapack_int));
+	ipiv = malloc(A->rows * sizeof(lapack_int));
 	if (ipiv == NULL) {
 		return luaL_error(L, "cannot allocate indexes");
 	}
@@ -209,9 +209,10 @@ static int linear_inv (lua_State *L) {
 }
 
 static int linear_det (lua_State *L) {
-	int              *ipiv, result, neg;
+	int               neg;
 	size_t            n, i;
 	double           *copy, *d, *s, det;
+	lapack_int       *ipiv, result;
 	linear_matrix_t  *A;
 
 	/* check and process arguments */
@@ -220,7 +221,7 @@ static int linear_det (lua_State *L) {
 	n = A->rows;
 
 	/* copy matrix */
-	copy = calloc(n * n, sizeof(double));
+	copy = malloc(n * n * sizeof(double));
 	if (copy == NULL) {
 		return luaL_error(L, "cannot allocate values");
 	}
@@ -233,7 +234,7 @@ static int linear_det (lua_State *L) {
 	}
 
 	/* invoke subprograms */
-	ipiv = calloc(n, sizeof(lapack_int));
+	ipiv = malloc(n * sizeof(lapack_int));
 	if (ipiv == NULL) {
 		free(copy);
 		return luaL_error(L, "cannot allocate indexes");
@@ -331,7 +332,7 @@ static int linear_cov (lua_State *L) {
 	luaL_argcheck(L, ddof < A->rows, 3, "bad ddof");
 
 	/* calculate means */
-	means = calloc(A->cols, sizeof(double));
+	means = malloc(A->cols * sizeof(double));
 	if (means == NULL) {
 		return luaL_error(L, "cannot allocate values");
 	}
@@ -402,11 +403,11 @@ static int linear_corr (lua_State *L) {
 	luaL_argcheck(L, B->rows == B->cols, 2, "not square");
 
 	/* calculate means and stds */
-	means = calloc(A->cols, sizeof(double));
+	means = malloc(A->cols * sizeof(double));
 	if (means == NULL) {
 		return luaL_error(L, "cannot allocate values");
 	}
-	stds = calloc(A->cols, sizeof(double));
+	stds = malloc(A->cols * sizeof(double));
 	if (stds == NULL) {
 		free(means);
 		return luaL_error(L, "cannot allocate values");
