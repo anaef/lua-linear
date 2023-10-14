@@ -773,7 +773,7 @@ static int linear_spline (lua_State *L) {
 				- (y->values[i * y->inc] - y->values[(i - 1) * y->inc]) / h[i- 1]);
 	}
 	switch (boundary) {
-	case 0:  /* not-a-knot*/
+	case 0:  /* not-a-knot */
 		d[0] = h[0] - (h[1] * h[1]) / h[0];
 		du[0] = 3 * h[1] + 2 * h[0] + (h[1] * h[1]) / h[0];
 		b[0] = 3 * ((y->values[2 * y->inc] - y->values[1 * y->inc]) / h[1]
