@@ -6,6 +6,9 @@
 - The `linear.svd` program function has been added, calculating the singular value decomposition
 of matrices.
 
+- The order statistics functions have been changed to work on vectors instead of lists, optimizing
+memory management.
+
 
 ## Release 1.2.0 (2023-10-12)
 

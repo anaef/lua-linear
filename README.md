@@ -79,20 +79,24 @@ correlations    -0.0026144290886127     0.0063412466674457      -0.0040729206979
 ```lua
 -- Approximate the normal distribution through percentiles, and compare with its CDF
 local x = linear.vector(100000)
-linear.normal(x)
-local ranks = linear.ranks(100, "zq")  -- percentile ranks: [0.00, 0.01, ..., 0.99, 1.00]
-local percentiles = linear.tolinear(linear.quantile(x, ranks))  -- sample percentiles
+linear.normal(x)                        -- 100k random variables from N(0,1)
+local percentiles = linear.vector(101)  -- use 101 sample percentiles
+linear.ranks(100, percentiles, "zq")    -- set percentile ranks, i.e., [0.00, 0.01, ..., 0.99, 1.00]
+linear.quantile(x, percentiles)         -- calculate the actual sample percentiles
+local r = linear.vector(#x)
+linear.copy(x, r)                       -- copy values of x to r
+linear.rank(percentiles, r)             -- calculate the rank of each value of x
 for i = 1, 3 do
-	local rank = linear.rank(percentiles, x[i])  -- approximates the normal CDF of x[i]
-	local cdf = linear.normalcdf(x[i])           -- actual CDF of x[i]
-	print("cdf", x[i], cdf, rank - cdf)          -- difference should be close to 0
+	local rank = r[i]                          -- rank within percentiles should approximate CDF
+	local cdf = linear.normalcdf(x[i])         -- actual CDF
+	print("cdf", x[i], rank, cdf, rank - cdf)  -- difference should be close to 0
 end
 ```
 
 ```
-cdf     -0.69208067347055       0.24444333394129        -0.00072371335583435
-cdf     0.41089310817189        0.65942454191657        -0.00053147240312124
-cdf     -0.95943429761886       0.16867000192409        -0.00044993796354462
+cdf     -1.7726983852418        0.039258615499493       0.038139349413071       0.0011192660864221
+cdf     -0.90382210127255       0.18323948061584        0.18304487023318        0.00019461038265881
+cdf     0.53756751344972        0.70285856454599        0.70456216834327        -0.0017036037972724
 ```
 
 

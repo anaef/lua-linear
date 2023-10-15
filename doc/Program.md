@@ -131,32 +131,35 @@ $i$-th column vector of $A$, and $N$ is its length.
 > The function is generally faster when matrix `A` is a column major matrix.
 
 
-## `linear.ranks (q [, mode])`
+## `linear.ranks (q, r [, mode])`
 
-Returns a list of the normalized ranks of the $q$-quantiles, formally $k / q$ for $0 \lt k \lt q$.
-The argument `q` must be a positive integer. For example, if $q$ is $4$, the function returns
-the normalized ranks of the first, second, and third quartile, i.e., $[0.25, 0.50, 0.75]$.
+Sets vector `r` to the normalized ranks of the $q$-quantiles, formally $k / q$ for $0 \lt k \lt q$.
+The argument `q` must be a positive integer. For example, if $q$ is $2$, the function sets the
+normalized rank of the median, i.e., $[0.5]$, and if $q$ is $4$, the function sets the normalized
+ranks of the first, second, and third quartile, i.e., $[0.25, 0.50, 0.75]$.
 
-The optional argument `mode` must be a string. If it includes the letter `'z'`, the list
-additionally contains the normalized rank of $0$-th quantile, i.e., $0$; if it includes the letter
-`'q'`, the list additionally contains the normalized rank of the $q$-th quantile, i.e., $1$.
+The optional argument `mode` must be a string. If it includes the letter `'z'`, the function
+additionally sets the normalized rank of $0$-th quantile, i.e., $0$; if mode includes the letter
+`'q'`, the function additionally sets the normalized rank of the $q$-th quantile, i.e., $1$.
+
+The length of vector `r` must match the number of normalized ranks.
 
 
-## `linear.quantile (values, r)`
+## `linear.quantile (v, r)`
 
-Returns the quantile with normalized rank `r` within the specified values. If `r` is a list of
-values, the function returns a list of quantiles with the respective normalized ranks. The
-normalized ranks must satisfy $0 \le r \le 1$.
+Sets the components of vector `r` to their quantiles within the components of vector `v`.
+On entry, each component of vector `r` specifies a normalized rank satisfying $0 \le r_i \le 1$;
+on exit, each component is set to the quantile of the respective normalized rank.
 
 The function creates a temporary, sorted copy of the values, and then uses linear interpolation
 to calculate the quantiles.
 
 
-## `linear.rank (values, q)`
+## `linear.rank (v, q)`
 
-Returns the normalized rank of value `q` within the specified values. If `q` is a list of values,
-the function returns a list of normalized ranks of the respective values. The normalized ranks
-satisfy $0 \le r \le 1$.
+Sets the components of vector `q` to their normalized ranks within the components of vector `v`.
+On entry, each component of vector `q` specifies a value; on exit, each component is set to the
+normalized rank of the respective value, satisfying $0 \le r_i \le 1$.
 
 The function creates a temporary, sorted copy of the values, and then uses linear interpolation
 to calculate the normalized ranks.
