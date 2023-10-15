@@ -589,6 +589,8 @@ local function testMedian ()
 	assert(linear.median(x) == 2)
 	x = linear.tolinear({ 2, 1, 3, 4 })
 	assert(linear.median(x) == 2.5)
+	x = linear.tolinear({ 2, 1, 0 / 0 })
+	assert(linear.median(x) ~= linear.median(x))
 end
 
 -- Tests the median absolute deviation function
@@ -601,6 +603,8 @@ local function testMad ()
 	assert(linear.mad(x) == 1)
 	x = linear.tolinear({ 1, 2, 4, 8, 16 })
 	assert(linear.mad(x) == 3)
+	x = linear.tolinear({ 2, 1, 0 / 0 })
+	assert(linear.mad(x) ~= linear.mad(x))
 end
 
 -- Tests the nrm2 function
@@ -1030,6 +1034,17 @@ local function testQuantile ()
 	assert(r[3] == 2)
 	assert(r[4] == 2.5)
 	assert(r[5] == 3)
+	linear.ranks(4, r, "zq")
+	r[1] = 0 / 0
+	linear.quantile(x, r)
+	assert(r[1] ~= r[1])
+	assert(r[2] == 1.5)
+	x = linear.tolinear({ 1, 3, 0 / 0 })
+	linear.ranks(4, r, "zq")
+	linear.quantile(x, r)
+	for i = 1, 5 do
+		assert(r[i] ~= r[i])
+	end
 end
 
 -- Tests the rank function
@@ -1042,6 +1057,15 @@ local function testRank ()
 	assert(q[3] == 0.5)
 	assert(q[4] == 0.75)
 	assert(q[5] == 1)
+	q = linear.tolinear({ 0 / 0, 1.5 })
+	linear.rank(x, q)
+	assert(q[1] ~= q[1])
+	assert(q[2] == 0.25)
+	x = linear.tolinear({ 1, 3, 0 / 0 })
+	q = linear.tolinear({ 1, 1.5 })
+	linear.rank(x, q)
+	assert(q[1] ~= q[1])
+	assert(q[2] ~= q[2])
 end
 
 -- Tests the spline function

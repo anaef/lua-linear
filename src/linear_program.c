@@ -515,7 +515,10 @@ static int linear_quantile (lua_State *L) {
 	for (i = 0; i < x->length; i++) {
 		if (isnan(*v)) {
 			free(s);
-			return luaL_error(L, "bad value at index %d", i + 1);
+			for (i = 0; i < r->length; i++) {
+				r->values[i * r->inc] = NAN;
+			}
+			return 0;
 		}
 		s[i] = *v;
 		v += x->inc;
@@ -525,17 +528,17 @@ static int linear_quantile (lua_State *L) {
 	/* calculate quantiles */
 	for (i = 0; i < r->length; i++) {
 		rank = r->values[i * r->inc];
-		if (!(rank >= 0 && rank <= 1)) {
-			free(s);
-			return luaL_error(L, "bad rank at index %d", i + 1);
-		}
-		pos = rank * (x->length - 1);
-		frac = fmod(pos, 1);
-		index = floor(pos);
-		if (frac > 0) {
-			r->values[i * r->inc] = s[index] + (s[index + 1] - s[index]) * frac;
+		if (rank >= 0 && rank <= 1) {
+			pos = rank * (x->length - 1);
+			frac = fmod(pos, 1);
+			index = floor(pos);
+			if (frac > 0) {
+				r->values[i * r->inc] = s[index] + (s[index + 1] - s[index]) * frac;
+			} else {
+				r->values[i * r->inc] = s[index];
+			}
 		} else {
-			r->values[i * r->inc] = s[index];
+			r->values[i * r->inc] = NAN;
 		}
 	}
 	free(s);
@@ -559,7 +562,10 @@ static int linear_rank (lua_State *L) {
 	for (i = 0; i < x->length; i++) {
 		if (isnan(*v)) {
 			free(s);
-			return luaL_error(L, "bad value at index %d", i + 1);
+			for (i = 0; i < q->length; i++) {
+				q->values[i * q->inc] = NAN;
+			}
+			return 0;
 		}
 		s[i] = *v;
 		v += x->inc;
@@ -569,11 +575,7 @@ static int linear_rank (lua_State *L) {
 	/* calculate ranks */
 	for (i = 0; i < q->length; i++) {
 		quantile = q->values[i * q->inc];
-		if (quantile <= s[0]) {
-			q->values[i * q->inc] = 0;
-		} else if (quantile >= s[x->length - 1]) {
-			q->values[i * q->inc] = 1;
-		} else if (!isnan(quantile)) {
+		if (quantile > s[0] && quantile < s[x->length - 1]) {
 			lower = 0;
 			upper = x->length - 1;
 			while (lower <= upper) {
@@ -586,9 +588,12 @@ static int linear_rank (lua_State *L) {
 			}
 			q->values[i * q->inc] = (upper + (quantile - s[upper])
 					/ (s[lower] - s[upper])) / (x->length - 1);
+		} else if (quantile <= s[0]) {
+			q->values[i * q->inc] = 0;
+		} else if (quantile >= s[x->length - 1]) {
+			q->values[i * q->inc] = 1;
 		} else {
-			free(s);
-			return luaL_error(L, "bad quantile at index %d", i + 1);
+			q->values[i * q->inc] = NAN;
 		}
 	}
 	free(s);

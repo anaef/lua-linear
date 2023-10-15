@@ -286,30 +286,28 @@ static int linear_kurt (lua_State *L) {
 
 static double linear_median_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int      i, mid;
-	double  *copy, median;
+	double  *s, median;
 
-	copy = malloc(size * sizeof(double));
-	if (copy == NULL) {
-		return luaL_error(args[0].L, "cannot allocate values");
+	s = malloc(size * sizeof(double));
+	if (s == NULL) {
+		return luaL_error(args[0].L, "cannot allocate sorted copy");
 	}
-	if (incx == 1) {
-		for (i = 0; i < size; i++) {
-			copy[i] = x[i];
+	for (i = 0; i < size; i++) {
+		if (isnan(*x)) {
+			free(s);
+			return NAN;
 		}
-	} else {
-		for (i = 0; i < size; i++) {
-			copy[i] = *x;
-			x += incx;
-		}
+		s[i] = *x;
+		x += incx;
 	}
-	qsort(copy, size, sizeof(double), linear_comparison_handler);
+	qsort(s, size, sizeof(double), linear_comparison_handler);
 	mid = size / 2;
 	if (size % 2 == 0) {
-		median = (copy[mid - 1] + copy[mid]) / 2;
+		median = (s[mid - 1] + s[mid]) / 2;
 	} else {
-		median = copy[mid];
+		median = s[mid];
 	}
-	free(copy);
+	free(s);
 	return median;
 }
 
@@ -319,42 +317,40 @@ static int linear_median (lua_State *L) {
 
 static double linear_mad_handler (int size, double *x, int incx, linear_arg_u *args) {
 	int      i, mid;
-	double  *copy, median, mad;
+	double  *s, median, mad;
 
 	/* calculate the median */
-	copy = malloc(size * sizeof(double));
-	if (copy == NULL) {
-		return luaL_error(args[0].L, "cannot allocate values");
+	s = malloc(size * sizeof(double));
+	if (s == NULL) {
+		return luaL_error(args[0].L, "cannot allocate sorted copy");
 	}
-	if (incx == 1) {
-		for (i = 0; i < size; i++) {
-			copy[i] = x[i];
+	for (i = 0; i < size; i++) {
+		if (isnan(*x)) {
+			free(s);
+			return NAN;
 		}
-	} else {
-		for (i = 0; i < size; i++) {
-			copy[i] = *x;
-			x += incx;
-		}
+		s[i] = *x;
+		x += incx;
 	}
-	qsort(copy, size, sizeof(double), linear_comparison_handler);
+	qsort(s, size, sizeof(double), linear_comparison_handler);
 	mid = size / 2;
 	if (size % 2 == 0) {
-		median = (copy[mid - 1] + copy[mid]) / 2;
+		median = (s[mid - 1] + s[mid]) / 2;
 	} else {
-		median = copy[mid];
+		median = s[mid];
 	}
 
 	/* calculate the median absolute deviation */
 	for (i = 0; i < size; i++) {
-		copy[i] = fabs(copy[i] - median);
+		s[i] = fabs(s[i] - median);
 	}
-	qsort(copy, size, sizeof(double), linear_comparison_handler);
+	qsort(s, size, sizeof(double), linear_comparison_handler);
 	if (size % 2 == 0) {
-		mad = (copy[mid - 1] + copy[mid]) / 2;
+		mad = (s[mid - 1] + s[mid]) / 2;
 	} else {
-		mad = copy[mid];
+		mad = s[mid];
 	}
-	free(copy);
+	free(s);
 	return mad;
 }
 
