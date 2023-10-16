@@ -94,10 +94,10 @@ matrix `VT` are set to the right singular vectors, and vector `s` is set to the 
 matrix `A`, in descending order. The content of matrix `A` is destroyed. The function returns
 `true` if the calculation was successful, and `false` if convergence failed.
 
-If the argument `ns` is omitted, the function calculates all singular vectors. Matrices `U`
+If the argument `ns` is not present, the function calculates all singular vectors. Matrices `U`
 and `VT` must be square matrices of sizes $m$ and $n$, respectively.
 
-If the argument `ns` is provided, it specifies the number of singular values to calculate and must
+If the argument `ns` is present, it specifies the number of singular values to calculate and must
 satisfy $1 \le \textrm{ns} \le \min(m, n)$. Matrix `U` must be an $m$ by $\textrm{ns}$ matrix, and
 matrix `VT` must be an $\textrm{ns}$ by $n$ matrix. The function calculates the largest $ns$
 singular values. If $\textrm{ns}$ is less than $\min(m, n)$, the function uses an eigenvalue
@@ -142,7 +142,7 @@ The optional argument `mode` must be a string. If it includes the letter `'z'`, 
 additionally sets the normalized rank of $0$-th quantile, i.e., $0$; if mode includes the letter
 `'q'`, the function additionally sets the normalized rank of the $q$-th quantile, i.e., $1$.
 
-The length of vector `r` must match the number of normalized ranks.
+The length of vector `r` must match the number of normalized ranks, i.e., $q - 1 + |\textrm{mode}|$.
 
 
 ## `linear.quantile (v, r)`
@@ -163,6 +163,9 @@ normalized rank of the respective value, satisfying $0 \le r_i \le 1$.
 
 The function creates a temporary, sorted copy of the values, and then uses linear interpolation
 to calculate the normalized ranks.
+
+If the components of vector `v` are unique, the rank function is the inverse of the quantile
+function.
 
 
 ## `linear.spline (x, y [, boundary [, extrapolation [, da, db]]])`

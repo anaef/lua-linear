@@ -30,7 +30,7 @@ length of the row vectors of matrix `X`.
 
 Applies the mean value function, formally $y_i \leftarrow \frac{\sum\nolimits_{j=1}^{N} X_{ij}}{N}$
 where $N$ is the length of the row vectors of matrix `X`. The mean value is also known as the
-first statistical moment.
+first statistical moment, and it is a measure of central tendency.
 
 
 ## `linear.var (x|X [, y [, order]] [, ddof])`
@@ -39,7 +39,7 @@ Applies the variance function with the specified delta degrees of freedom, `ddof
 $y_i \leftarrow \frac{\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2}{N - \textrm{ddof}}$ where
 $\bar{X^i}$ is the mean value of the $i$-th row vector of $X$, and $N$ is its length. The
 non-negative argument `ddof` defaults to `0` and must be less than $N$. The variance is also known
-as the second statistical moment.
+as the second statistical moment, and it is a mesure of dispersion.
 
 
 ## `linear.std (x|X [, y [, order]] [, ddof])`
@@ -47,7 +47,8 @@ as the second statistical moment.
 Applies the standard deviation function with the specified delta degrees of freedom, `ddof`,
 formally $y_i \leftarrow \sqrt{\frac{\sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^2}
 {N - \textrm{ddof}}}$ where $\bar{X^i}$ is the mean value of the $i$-th row vector of $X$, and $N$
-is its length. The non-negative argument `ddof` defaults to `0` and must be less than $N$.
+is its length. The non-negative argument `ddof` defaults to `0` and must be less than $N$. The
+standard deviation is the square root of the variance.
 
 
 ## `linear.skew (x|X [, y [, order]] [, set])`
@@ -59,7 +60,7 @@ $y_i \leftarrow \frac{\frac{1}{N} \sum\nolimits_{j=1}^N (X_{ij} - \bar{X^i})^3}
 mean value of the $i$-th row vector of $X$, and $N$ is its length; if set to `'s'`, the function
 calculates the sample skewness, formally $y_i \leftarrow \frac{\sqrt{N (N - 1)}}{N - 2} s_i$
 where $s_i$ is the population skewness as defined before. The skewness is also known as the third
-statistical moment.
+statistical moment, and it is a measure of asymmetry.
 
 
 ## `linear.kurt (x|X [, y [, order]] [, set])`
@@ -71,7 +72,8 @@ kurtosis, formally $y_i \leftarrow \frac{\frac{1}{N} \sum\nolimits_{j=1}^N (X_{i
 is the mean value of the $i$-th row vector of $X$, and $N$ is its length; if set to `'s'`, the
 function calculates the sample excess kurtosis, formally $y_i \leftarrow \frac{N - 1}
 {(N - 2) (N - 3)}((N + 1) k_i + 6)$ where $k_i$ is the population excess kurtosis as defined
-before. The kurtosis is also known as the fourth statistical moment.
+before. The kurtosis is also known as the fourth statistical moment, and it is a measure
+of heavy-tailedness.
 
 
 ## `linear.median (x|X [, y [, order]])`

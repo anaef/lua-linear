@@ -31,6 +31,10 @@ Applies the scalar multiplication function, formally $x_i \leftarrow \alpha x_i$
 Applies the power function, formally $x_i \leftarrow {x_i}^\alpha$. The argument `alpha` defaults
 to `1.0`.
 
+> [!NOTE]
+> You can set the argument `alpha` to `0.5` to apply the square root function. This is an
+> optimized case.
+
 
 ## `linear.exp (n|x|X)`
 

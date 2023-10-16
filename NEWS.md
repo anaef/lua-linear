@@ -3,11 +3,13 @@
 
 ## Release 1.3.0
 
-- The `linear.svd` program function has been added, calculating the singular value decomposition
-of matrices.
+- The `linear.svd` program function has been added, calculating the full or low-rank singular
+value decomposition of matrices.
 
-- NaN values are now handled transparently in the `linear.median`, `linear.mad`, `linear.quantile`,
-and `linear.rank` functions.
+- NaN values are now handled transparently and consistently in the `linear.median`, `linear.mad`,
+`linear.quantile`, and `linear.rank` functions: calculations involving a NaN value have a NaN
+result. The previous behavior was not well defined for the `linear.median` and `linear.mad`
+functions whereas the `linear.quantile` and `linear.rank` functions generated an error.
 
 - The order statistics functions `linear.ranks`, `linear.quantile`, and `linear.rank` have been
 changed to work on vectors instead of lists, optimizing memory management.
