@@ -85,7 +85,7 @@ CBLAS_ORDER linear_checkorder (lua_State *L, int index) {
 			: CblasColMajor;
 }
 
-int linear_checkargs (lua_State *L, int index, size_t size, linear_param_t *params,
+void linear_checkargs (lua_State *L, int index, size_t size, linear_param_t *params,
 		linear_arg_u *args) {
 	while (params->type) {
 		switch (params->type) {
@@ -119,18 +119,17 @@ int linear_checkargs (lua_State *L, int index, size_t size, linear_param_t *para
 			break;
 
 		default:
-			return luaL_error(L, "bad param type");
+			luaL_error(L, "bad param type");
 		}
 		params++;
 		args++;
 	}
-	return 0;
 }
 
 int linear_argerror (lua_State *L, int index, int numok) {
 	const char  *fmt;
 
-	fmt = !numok ? "vector, or matrix expected, got %s"
+	fmt = !numok ? "vector or matrix expected, got %s"
 			: "number, vector, or matrix expected, got %s";
 	return luaL_argerror(L, index, lua_pushfstring(L, fmt, luaL_typename(L, index)));
 }
@@ -432,7 +431,7 @@ static uint64_t *linear_randomstate (lua_State *L) {
 	uint64_t  *r;
 
 	lua_getfield(L, LUA_REGISTRYINDEX, LINEAR_RANDOM);
-	r = (void *)lua_topointer(L, -1);
+	r = lua_touserdata(L, -1);
 	lua_pop(L, 1);
 	return r;
 }
@@ -566,11 +565,8 @@ static int linear_tolinear (lua_State *L) {
 
 	case LUA_TTABLE:
 		major = lua_rawlen(L, 1);
-		if (major < 1 || major > INT_MAX) {
-			return luaL_error(L, "bad dimension");
-		}
 		minor = lua_rawlen(L, -1);
-		if (minor < 1 || minor > INT_MAX) {
+		if (major < 1 || major > INT_MAX || minor < 1 || minor > INT_MAX) {
 			return luaL_error(L, "bad dimension");
 		}
 		lua_pop(L, 1);
@@ -680,13 +676,11 @@ static int linear_tovector (lua_State *L) {
 static int linear_type (lua_State *L) {
 	if (luaL_testudata(L, 1, LINEAR_VECTOR) != NULL) {
 		lua_pushliteral(L, "vector");
-		return 1;
-	}
-	if (luaL_testudata(L, 1, LINEAR_MATRIX) != NULL) {
+	} else if (luaL_testudata(L, 1, LINEAR_MATRIX) != NULL) {
 		lua_pushliteral(L, "matrix");
-		return 1;
+	} else {
+		lua_pushnil(L);
 	}
-	lua_pushnil(L);
 	return 1;
 }
 
@@ -816,7 +810,7 @@ static int linear_reshape (lua_State *L) {
 
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	s = x->values;
-	last = x->values + x->length * x->inc;
+	last = s + x->length * x->inc;
 	index = 2;
 	while (s < last) {
 		X = luaL_checkudata(L, index, LINEAR_MATRIX);

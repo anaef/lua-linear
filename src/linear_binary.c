@@ -48,8 +48,8 @@ static linear_param_t linear_params_alpha_beta[] = {
 
 
 int linear_binary (lua_State *L, linear_binary_function f, linear_param_t *params) {
-	size_t                 i;
-	linear_arg_u       args[LINEAR_PARAMS_MAX];
+	size_t            i;
+	linear_arg_u      args[LINEAR_PARAMS_MAX];
 	linear_vector_t  *x, *y;
 	linear_matrix_t  *X, *Y;
 

@@ -62,7 +62,7 @@ typedef union linear_arg {
 
 
 CBLAS_ORDER linear_checkorder(lua_State *L, int index);
-int linear_checkargs(lua_State *L, int index, size_t size, linear_param_t *params,
+void linear_checkargs(lua_State *L, int index, size_t size, linear_param_t *params,
 		linear_arg_u *args);
 int linear_argerror(lua_State *L, int index, int numok);
 inline int linear_rawgeti(lua_State *L, int index, int n);

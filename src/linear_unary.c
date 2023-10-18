@@ -136,22 +136,7 @@ static int linear_sum (lua_State *L) {
 }
 
 static double linear_mean_handler (int size, double *x, int incx, linear_arg_u *args) {
-	int     i;
-	double  sum;
-
-	(void)args;
-	sum = 0.0;
-	if (incx == 1) {
-		for (i = 0; i < size; i++) {
-			sum += x[i];
-		}
-	} else {
-		for (i = 0; i < size; i++) {
-			sum += *x;
-			x += incx;
-		}
-	}
-	return sum / size;
+	return linear_sum_handler(size, x, incx, args) / size;
 }
 
 static int linear_mean (lua_State *L) {
@@ -290,7 +275,7 @@ static double linear_median_handler (int size, double *x, int incx, linear_arg_u
 
 	s = malloc(size * sizeof(double));
 	if (s == NULL) {
-		return luaL_error(args[0].L, "cannot allocate sorted copy");
+		return luaL_error(args[0].L, "cannot allocate components");
 	}
 	for (i = 0; i < size; i++) {
 		if (isnan(*x)) {
@@ -322,7 +307,7 @@ static double linear_mad_handler (int size, double *x, int incx, linear_arg_u *a
 	/* calculate the median */
 	s = malloc(size * sizeof(double));
 	if (s == NULL) {
-		return luaL_error(args[0].L, "cannot allocate sorted copy");
+		return luaL_error(args[0].L, "cannot allocate components");
 	}
 	for (i = 0; i < size; i++) {
 		if (isnan(*x)) {

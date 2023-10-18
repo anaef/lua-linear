@@ -82,8 +82,7 @@ static int linear_ger (lua_State *L) {
 	x = luaL_checkudata(L, 1, LINEAR_VECTOR);
 	y = luaL_checkudata(L, 2, LINEAR_VECTOR);
 	A = luaL_checkudata(L, 3, LINEAR_MATRIX);
-	luaL_argcheck(L, x->length == A->rows, 1, "dimension mismatch");
-	luaL_argcheck(L, y->length == A->cols, 2, "dimension mismatch");
+	luaL_argcheck(L, A->rows == x->length && A->cols == y->length, 3, "dimension mismatch");
 	alpha = luaL_optnumber(L, 4, 1.0);
 	cblas_dger(A->order, A->rows, A->cols, alpha, x->values, x->inc, y->values, y->inc,
 			A->values, A->ld);
@@ -91,7 +90,6 @@ static int linear_ger (lua_State *L) {
 }
 
 static int linear_gemv (lua_State *L) {
-	size_t            m, n;
 	double            alpha, beta;
 	CBLAS_TRANSPOSE   ta;
 	linear_matrix_t  *A;
@@ -101,10 +99,10 @@ static int linear_gemv (lua_State *L) {
 	x = luaL_checkudata(L, 2, LINEAR_VECTOR);
 	y = luaL_checkudata(L, 3, LINEAR_VECTOR);
 	ta = linear_checktranspose(L, 4);
-	m = ta == CblasNoTrans ? A->rows : A->cols;
-	n = ta == CblasNoTrans ? A->cols : A->rows;
-	luaL_argcheck(L, x->length == n, 2, "dimension mismatch");
-	luaL_argcheck(L, y->length == m, 3, "dimension mismatch");
+	luaL_argcheck(L, x->length == (ta == CblasNoTrans ? A->cols : A->rows), 2,
+			"dimension mismatch");
+	luaL_argcheck(L, y->length == (ta == CblasNoTrans ? A->rows : A->cols), 3,
+			"dimension mismatch");
 	alpha = luaL_optnumber(L, 5, 1.0);
 	beta = luaL_optnumber(L, 6, 0.0);
 	cblas_dgemv(A->order, ta, A->rows, A->cols, alpha, A->values, A->ld, x->values, x->inc,
@@ -113,7 +111,7 @@ static int linear_gemv (lua_State *L) {
 }
 
 static int linear_gemm (lua_State *L) {
-	size_t            m, n, ka, kb;
+	size_t            m, n, k;
 	double            alpha, beta;
 	CBLAS_TRANSPOSE   ta, tb;
 	linear_matrix_t  *A, *B, *C;
@@ -127,12 +125,11 @@ static int linear_gemm (lua_State *L) {
 	tb = linear_checktranspose(L, 5);
 	m = ta == CblasNoTrans ? A->rows : A->cols;
 	n = tb == CblasNoTrans ? B->cols : B->rows;
-	ka = ta == CblasNoTrans ? A->cols : A->rows;
-	kb = tb == CblasNoTrans ? B->rows : B->cols;
-	luaL_argcheck(L, ka == kb, 2, "dimension mismatch");
+	k = ta == CblasNoTrans ? A->cols : A->rows;
+	luaL_argcheck(L, k == (tb == CblasNoTrans ? B->rows : B->cols), 2, "dimension mismatch");
 	alpha = luaL_optnumber(L, 6, 1.0);
 	beta = luaL_optnumber(L, 7, 0.0);
-	cblas_dgemm(A->order, ta, tb, m, n, ka, alpha, A->values, A->ld, B->values, B->ld, beta,
+	cblas_dgemm(A->order, ta, tb, m, n, k, alpha, A->values, A->ld, B->values, B->ld, beta,
 			C->values, C->ld);
 	return 0;
 }
@@ -223,7 +220,7 @@ static int linear_det (lua_State *L) {
 	/* copy matrix */
 	copy = malloc(n * n * sizeof(double));
 	if (copy == NULL) {
-		return luaL_error(L, "cannot allocate values");
+		return luaL_error(L, "cannot allocate elements");
 	}
 	d = copy;
 	s = A->values;
@@ -233,7 +230,7 @@ static int linear_det (lua_State *L) {
 		s += A->ld;
 	}
 
-	/* invoke subprograms */
+	/* invoke subprogram */
 	ipiv = malloc(n * sizeof(lapack_int));
 	if (ipiv == NULL) {
 		free(copy);
@@ -295,7 +292,7 @@ static int linear_svd (lua_State *L) {
 	if (ns == min) {
 		superb = malloc((min - 1) * sizeof(double));
 		if (superb == NULL) {
-			return luaL_error(L, "cannot allocate unconverged elements");
+			return luaL_error(L, "cannot allocate elements");
 		}
 		result = LAPACKE_dgesvd(A->order, full ? 'A' : 'S', full ? 'A' : 'S', A->rows,
 				A->cols, A->values, A->ld, s->values, U->values, U->ld, VT->values,
@@ -304,7 +301,7 @@ static int linear_svd (lua_State *L) {
 	} else {
 		isuperb = malloc((12 * min - 1) * sizeof(lapack_int));
 		if (isuperb == NULL) {
-			return luaL_error(L, "cannot allocate unconverged indexes");
+			return luaL_error(L, "cannot allocate indexes");
 		}
 		result = LAPACKE_dgesvdx(A->order, 'V', 'V', 'I', A->rows, A->cols, A->values,
 			A->ld, 0, 0, 1, ns, &nsout, s->values, U->values, U->ld, VT->values,
@@ -509,7 +506,7 @@ static int linear_quantile (lua_State *L) {
 	r = luaL_checkudata(L, 2, LINEAR_VECTOR);
 	s = malloc(x->length * sizeof(double));
 	if (s == NULL) {
-		return luaL_error(L, "cannot allocate sorted copy");
+		return luaL_error(L, "cannot allocate components");
 	}
 	v = x->values;
 	for (i = 0; i < x->length; i++) {
@@ -556,7 +553,7 @@ static int linear_rank (lua_State *L) {
 	q = luaL_checkudata(L, 2, LINEAR_VECTOR);
 	s = malloc(x->length * sizeof(double));
 	if (s == NULL) {
-		return luaL_error(L, "cannot allocate sorted copy");
+		return luaL_error(L, "cannot allocate components");
 	}
 	v = x->values;
 	for (i = 0; i < x->length; i++) {
@@ -605,7 +602,7 @@ static int linear_interpolant (lua_State *L) {
 	size_t            lower, upper, mid;
 	linear_spline_t  *spline;
 
-	spline = (void *)lua_topointer(L, lua_upvalueindex(1));
+	spline = lua_touserdata(L, lua_upvalueindex(1));
 	x = luaL_checknumber(L, 1);
 	if (x >= spline->x[0] && x <= spline->x[spline->n]) {
 		/* interpolation */
@@ -714,7 +711,7 @@ static int linear_spline (lua_State *L) {
 	for (i = 0; i < n; i++) {
 		h[i] = x->values[(i + 1) * x->inc] - x->values[i * x->inc];
 		if (!(h[i] > 0)) {
-			return luaL_argerror(L, 1, "bad order");
+			return luaL_error(L, "bad order at indexes (%d,%d)", i + 1, i + 2);
 		}
 	}
 	for (i = 1; i < n; i++) {
