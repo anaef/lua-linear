@@ -618,9 +618,7 @@ static int linear_tovector (lua_State *L) {
 	case LUA_TSTRING:
 		key = lua_tostring(L, 2);
 		for (i = 0; i < size; i++) {
-			if (linear_rawgeti(L, 1, i + 1) != LUA_TTABLE) {
-				return luaL_error(L, "bad value at index %d", i + 1);
-			}
+			lua_rawgeti(L, 1, i + 1);
 			switch (linear_getfield(L, -1, key)) {
 			case LUA_TNUMBER:
 				*value++ = lua_tonumber(L, -1);

@@ -14,6 +14,9 @@ functions whereas the `linear.quantile` and `linear.rank` functions generated an
 - The order statistics functions `linear.ranks`, `linear.quantile`, and `linear.rank` have been
 changed to work on vectors instead of lists, optimizing memory management.
 
+- The `linear.tovector` function failed to index non-table values, such as userdata. This has
+been fixed.
+
 - The elementary, unary, and binary handler function pointers have been changed to work with
 size_t instead of int.
 
