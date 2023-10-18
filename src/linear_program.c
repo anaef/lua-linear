@@ -690,7 +690,7 @@ static int linear_spline (lua_State *L) {
 	extrapolation = luaL_checkoption(L, 4, "none", linear_extrapolations);
 	da = boundary == 1 ? luaL_checknumber(L, 5) : 0.0;  /* clamped */
 	db = boundary == 1 ? luaL_checknumber(L, 6) : 0.0;
-	luaL_argcheck(L, x->length >= (boundary == 0 ? 4 : 3), 0, "bad dimension");
+	luaL_argcheck(L, x->length >= (boundary == 0 ? 4 : 3), 1, "bad dimension");
 	luaL_argcheck(L, x->length == y->length, 2, "dimension mismatch");
 	n = x->length - 1;  /* number of polynomials */
 
