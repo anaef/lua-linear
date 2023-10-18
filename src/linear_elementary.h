@@ -12,7 +12,7 @@
 #include <lua.h>
 
 
-typedef void (*linear_elementary_function)(int size, double *x, int incx, linear_arg_u *args);
+typedef void (*linear_elementary_function)(size_t size, double *x, size_t incx, linear_arg_u *args);
 
 
 int linear_elementary(lua_State *L, linear_elementary_function f, linear_param_t *params);

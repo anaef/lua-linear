@@ -12,7 +12,7 @@
 #include <lua.h>
 
 
-typedef double (*linear_unary_function)(int size, double *x, int incx, union linear_arg *args);
+typedef double (*linear_unary_function)(size_t size, double *x, size_t incx, union linear_arg *args);
 
 
 int linear_unary(lua_State *L, linear_unary_function f, linear_param_t *params);

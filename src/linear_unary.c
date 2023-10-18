@@ -17,29 +17,29 @@
 #endif
 
 
-static double linear_sum_handler(int size, double *values, int inc, linear_arg_u *args);
+static double linear_sum_handler(size_t size, double *values, size_t inc, linear_arg_u *args);
 static int linear_sum(lua_State *L);
-static double linear_mean_handler(int size, double *values, int inc, linear_arg_u *args);
+static double linear_mean_handler(size_t size, double *values, size_t inc, linear_arg_u *args);
 static int linear_mean(lua_State *L);
-static double linear_var_handler(int size, double *values, int inc, linear_arg_u *args);
+static double linear_var_handler(size_t size, double *values, size_t inc, linear_arg_u *args);
 static int linear_var(lua_State *L);
-static double linear_std_handler(int size, double *values, int inc, linear_arg_u *args);
+static double linear_std_handler(size_t size, double *values, size_t inc, linear_arg_u *args);
 static int linear_std(lua_State *L);
-static double linear_skew_handler(int size, double *values, int inc, linear_arg_u *args);
+static double linear_skew_handler(size_t size, double *values, size_t inc, linear_arg_u *args);
 static int linear_skew(lua_State *L);
-static double linear_kurt_handler(int size, double *values, int inc, linear_arg_u *args);
+static double linear_kurt_handler(size_t size, double *values, size_t inc, linear_arg_u *args);
 static int linear_kurt(lua_State *L);
-static double linear_nrm2_handler(int size, double *values, int inc, linear_arg_u *args);
+static double linear_nrm2_handler(size_t size, double *values, size_t inc, linear_arg_u *args);
 static int linear_median(lua_State *L);
-static double linear_median_handler(int size, double *values, int inc, linear_arg_u *args);
+static double linear_median_handler(size_t size, double *values, size_t inc, linear_arg_u *args);
 static int linear_mad(lua_State *L);
-static double linear_mad_handler(int size, double *values, int inc, linear_arg_u *args);
+static double linear_mad_handler(size_t size, double *values, size_t inc, linear_arg_u *args);
 static int linear_nrm2(lua_State *L);
-static double linear_asum_handler(int size, double *values, int inc, linear_arg_u *args);
+static double linear_asum_handler(size_t size, double *values, size_t inc, linear_arg_u *args);
 static int linear_asum(lua_State *L);
-static double linear_min_handler(int size, double *x, int incx, linear_arg_u *args);
+static double linear_min_handler(size_t size, double *x, size_t incx, linear_arg_u *args);
 static int linear_min(lua_State *L);
-static double linear_max_handler(int size, double *x, int incx, linear_arg_u *args);
+static double linear_max_handler(size_t size, double *x, size_t incx, linear_arg_u *args);
 static int linear_max(lua_State *L);
 
 
@@ -112,8 +112,8 @@ int linear_unary (lua_State *L, linear_unary_function f, linear_param_t *params)
 	return linear_argerror(L, 1, 0);
 }
 
-static double linear_sum_handler (int size, double *x, int incx, linear_arg_u *args) {
-	int     i;
+static double linear_sum_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
+	size_t  i;
 	double  sum;
 
 	(void)args;
@@ -135,7 +135,7 @@ static int linear_sum (lua_State *L) {
 	return linear_unary(L, linear_sum_handler, linear_params_none);
 }
 
-static double linear_mean_handler (int size, double *x, int incx, linear_arg_u *args) {
+static double linear_mean_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
 	return linear_sum_handler(size, x, incx, args) / size;
 }
 
@@ -143,8 +143,8 @@ static int linear_mean (lua_State *L) {
 	return linear_unary(L, linear_mean_handler, linear_params_none);
 }
 
-static double linear_var_handler (int size, double *x, int incx, linear_arg_u *args) {
-	int     i;
+static double linear_var_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
+	size_t  i;
 	double  sum, mean;
 
 	sum = 0.0;
@@ -163,7 +163,7 @@ static double linear_var_handler (int size, double *x, int incx, linear_arg_u *a
 			x += incx;
 		}
 		mean = sum / size;
-		x -= (size_t)size * (size_t)incx;
+		x -= size * incx;
 		sum = 0.0;
 		for (i = 0; i < size; i++) {
 			sum += (*x - mean) * (*x - mean);
@@ -177,7 +177,7 @@ static int linear_var (lua_State *L) {
 	return linear_unary(L, linear_var_handler, linear_params_ddof);
 }
 
-static double linear_std_handler (int size, double *x, int incx, linear_arg_u *args) {
+static double linear_std_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
 	return sqrt(linear_var_handler(size, x, incx, args));
 }
 
@@ -185,8 +185,8 @@ static int linear_std (lua_State *L) {
 	return linear_unary(L, linear_std_handler, linear_params_ddof);
 }
 
-static double linear_skew_handler (int size, double *x, int incx, linear_arg_u *args) {
-	int     i;
+static double linear_skew_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
+	size_t  i;
 	double  sum, mean, m3, m2, skew;
 
 	sum = 0.0;
@@ -207,7 +207,7 @@ static double linear_skew_handler (int size, double *x, int incx, linear_arg_u *
 			x += incx;
 		}
 		mean = sum / size;
-		x -= (size_t)size * (size_t)incx;
+		x -= size * incx;
 		for (i = 0; i < size; i++) {
 			m3 += pow(*x - mean, 3);
 			m2 += (*x - mean) * (*x - mean);
@@ -227,8 +227,8 @@ static int linear_skew (lua_State *L) {
 	return linear_unary(L, linear_skew_handler, linear_params_set);
 }
 
-static double linear_kurt_handler (int size, double *x, int incx, linear_arg_u *args) {
-	int     i;
+static double linear_kurt_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
+	size_t  i;
 	double  sum, mean, m4, m2, kurt;
 
 	sum = 0.0;
@@ -249,7 +249,7 @@ static double linear_kurt_handler (int size, double *x, int incx, linear_arg_u *
 			x += incx;
 		}
 		mean = sum / size;
-		x -= (size_t)size * (size_t)incx;
+		x -= size * incx;
 		for (i = 0; i < size; i++) {
 			m4 += pow(*x - mean, 4);
 			m2 += (*x - mean) * (*x - mean);
@@ -269,8 +269,8 @@ static int linear_kurt (lua_State *L) {
 	return linear_unary(L, linear_kurt_handler, linear_params_set);
 }
 
-static double linear_median_handler (int size, double *x, int incx, linear_arg_u *args) {
-	int      i, mid;
+static double linear_median_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
+	size_t   i, mid;
 	double  *s, median;
 
 	s = malloc(size * sizeof(double));
@@ -300,8 +300,8 @@ static int linear_median (lua_State *L) {
 	return linear_unary(L, linear_median_handler, linear_params_lua);
 }
 
-static double linear_mad_handler (int size, double *x, int incx, linear_arg_u *args) {
-	int      i, mid;
+static double linear_mad_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
+	size_t   i, mid;
 	double  *s, median, mad;
 
 	/* calculate the median */
@@ -343,7 +343,7 @@ static int linear_mad (lua_State *L) {
 	return linear_unary(L, linear_mad_handler, linear_params_lua);
 }
 
-static double linear_nrm2_handler (int size, double *x, int incx, linear_arg_u *args) {
+static double linear_nrm2_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
 	(void)args;
 	return cblas_dnrm2(size, x, incx);
 }
@@ -352,7 +352,7 @@ static int linear_nrm2 (lua_State *L) {
 	return linear_unary(L, linear_nrm2_handler, linear_params_none);
 }
 
-static double linear_asum_handler (int size, double *x, int incx, linear_arg_u *args) {
+static double linear_asum_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
 	(void)args;
 	return cblas_dasum(size, x, incx);
 }
@@ -361,8 +361,8 @@ static int linear_asum (lua_State *L) {
 	return linear_unary(L, linear_asum_handler, linear_params_none);
 }
 
-static double linear_min_handler (int size, double *x, int incx, linear_arg_u *args) {
-	int     i;
+static double linear_min_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
+	size_t  i;
 	double  min;
 
 	(void)args;
@@ -380,8 +380,8 @@ static int linear_min (lua_State *L) {
 	return linear_unary(L, linear_min_handler, linear_params_none);
 }
 
-static double linear_max_handler (int size, double *x, int incx, linear_arg_u *args) {
-	int     i;
+static double linear_max_handler (size_t size, double *x, size_t incx, linear_arg_u *args) {
+	size_t  i;
 	double  max;
 
 	(void)args;

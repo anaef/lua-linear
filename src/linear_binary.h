@@ -12,7 +12,7 @@
 #include <lua.h>
 
 
-typedef void (*linear_binary_function)(int size, double *x, int incx, double *y, int incy,
+typedef void (*linear_binary_function)(size_t size, double *x, size_t incx, double *y, size_t incy,
 		linear_arg_u *args);
 
 
