@@ -304,8 +304,8 @@ static int linear_svd (lua_State *L) {
 			return luaL_error(L, "cannot allocate indexes");
 		}
 		result = LAPACKE_dgesvdx(A->order, 'V', 'V', 'I', A->rows, A->cols, A->values,
-			A->ld, 0, 0, 1, ns, &nsout, s->values, U->values, U->ld, VT->values,
-			VT->ld,	isuperb);
+				A->ld, 0, 0, 1, ns, &nsout, s->values, U->values, U->ld, VT->values,
+				VT->ld,	isuperb);
 		free(isuperb);
 	}
 	if (result < 0) {
@@ -328,7 +328,7 @@ static int linear_cov (lua_State *L) {
 	ddof = luaL_optinteger(L, 3, 0);
 	luaL_argcheck(L, ddof < A->rows, 3, "bad ddof");
 
-	/* calculate means */
+	/* calculate means and covariances */
 	means = malloc(A->cols * sizeof(double));
 	if (means == NULL) {
 		return luaL_error(L, "cannot allocate values");
@@ -342,20 +342,6 @@ static int linear_cov (lua_State *L) {
 			}
 			means[i] = sum / A->rows;
 		}
-	} else {
-		for (i = 0; i < A->cols; i++) {
-			sum = 0.0;
-			v = &A->values[i];
-			for (j = 0; j < A->rows; j++) {
-				sum += *v;
-				v += A->ld;
-			}
-			means[i] = sum / A->rows;
-		}
-	}
-
-	/* calculate covariances */
-	if (A->order == CblasColMajor) {
 		for (i = 0; i < A->cols; i++) {
 			for (j = i; j < A->cols; j++) {
 				sum = 0.0;
@@ -369,6 +355,15 @@ static int linear_cov (lua_State *L) {
 			}
 		}
 	} else {
+		for (i = 0; i < A->cols; i++) {
+			sum = 0.0;
+			v = &A->values[i];
+			for (j = 0; j < A->rows; j++) {
+				sum += *v;
+				v += A->ld;
+			}
+			means[i] = sum / A->rows;
+		}
 		for (i = 0; i < A->cols; i++) {
 			for (j = i; j < A->cols; j++) {
 				sum = 0.0;
@@ -399,7 +394,7 @@ static int linear_corr (lua_State *L) {
 	luaL_argcheck(L, A->cols == B->rows, 2, "dimension mismatch");
 	luaL_argcheck(L, B->rows == B->cols, 2, "not square");
 
-	/* calculate means and stds */
+	/* calculate means, stds, and Pearson product-moment correlation coefficients */
 	means = malloc(A->cols * sizeof(double));
 	if (means == NULL) {
 		return luaL_error(L, "cannot allocate values");
@@ -424,6 +419,18 @@ static int linear_corr (lua_State *L) {
 			}
 			stds[i] = sqrt(sum);
 		}
+		for (i = 0; i < A->cols; i++) {
+			for (j = i; j < A->cols; j++) {
+				sum = 0.0;
+				vi = &A->values[i * A->ld];
+				vj = &A->values[j * A->ld];
+				for (k = 0; k < A->rows; k++) {
+					sum += (vi[k] - means[i]) * (vj[k] - means[j]);
+				}
+				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
+						/ (stds[i] * stds[j]);
+			}
+		}
 	} else {
 		for (i = 0; i < A->cols; i++) {
 			sum = 0.0;
@@ -441,23 +448,6 @@ static int linear_corr (lua_State *L) {
 			}
 			stds[i] = sqrt(sum);
 		}
-	}
-
-	/* calculate Pearson product-moment correlation coefficients */
-	if (A->order == CblasColMajor) {
-		for (i = 0; i < A->cols; i++) {
-			for (j = i; j < A->cols; j++) {
-				sum = 0.0;
-				vi = &A->values[i * A->ld];
-				vj = &A->values[j * A->ld];
-				for (k = 0; k < A->rows; k++) {
-					sum += (vi[k] - means[i]) * (vj[k] - means[j]);
-				}
-				B->values[i * B->ld + j] = B->values[j * B->ld + i] = sum
-						/ (stds[i] * stds[j]);
-			}
-		}
-	} else {
 		for (i = 0; i < A->cols; i++) {
 			for (j = i; j < A->cols; j++) {
 				sum = 0.0;
@@ -637,7 +627,7 @@ static int linear_interpolant (lua_State *L) {
 		case 3:  /* cubic */
 			x -= spline->x[0];
 			y = ((spline->d[0] * x + spline->c[0]) * x + spline->b[0]) * x
-				+ spline->a[0];
+					+ spline->a[0];
 			break;
 
 		default:
@@ -646,27 +636,26 @@ static int linear_interpolant (lua_State *L) {
 	} else if (x > spline->x[spline->n]) {
 		/* right extrapolation */
 		switch (spline->extrapolation) {
-			case 0:  /* none */
-				return luaL_argerror(L, 1, "too large");
+		case 0:  /* none */
+			return luaL_argerror(L, 1, "too large");
 
-			case 1:  /* const */
-				y = spline->a[spline->n];
-				break;
+		case 1:  /* const */
+			y = spline->a[spline->n];
+			break;
 
-			case 2:  /* linear */
-				x -= spline->x[spline->n];
-				y = spline->b[spline->n - 1] * x + spline->a[spline->n];
-				break;
+		case 2:  /* linear */
+			x -= spline->x[spline->n];
+			y = spline->b[spline->n - 1] * x + spline->a[spline->n];
+			break;
 
-			case 3:  /* cubic */
-				x -= spline->x[spline->n - 1];
-				y = ((spline->d[spline->n - 1] * x + spline->c[spline->n - 1]) * x
-						+ spline->b[spline->n - 1]) * x
-						+ spline->a[spline->n - 1];
-				break;
+		case 3:  /* cubic */
+			x -= spline->x[spline->n - 1];
+			y = ((spline->d[spline->n - 1] * x + spline->c[spline->n - 1]) * x
+					+ spline->b[spline->n - 1]) * x + spline->a[spline->n - 1];
+			break;
 
-			default:
-				return 0;  /* not reached */
+		default:
+			return 0;  /* not reached */
 		}
 	} else {
 		return luaL_argerror(L, 1, "bad value");

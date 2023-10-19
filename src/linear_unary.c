@@ -287,11 +287,7 @@ static double linear_median_handler (size_t size, double *x, size_t incx, linear
 	}
 	qsort(s, size, sizeof(double), linear_comparison_handler);
 	mid = size / 2;
-	if (size % 2 == 0) {
-		median = (s[mid - 1] + s[mid]) / 2;
-	} else {
-		median = s[mid];
-	}
+	median = size % 2 == 0 ? (s[mid - 1] + s[mid]) / 2 : s[mid];
 	free(s);
 	return median;
 }
@@ -319,22 +315,14 @@ static double linear_mad_handler (size_t size, double *x, size_t incx, linear_ar
 	}
 	qsort(s, size, sizeof(double), linear_comparison_handler);
 	mid = size / 2;
-	if (size % 2 == 0) {
-		median = (s[mid - 1] + s[mid]) / 2;
-	} else {
-		median = s[mid];
-	}
+	median = size % 2 == 0 ? (s[mid - 1] + s[mid]) / 2 : s[mid];
 
 	/* calculate the median absolute deviation */
 	for (i = 0; i < size; i++) {
 		s[i] = fabs(s[i] - median);
 	}
 	qsort(s, size, sizeof(double), linear_comparison_handler);
-	if (size % 2 == 0) {
-		mad = (s[mid - 1] + s[mid]) / 2;
-	} else {
-		mad = s[mid];
-	}
+	mad = size % 2 == 0 ? (s[mid - 1] + s[mid]) / 2 : s[mid];
 	free(s);
 	return mad;
 }

@@ -90,7 +90,7 @@ int linear_elementary (lua_State *L, linear_elementary_function f, linear_param_
 	n = lua_tonumberx(L, 1, &isnum);
 #else
 	isnum = lua_isnumber(L, 1);
-	n = lua_tonumber(L, 1);
+	n = isnum ? lua_tonumber(L, 1) : 0.0;
 #endif
 	if (isnum) {
 		linear_checkargs(L, 2, 1, params, args);
