@@ -14,7 +14,7 @@
 #include <cblas.h>
 
 
-#define LINEAR_VECTOR       "linear.vector"  /* vector metatable*/
+#define LINEAR_VECTOR       "linear.vector"  /* vector metatable */
 #define LINEAR_MATRIX       "linear.matrix"  /* matrix metatable */
 #define LINEAR_RANDOM       "linear.random"  /* random state */
 #define LINEAR_PARAMS_MAX   5                /* maximum number of extra parameters */
@@ -26,7 +26,7 @@ typedef struct linear_data_s {
 } linear_data_t;
 
 typedef struct linear_vector_s {
-	size_t          length;  /* length*/
+	size_t          length;  /* length */
 	size_t          inc;     /* increment to next value */
 	linear_data_t  *data;    /* shared data */
 	double         *values;  /* components */
@@ -34,7 +34,7 @@ typedef struct linear_vector_s {
 
 typedef struct linear_matrix_s {
 	size_t          rows;    /* number of rows */
-	size_t          cols;    /* number of columns*/
+	size_t          cols;    /* number of columns */
 	size_t          ld;      /* increment to next major vector */
 	CBLAS_ORDER     order;   /* order */
 	linear_data_t  *data;    /* shared data */
