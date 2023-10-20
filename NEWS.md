@@ -1,7 +1,7 @@
 # Lua Linear Release Notes
 
 
-## Release 1.3.0
+## Release 1.3.0 (2023-10-20)
 
 - The `linear.svd` program function has been added, calculating the full or low-rank singular
 value decomposition of matrices.

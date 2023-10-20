@@ -1,6 +1,6 @@
 rockspec_format = "3.0"
 package = "lua-linear"
-version = "1.2.0-1"
+version = "1.3.0-1"
 description = {
 	summary = "Linear algebra and statistics for Lua",
 	detailed = [[
@@ -25,7 +25,7 @@ external_dependencies = {
 }
 source = {
 	url = "git+https://github.com/anaef/lua-linear.git",
-	tag = "v1.2.0",
+	tag = "v1.3.0",
 }
 build = {
 	type = "builtin",
